@@ -32,6 +32,7 @@
         .form-input, .form-textarea { width: 100%; padding: 12px 16px; border: 2px solid #C8C9C7; border-radius: 6px; font-size: 15px; transition: all 0.2s; }
         .form-input:focus, .form-textarea:focus { outline: none; border-color: #003594; box-shadow: 0 0 0 3px #DBEEFF; }
         .form-textarea { font-family: monospace; }
+        select.form-input { cursor: pointer; }
         .btn { padding: 14px 28px; font-weight: 700; border-radius: 6px; cursor: pointer; border: 2px solid; font-size: 13px; display: inline-flex; align-items: center; gap: 10px; transition: all 0.2s; font-family: 'alternate-gothic-no-3-d', 'Roboto', sans-serif; letter-spacing: 0.8px; text-transform: uppercase; justify-content: center; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-primary { background: #003594; color: white; border-color: #003594; }
@@ -243,122 +244,6 @@
                 }
             };
 
-            const startCycleCount = () => {
-                if (!cycleCountSection || !cycleCountRack) return;
-                // Start with first shelf
-                const shelves = getUniqueShelves(cycleCountSection, cycleCountRack);
-                setCycleCountSession({ section: cycleCountSection, rack: cycleCountRack, startTime: new Date().toISOString() });
-                setCycleCountShelf(shelves[0]?.toString() || '');
-                setCountedItems([]);
-            };
-
-            const handleScan = () => {
-                if (!scannedSKU.trim()) return;
-                const ns = normalizeSKU(scannedSKU);
-                
-                // Check if already counted
-                const alreadyCounted = countedItems.find(i => normalizeSKU(i.sku) === ns);
-                if (alreadyCounted) {
-                    if (confirm(`Already counted ${alreadyCounted.sku}. Edit previous entry?`)) {
-                        // Remove from list and allow re-entry
-                        setCountedItems(countedItems.filter(i => normalizeSKU(i.sku) !== ns));
-                    } else {
-                        setScannedSKU('');
-                        return;
-                    }
-                }
-                
-                const item = inventory.find(i => normalizeSKU(i.internalSKU) === ns || i.manufacturerSKUs.some(m => normalizeSKU(m) === ns));
-                if (!item) { alert('SKU not found'); setScannedSKU(''); return; }
-                
-                const loc = parseLocation(item.location);
-                const currentLoc = `${cycleCountSession.section}-${cycleCountSession.rack}-${cycleCountShelf}`;
-                const expectedLoc = `${loc.section}-${loc.rack}-${loc.shelf}`;
-                
-                if (currentLoc !== expectedLoc) {
-                    setMisplacedItem({ item, expectedLoc });
-                    return;
-                }
-                
-                setCurrentItem(item);
-                setCountQuantity('');
-                setRecountQuantity('');
-                setNeedsRecount(false);
-            };
-            
-            const countMisplacedItem = () => {
-                setCurrentItem(misplacedItem.item);
-                setMisplacedItem(null);
-                setCountQuantity('');
-                setRecountQuantity('');
-                setNeedsRecount(false);
-            };
-            
-            const cancelMisplaced = () => {
-                setMisplacedItem(null);
-                setScannedSKU('');
-            };
-
-            const submitCount = () => {
-                if (!countQuantity && !needsRecount) return;
-                if (needsRecount && !recountQuantity) return;
-                const counted = parseInt(needsRecount ? recountQuantity : countQuantity);
-                const onHand = parseInt(currentItem.onHand || 0);
-                if (counted !== onHand && !needsRecount) { setNeedsRecount(true); return; }
-                
-                const loc = parseLocation(currentItem.location);
-                const expectedLoc = `${loc.section}-${loc.rack}-${loc.shelf}`;
-                const actualLoc = `${cycleCountSession.section}-${cycleCountSession.rack}-${cycleCountShelf}`;
-                const isMisplaced = expectedLoc !== actualLoc;
-                
-                setCountedItems([...countedItems, {
-                    sku: currentItem.internalSKU, itemName: currentItem.itemName, location: currentItem.location,
-                    countedAt: actualLoc, uom: currentItem.uom, onHand, counted, variance: counted - onHand, 
-                    misplaced: isMisplaced, timestamp: new Date().toISOString()
-                }]);
-                setScannedSKU(''); setCurrentItem(null); setCountQuantity(''); setRecountQuantity(''); setNeedsRecount(false);
-            };
-            
-            const nextShelf = () => {
-                const shelves = getUniqueShelves(cycleCountSession.section, cycleCountSession.rack);
-                const currentIdx = shelves.indexOf(parseInt(cycleCountShelf));
-                if (currentIdx < shelves.length - 1) {
-                    setCycleCountShelf(shelves[currentIdx + 1].toString());
-                } else {
-                    alert('Last shelf in this rack');
-                }
-            };
-            
-            const getExpectedItems = () => {
-                return inventory.filter(item => {
-                    const loc = parseLocation(item.location);
-                    return loc.section === cycleCountSession.section && 
-                           loc.rack === parseInt(cycleCountSession.rack) && 
-                           loc.shelf === parseInt(cycleCountShelf);
-                });
-            };
-            
-            const getMissingItems = () => {
-                const expected = getExpectedItems();
-                const countedSKUs = new Set(countedItems.filter(i => !i.misplaced).map(i => normalizeSKU(i.sku)));
-                return expected.filter(item => !countedSKUs.has(normalizeSKU(item.internalSKU)));
-            };
-
-            const exportCycleCount = () => {
-                if (!countedItems.length) return;
-                const csv = 'Location,Expected Location,SKU,Item,UoM,OnHand,Counted,Variance,Misplaced,Time\n' + 
-                    countedItems.map(i => `${i.countedAt},${i.location},${i.sku},"${i.itemName}",${i.uom},${i.onHand},${i.counted},${i.variance},${i.misplaced ? 'YES' : 'NO'},${i.timestamp}`).join('\n');
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url; a.download = `cycle_count_${cycleCountSession.section}${cycleCountSession.rack}_${new Date().toISOString().split('T')[0]}.csv`;
-                document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-            };
-            
-            const printCycleCount = () => {
-                window.print();
-            };
-
             const deletePackingSlip = (id) => {
                 try { const u = savedPackingSlips.filter(s => s.id !== id); localStorage.setItem('stockroom_packing_slips', JSON.stringify(u)); setSavedPackingSlips(u); if (selectedSlip?.id === id) setSelectedSlip(null); } catch (e) {}
             };
@@ -409,8 +294,124 @@
                 setHazmatInput('');
             };
 
+            // Cycle Count Functions
+            const startCycleCount = () => {
+                if (!cycleCountSection || !cycleCountRack) return;
+                const shelves = getUniqueShelves(cycleCountSession.section, cycleCountSession.rack);
+                setCycleCountSession({ section: cycleCountSection, rack: cycleCountRack, startTime: new Date().toISOString() });
+                setCycleCountShelf(shelves[0]?.toString() || '1');
+                setCountedItems([]);
+            };
+
+            const handleScan = () => {
+                if (!scannedSKU.trim()) return;
+                const ns = normalizeSKU(scannedSKU);
+                
+                // Check if already counted
+                const alreadyCounted = countedItems.find(i => normalizeSKU(i.sku) === ns);
+                if (alreadyCounted) {
+                    if (confirm(`Already counted ${alreadyCounted.sku}. Edit previous entry?`)) {
+                        setCountedItems(countedItems.filter(i => normalizeSKU(i.sku) !== ns));
+                    } else {
+                        setScannedSKU('');
+                        return;
+                    }
+                }
+                
+                const item = inventory.find(i => normalizeSKU(i.internalSKU) === ns || i.manufacturerSKUs.some(m => normalizeSKU(m) === ns));
+                if (!item) { alert('SKU not found in database'); setScannedSKU(''); return; }
+                
+                const loc = parseLocation(item.location);
+                const currentLoc = `${cycleCountSession.section}-${cycleCountSession.rack}-${cycleCountShelf}`;
+                const expectedLoc = `${loc.section}-${loc.rack}-${loc.shelf}`;
+                
+                if (currentLoc !== expectedLoc) {
+                    setMisplacedItem({ item, expectedLoc });
+                    return;
+                }
+                
+                setCurrentItem(item);
+                setCountQuantity('');
+                setRecountQuantity('');
+                setNeedsRecount(false);
+            };
+
+            const countMisplacedItem = () => {
+                setCurrentItem(misplacedItem.item);
+                setMisplacedItem(null);
+                setCountQuantity('');
+                setRecountQuantity('');
+                setNeedsRecount(false);
+            };
+
+            const cancelMisplaced = () => {
+                setMisplacedItem(null);
+                setScannedSKU('');
+            };
+
+            const submitCount = () => {
+                if (!countQuantity && !needsRecount) return;
+                if (needsRecount && !recountQuantity) return;
+                const counted = parseInt(needsRecount ? recountQuantity : countQuantity);
+                const onHand = parseInt(currentItem.onHand || 0);
+                if (counted !== onHand && !needsRecount) { setNeedsRecount(true); return; }
+                
+                const loc = parseLocation(currentItem.location);
+                const expectedLoc = `${loc.section}-${loc.rack}-${loc.shelf}`;
+                const actualLoc = `${cycleCountSession.section}-${cycleCountSession.rack}-${cycleCountShelf}`;
+                const isMisplaced = expectedLoc !== actualLoc;
+                
+                setCountedItems([...countedItems, {
+                    sku: currentItem.internalSKU, itemName: currentItem.itemName, expectedLocation: currentItem.location,
+                    countedAt: actualLoc, uom: currentItem.uom, onHand, counted, variance: counted - onHand, 
+                    misplaced: isMisplaced, timestamp: new Date().toISOString()
+                }]);
+                setScannedSKU(''); setCurrentItem(null); setCountQuantity(''); setRecountQuantity(''); setNeedsRecount(false);
+            };
+
+            const nextShelf = () => {
+                const shelves = getUniqueShelves(cycleCountSession.section, cycleCountSession.rack);
+                const currentIdx = shelves.indexOf(parseInt(cycleCountShelf));
+                if (currentIdx < shelves.length - 1) {
+                    setCycleCountShelf(shelves[currentIdx + 1].toString());
+                    setScannedSKU('');
+                    setCurrentItem(null);
+                } else {
+                    alert('Last shelf in this rack');
+                }
+            };
+
+            const getExpectedItems = () => {
+                return inventory.filter(item => {
+                    if (item.location.toUpperCase().includes('SS')) return false;
+                    const loc = parseLocation(item.location);
+                    return loc.section === cycleCountSession.section && 
+                           loc.rack === parseInt(cycleCountSession.rack) && 
+                           loc.shelf === parseInt(cycleCountShelf);
+                });
+            };
+
+            const getMissingItems = () => {
+                const expected = getExpectedItems();
+                const countedSKUs = new Set(countedItems.filter(i => !i.misplaced && i.countedAt === `${cycleCountSession.section}-${cycleCountSession.rack}-${cycleCountShelf}`).map(i => normalizeSKU(i.sku)));
+                return expected.filter(item => !countedSKUs.has(normalizeSKU(item.internalSKU)));
+            };
+
+            const exportCycleCount = () => {
+                if (!countedItems.length) return;
+                const csv = 'Counted At,Expected Location,SKU,Item,UoM,OnHand,Counted,Variance,Misplaced,Time\n' + 
+                    countedItems.map(i => `${i.countedAt},${i.expectedLocation},${i.sku},"${i.itemName}",${i.uom},${i.onHand},${i.counted},${i.variance},${i.misplaced ? 'YES' : 'NO'},${i.timestamp}`).join('\n');
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = `cycle_count_${cycleCountSession.section}${cycleCountSession.rack}_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+            };
+
+            const printCycleCount = () => window.print();
+
             const endCycleCount = () => {
-                if (confirm('End session? Export first!')) {
+                if (confirm('End session? Export data first!')) {
                     setCycleCountSession(null); setCountedItems([]); setCurrentItem(null); 
                     setCycleCountSection(''); setCycleCountRack(''); setCycleCountShelf('');
                 }
@@ -434,7 +435,7 @@
                 });
                 return Array.from(racks).sort((a, b) => a - b);
             };
-            
+
             const getUniqueShelves = (section, rack) => {
                 const shelves = new Set();
                 inventory.forEach(i => {
@@ -443,96 +444,6 @@
                 });
                 return Array.from(shelves).sort((a, b) => a - b);
             };
-
-            const CycleCountTab = () => (
-                <div className="card">
-                    <h2>Cycle Count</h2>
-                    {!cycleCountSession ? (
-                        <div>
-                            <p style={{fontSize: '14px', color: '#666', marginBottom: '20px'}}>Select section and rack</p>
-                            <div className="grid-2">
-                                <div className="form-group">
-                                    <label className="form-label">Section</label>
-                                    <select className="form-input" value={cycleCountSection} onChange={(e) => { setCycleCountSection(e.target.value); setCycleCountRack(''); }}>
-                                        <option value="">Select...</option>
-                                        {getUniqueSections().map(s => <option key={s} value={s}>Section {s}</option>)}
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label className="form-label">Rack</label>
-                                    <select className="form-input" value={cycleCountRack} onChange={(e) => setCycleCountRack(e.target.value)} disabled={!cycleCountSection}>
-                                        <option value="">Select...</option>
-                                        {cycleCountSection && getUniqueRacks(cycleCountSection).map(r => <option key={r} value={r}>Rack {r}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-                            <button onClick={startCycleCount} disabled={!cycleCountSection || !cycleCountRack} className="btn btn-primary btn-block">Start</button>
-                        </div>
-                    ) : (
-                        <div>
-                            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '20px'}}>
-                                <h3 style={{margin: 0}}>Section {cycleCountSession.section} - Rack {cycleCountSession.rack}</h3>
-                                <div style={{display: 'flex', gap: '8px'}}>
-                                    <button onClick={exportCycleCount} disabled={!countedItems.length} className="btn btn-primary" style={{padding: '10px 20px'}}>Export</button>
-                                    <button onClick={endCycleCount} className="btn btn-red" style={{padding: '10px 20px'}}>End</button>
-                                </div>
-                            </div>
-                            <div className="alert alert-info"><strong>Counted:</strong> {countedItems.length}</div>
-                            {!currentItem ? (
-                                <div>
-                                    <div className="form-group">
-                                        <label className="form-label" style={{fontSize: '16px'}}>Scan SKU</label>
-                                        <input type="text" className="form-input" value={scannedSKU} onChange={(e) => setScannedSKU(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleScan()} autoFocus style={{fontSize: '22px', padding: '20px', textAlign: 'center', border: '3px solid #003594'}} />
-                                    </div>
-                                    <button onClick={handleScan} className="btn btn-primary btn-block" style={{fontSize: '18px', padding: '18px'}}>Lookup</button>
-                                </div>
-                            ) : (
-                                <div>
-                                    <div style={{background: '#DBEEFF', border: '3px solid #003594', borderRadius: '8px', padding: '24px', marginBottom: '24px'}}>
-                                        <p style={{margin: '8px 0', fontSize: '20px', color: '#003594'}}><strong>SKU:</strong> {currentItem.internalSKU}</p>
-                                        <p style={{margin: '8px 0', fontSize: '18px'}}><strong>Item:</strong> {currentItem.itemName}</p>
-                                        <p style={{margin: '8px 0', fontSize: '18px'}}><strong>Location:</strong> {currentItem.location}</p>
-                                        <p style={{margin: '12px 0', fontSize: '24px', fontWeight: 'bold', color: '#003594'}}><strong>UoM:</strong> {currentItem.uom}</p>
-                                        <p style={{margin: '8px 0', fontSize: '18px'}}><strong>On-Hand:</strong> {currentItem.onHand || '0'}</p>
-                                    </div>
-                                    {!needsRecount ? (
-                                        <div>
-                                            <div className="form-group">
-                                                <label className="form-label" style={{fontSize: '18px'}}>Count</label>
-                                                <input type="number" className="form-input" value={countQuantity} onChange={(e) => setCountQuantity(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && submitCount()} autoFocus style={{fontSize: '28px', padding: '20px', textAlign: 'center', border: '3px solid #00AD6E'}} />
-                                            </div>
-                                            <button onClick={submitCount} disabled={!countQuantity} className="btn btn-secondary btn-block" style={{fontSize: '18px', padding: '18px'}}>Submit</button>
-                                        </div>
-                                    ) : (
-                                        <div>
-                                            <div className="alert alert-error" style={{fontSize: '18px', padding: '20px'}}>
-                                                <strong>MISMATCH:</strong> Counted {countQuantity}, System {currentItem.onHand}. Recount.
-                                            </div>
-                                            <div className="form-group">
-                                                <label className="form-label" style={{fontSize: '18px'}}>Recount</label>
-                                                <input type="number" className="form-input" value={recountQuantity} onChange={(e) => setRecountQuantity(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && submitCount()} autoFocus style={{fontSize: '28px', padding: '20px', textAlign: 'center', border: '3px solid #FF5B45'}} />
-                                            </div>
-                                            <button onClick={submitCount} disabled={!recountQuantity} className="btn btn-secondary btn-block" style={{fontSize: '18px', padding: '18px'}}>Submit</button>
-                                        </div>
-                                    )}
-                                    <button onClick={() => { setCurrentItem(null); setScannedSKU(''); setCountQuantity(''); setRecountQuantity(''); setNeedsRecount(false); }} className="btn btn-gray btn-block" style={{marginTop: '12px'}}>Cancel</button>
-                                </div>
-                            )}
-                            {countedItems.length > 0 && (
-                                <div style={{marginTop: '32px', paddingTop: '32px', borderTop: '3px solid #e5e7eb'}}>
-                                    <h3>Log ({countedItems.length})</h3>
-                                    <div style={{overflowX: 'auto'}}>
-                                        <table>
-                                            <thead><tr><th className="text-center">Loc</th><th className="text-center">SKU</th><th>Item</th><th className="text-center">UoM</th><th className="text-center">System</th><th className="text-center">Count</th><th className="text-center">Var</th></tr></thead>
-                                            <tbody>{countedItems.map((it, i) => <tr key={i} style={{background: it.variance !== 0 ? '#FFDECD' : 'white'}}><td className="text-center text-mono" style={{fontWeight: 'bold'}}>{it.location}</td><td className="text-center text-mono" style={{fontSize: '13px'}}>{it.sku}</td><td>{it.itemName}</td><td className="text-center">{it.uom}</td><td className="text-center">{it.onHand}</td><td className="text-center" style={{fontWeight: 'bold', fontSize: '16px'}}>{it.counted}</td><td className="text-center" style={{fontWeight: 'bold', fontSize: '16px', color: it.variance === 0 ? '#00AD6E' : '#FF5B45'}}>{it.variance > 0 ? '+' : ''}{it.variance}</td></tr>)}</tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
-            );
 
             return (
                 <div>
@@ -554,16 +465,325 @@
                                 <h2>Database Status</h2>
                                 {inventory.length > 0 ? <div className="alert alert-success"><strong>Loaded:</strong> {inventory.length} items</div> : <div className="alert alert-info">Loading...</div>}
                             </div>
-                            {activeTab === 'search' && <div>SEARCH</div>}
-                            {activeTab === 'packing' && <div>PACKING</div>}
-                            {activeTab === 'history' && <div>HISTORY</div>}
-                            {activeTab === 'cyclecount' && <CycleCountTab />}
-                            {activeTab === 'hazmat' && <div>HAZMAT</div>}
+                            {activeTab === 'search' && (
+                                <div>
+                                    <div className="card">
+                                        <h2>General Search</h2>
+                                        <div className="form-group">
+                                            <label className="form-label">Search by SKU or Item Name</label>
+                                            <input type="text" className="form-input" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleGeneralSearch()} />
+                                        </div>
+                                        {error && <div className="alert alert-error">{error}</div>}
+                                        <button onClick={handleGeneralSearch} className="btn btn-primary btn-block">Search</button>
+                                    </div>
+                                    {searchResults && (
+                                        <div className="card">
+                                            <h2>Results ({searchResults.length})</h2>
+                                            {searchResults.length > 0 ? (
+                                                <div>
+                                                    <div style={{overflowX: 'auto'}}>
+                                                        <table>
+                                                            <thead>
+                                                                <tr>
+                                                                    <th onClick={() => handleSort('location')} className="text-center">Location <SortIcon columnKey="location" /></th>
+                                                                    <th onClick={() => handleSort('itemName')}>Item <SortIcon columnKey="itemName" /></th>
+                                                                    <th onClick={() => handleSort('internalSKU')} className="text-center">Internal SKU <SortIcon columnKey="internalSKU" /></th>
+                                                                    <th onClick={() => handleSort('manufacturerSKUs')}>Vendor SKUs <SortIcon columnKey="manufacturerSKUs" /></th>
+                                                                    <th onClick={() => handleSort('vendor')} className="text-center">Vendor <SortIcon columnKey="vendor" /></th>
+                                                                    <th onClick={() => handleSort('uom')} className="text-center">UoM <SortIcon columnKey="uom" /></th>
+                                                                    <th onClick={() => handleSort('altUom')} className="text-center">Alt UoM <SortIcon columnKey="altUom" /></th>
+                                                                    <th onClick={() => handleSort('ourPrice')} className="text-center">Price <SortIcon columnKey="ourPrice" /></th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {getSortedResults(searchResults).map((item, idx) => (
+                                                                    <tr key={idx}>
+                                                                        <td className="text-center text-mono" style={{fontWeight: 'bold'}}>{item.location}</td>
+                                                                        <td>{item.itemName}</td>
+                                                                        <td className="text-center text-mono" style={{fontSize: '12px'}}>{item.internalSKU}</td>
+                                                                        <td className="text-mono" style={{fontSize: '12px'}}>{item.manufacturerSKUs.join(', ')}</td>
+                                                                        <td className="text-center" style={{fontSize: '12px'}}>{item.vendor || '-'}</td>
+                                                                        <td className="text-center">
+                                                                            <div>{item.uom}</div>
+                                                                            {item.childPartNbr && <div style={{fontSize: '11px', color: '#666', marginTop: '2px'}}>→ {item.childPartNbr}{item.childConvFactor && ` (${item.childConvFactor})`}</div>}
+                                                                        </td>
+                                                                        <td className="text-center">
+                                                                            {item.altUom ? <div><div>{item.altUom}</div>{item.convFactor && <div style={{fontSize: '11px', color: '#666'}}>×{item.convFactor}</div>}</div> : '-'}
+                                                                        </td>
+                                                                        <td className="text-center">
+                                                                            {item.ourPrice && <div style={{fontWeight: 'bold', color: '#00AD6E'}}>${item.ourPrice}</div>}
+                                                                            {item.externalPrice && <div style={{fontWeight: 'bold', color: '#FF5B45', fontSize: '12px', marginTop: '2px'}}>${(parseFloat(item.externalPrice) * 1.54).toFixed(2)}</div>}
+                                                                            {!item.ourPrice && !item.externalPrice && '-'}
+                                                                        </td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                    <div style={{marginTop: '20px', padding: '16px', background: '#DBEEFF', borderRadius: '6px', border: '2px solid #66B2E3'}}>
+                                                        <p style={{fontSize: '13px', color: '#00205B', margin: 0}}><strong>Note:</strong> Prices are subject to change and should not be considered a quote. Please inquire with a sales representative to confirm current pricing.</p>
+                                                    </div>
+                                                </div>
+                                            ) : <p style={{textAlign: 'center', color: '#666', padding: '32px'}}>No items found.</p>}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            {activeTab === 'packing' && (
+                                <div className="card">
+                                    <h2>Generate Packing Slip</h2>
+                                    <div className="grid-2">
+                                        <div className="form-group"><label className="form-label">Supplier</label><input type="text" className="form-input" value={packingSlip.supplier} onChange={(e) => setPackingSlip({...packingSlip, supplier: e.target.value})} /></div>
+                                        <div className="form-group"><label className="form-label">Purchase Order #</label><input type="text" className="form-input" value={packingSlip.poNumber} onChange={(e) => setPackingSlip({...packingSlip, poNumber: e.target.value})} /></div>
+                                    </div>
+                                    <div className="grid-2">
+                                        <div className="form-group"><label className="form-label">Date Received</label><input type="date" className="form-input" value={packingSlip.dateReceived} onChange={(e) => setPackingSlip({...packingSlip, dateReceived: e.target.value})} /></div>
+                                        <div className="form-group"><label className="form-label">Received By</label><input type="text" className="form-input" value={packingSlip.receivedBy} onChange={(e) => setPackingSlip({...packingSlip, receivedBy: e.target.value})} /></div>
+                                    </div>
+                                    <div className="form-group"><label className="form-label">Items (SKU, Qty, Exp)</label><textarea className="form-textarea" rows="10" value={itemInput} onChange={(e) => setItemInput(e.target.value)} placeholder="SKU-001, 5, 12/31/2025" /></div>
+                                    <div className="form-group"><label className="form-label">Notes</label><textarea className="form-textarea" rows="4" value={packingSlip.notes} onChange={(e) => setPackingSlip({...packingSlip, notes: e.target.value})} /></div>
+                                    <div className="btn-group">
+                                        <button onClick={() => { handlePackingSlipItems(); setTimeout(() => window.print(), 100); }} className="btn btn-secondary">Print</button>
+                                        <button onClick={() => { setPackingSlip({ supplier: '', poNumber: '', dateReceived: '', receivedBy: '', items: [], notes: '', notFoundSKUs: [] }); setItemInput(''); }} className="btn btn-gray">Clear</button>
+                                    </div>
+                                </div>
+                            )}
+                            {activeTab === 'history' && (
+                                <div>
+                                    <div className="card">
+                                        <h2>History</h2>
+                                        <div className="form-group">
+                                            <label className="form-label">Search</label>
+                                            <input type="text" className="form-input" value={historySearchQuery} onChange={(e) => setHistorySearchQuery(e.target.value)} />
+                                        </div>
+                                        <div className="btn-group">
+                                            <button onClick={exportPackingSlips} disabled={!savedPackingSlips.length} className="btn btn-primary">Export</button>
+                                            <label className="btn btn-secondary" style={{margin: 0}}><input type="file" accept=".json" onChange={importPackingSlips} style={{display: 'none'}} />Import</label>
+                                        </div>
+                                    </div>
+                                    {selectedSlip && (
+                                        <div className="card">
+                                            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '16px'}}>
+                                                <h2 style={{margin: 0}}>PO# {selectedSlip.poNumber}</h2>
+                                                <button onClick={() => setSelectedSlip(null)} className="btn btn-gray">Close</button>
+                                            </div>
+                                            <button onClick={() => window.print()} className="btn btn-secondary btn-block" style={{marginBottom: '16px'}}>Print</button>
+                                            <div style={{border: '2px solid #C8C9C7', borderRadius: '6px', padding: '16px'}}>
+                                                <div className="grid-2" style={{marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid #e5e7eb'}}>
+                                                    <div><p style={{margin: '4px 0', fontSize: '14px'}}><strong>Supplier:</strong> {selectedSlip.supplier}</p><p style={{margin: '4px 0', fontSize: '14px'}}><strong>PO:</strong> {selectedSlip.poNumber}</p></div>
+                                                    <div><p style={{margin: '4px 0', fontSize: '14px'}}><strong>Date:</strong> {selectedSlip.dateReceived}</p><p style={{margin: '4px 0', fontSize: '14px'}}><strong>By:</strong> {selectedSlip.receivedBy}</p></div>
+                                                </div>
+                                                <div className="preview-box">
+                                                    <table>
+                                                        <thead style={{position: 'sticky', top: 0}}><tr><th className="text-center" style={{fontSize: '12px'}}>Loc</th><th className="text-center" style={{fontSize: '12px'}}>Qty</th><th style={{fontSize: '12px'}}>Item</th><th className="text-center" style={{fontSize: '12px'}}>SKU</th><th style={{fontSize: '12px'}}>Vendor SKUs</th><th className="text-center" style={{fontSize: '12px'}}>Exp</th></tr></thead>
+                                                        <tbody>{selectedSlip.items.map((it, i) => <tr key={i}><td className="text-center text-mono" style={{fontSize: '12px', fontWeight: 'bold'}}>{it.location}</td><td className="text-center" style={{fontSize: '12px'}}>{it.quantity}</td><td style={{fontSize: '12px'}}>{it.itemName}</td><td className="text-center text-mono" style={{fontSize: '11px'}}>{it.internalSKU}</td><td className="text-mono" style={{fontSize: '11px'}}>{it.vendorSKUs}</td><td className="text-center" style={{fontSize: '11px'}}>{it.expiration || '-'}</td></tr>)}</tbody>
+                                                    </table>
+                                                </div>
+                                                {selectedSlip.notes?.trim() && <div style={{marginTop: '16px', padding: '12px', background: '#f9fafb', borderRadius: '4px'}}><p style={{fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0'}}>Notes:</p><p style={{fontSize: '12px', margin: 0, whiteSpace: 'pre-wrap'}}>{selectedSlip.notes}</p></div>}
+                                                {selectedSlip.notFoundSKUs?.length > 0 && <div style={{marginTop: '16px', padding: '12px', background: '#FFDECD', borderRadius: '4px', border: '2px solid #FF5B45'}}><p style={{fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0', color: '#770538'}}>Not Found:</p><ul style={{margin: 0, paddingLeft: '20px', fontSize: '12px', color: '#770538'}}>{selectedSlip.notFoundSKUs.map((x, i) => <li key={i} className="text-mono">{typeof x === 'string' ? x : `${x.sku} (Qty: ${x.quantity})`}</li>)}</ul></div>}
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div className="card">
+                                        {!savedPackingSlips.length ? <p style={{textAlign: 'center', color: '#666', padding: '32px'}}>No slips saved.</p> : savedPackingSlips.filter(s => !historySearchQuery || s.poNumber.toLowerCase().includes(historySearchQuery.toLowerCase()) || s.supplier.toLowerCase().includes(historySearchQuery.toLowerCase()) || s.items.some(i => i.itemName.toLowerCase().includes(historySearchQuery.toLowerCase()))).map(s => (
+                                            <div key={s.id} className="history-item">
+                                                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px'}}>
+                                                    <div><h3 style={{margin: '0 0 8px 0', fontSize: '18px'}}>PO# {s.poNumber}</h3><p style={{margin: '2px 0', fontSize: '14px', color: '#666'}}>Supplier: {s.supplier}</p><p style={{margin: '2px 0', fontSize: '14px', color: '#666'}}>Date: {s.dateReceived} | By: {s.receivedBy}</p></div>
+                                                    <div style={{display: 'flex', gap: '8px'}}><button onClick={() => setSelectedSlip(s)} className="btn btn-primary" style={{padding: '8px 16px'}}>View</button><button onClick={() => confirm('Delete?') && deletePackingSlip(s.id)} className="btn btn-red" style={{padding: '8px 16px'}}>Delete</button></div>
+                                                </div>
+                                                <div style={{marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #e5e7eb'}}><p style={{fontSize: '14px'}}><strong>Items:</strong> {s.items.length}</p></div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {activeTab === 'cyclecount' && (
+                                <div className="card">
+                                    <h2>Cycle Count</h2>
+                                    {!cycleCountSession ? (
+                                        <div>
+                                            <p style={{fontSize: '14px', color: '#666', marginBottom: '20px'}}>Select section and rack to begin</p>
+                                            <div className="grid-2">
+                                                <div className="form-group">
+                                                    <label className="form-label">Section</label>
+                                                    <select className="form-input" value={cycleCountSection} onChange={(e) => { setCycleCountSection(e.target.value); setCycleCountRack(''); }}>
+                                                        <option value="">Select...</option>
+                                                        {getUniqueSections().map(s => <option key={s} value={s}>Section {s}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div className="form-group">
+                                                    <label className="form-label">Rack</label>
+                                                    <select className="form-input" value={cycleCountRack} onChange={(e) => setCycleCountRack(e.target.value)} disabled={!cycleCountSection}>
+                                                        <option value="">Select...</option>
+                                                        {cycleCountSection && getUniqueRacks(cycleCountSection).map(r => <option key={r} value={r}>Rack {r}</option>)}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <button onClick={startCycleCount} disabled={!cycleCountSection || !cycleCountRack} className="btn btn-primary btn-block">Start Session</button>
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+                                                <div>
+                                                    <h3 style={{margin: 0}}>Section {cycleCountSession.section} - Rack {cycleCountSession.rack} - Shelf {cycleCountShelf}</h3>
+                                                    <p style={{fontSize: '14px', color: '#666', marginTop: '4px'}}>Counted: {countedItems.length} items</p>
+                                                </div>
+                                                <div style={{display: 'flex', gap: '8px'}}>
+                                                    <button onClick={printCycleCount} disabled={!countedItems.length} className="btn btn-secondary" style={{padding: '10px 20px'}}>Print PDF</button>
+                                                    <button onClick={exportCycleCount} disabled={!countedItems.length} className="btn btn-primary" style={{padding: '10px 20px'}}>CSV</button>
+                                                    <button onClick={endCycleCount} className="btn btn-red" style={{padding: '10px 20px'}}>End</button>
+                                                </div>
+                                            </div>
+                                            
+                                            {getMissingItems().length > 0 && (
+                                                <div className="alert alert-error">
+                                                    <div>
+                                                        <strong>Missing Items on This Shelf:</strong> {getMissingItems().length}
+                                                        <div style={{fontSize: '12px', marginTop: '8px'}}>
+                                                            {getMissingItems().slice(0, 5).map((i, idx) => <div key={idx}>{i.internalSKU} - {i.itemName}</div>)}
+                                                            {getMissingItems().length > 5 && <div>... and {getMissingItems().length - 5} more</div>}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            
+                                            <button onClick={nextShelf} className="btn btn-primary btn-block" style={{marginBottom: '20px', fontSize: '16px', padding: '16px'}}>Next Shelf →</button>
+                                            
+                                            {misplacedItem ? (
+                                                <div className="alert alert-error" style={{fontSize: '16px', padding: '24px'}}>
+                                                    <div>
+                                                        <strong>MISPLACED ITEM</strong>
+                                                        <p style={{margin: '12px 0 4px 0', fontSize: '18px'}}><strong>{misplacedItem.item.itemName}</strong></p>
+                                                        <p style={{margin: '4px 0', fontSize: '14px'}}>SKU: {misplacedItem.item.internalSKU}</p>
+                                                        <p style={{margin: '8px 0 4px 0'}}>Expected: <strong>{misplacedItem.expectedLoc}</strong></p>
+                                                        <p style={{margin: '4px 0'}}>Currently at: <strong>{cycleCountSession.section}-{cycleCountSession.rack}-{cycleCountShelf}</strong></p>
+                                                        <div className="btn-group" style={{marginTop: '16px'}}>
+                                                            <button onClick={countMisplacedItem} className="btn btn-secondary">Count Anyway</button>
+                                                            <button onClick={cancelMisplaced} className="btn btn-gray">Skip</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : !currentItem ? (
+                                                <div>
+                                                    <div className="form-group">
+                                                        <label className="form-label" style={{fontSize: '16px'}}>Scan Barcode</label>
+                                                        <input type="text" className="form-input" value={scannedSKU} onChange={(e) => setScannedSKU(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleScan()} autoFocus style={{fontSize: '22px', padding: '20px', textAlign: 'center', border: '3px solid #003594'}} />
+                                                    </div>
+                                                    <button onClick={handleScan} className="btn btn-primary btn-block" style={{fontSize: '18px', padding: '18px'}}>Lookup</button>
+                                                </div>
+                                            ) : (
+                                                <div>
+                                                    <div style={{background: '#DBEEFF', border: '3px solid #003594', borderRadius: '8px', padding: '24px', marginBottom: '24px'}}>
+                                                        <p style={{margin: '8px 0', fontSize: '20px', color: '#003594'}}><strong>SKU:</strong> {currentItem.internalSKU}</p>
+                                                        <p style={{margin: '8px 0', fontSize: '18px'}}><strong>Item:</strong> {currentItem.itemName}</p>
+                                                        <p style={{margin: '8px 0', fontSize: '18px'}}><strong>Location:</strong> {currentItem.location}</p>
+                                                        <p style={{margin: '12px 0', fontSize: '24px', fontWeight: 'bold', color: '#003594'}}><strong>Unit:</strong> {currentItem.uom}</p>
+                                                        <p style={{margin: '8px 0', fontSize: '18px'}}><strong>On-Hand:</strong> {currentItem.onHand || '0'}</p>
+                                                    </div>
+                                                    {!needsRecount ? (
+                                                        <div>
+                                                            <div className="form-group">
+                                                                <label className="form-label" style={{fontSize: '18px'}}>Enter Count</label>
+                                                                <input type="number" className="form-input" value={countQuantity} onChange={(e) => setCountQuantity(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && submitCount()} autoFocus style={{fontSize: '28px', padding: '20px', textAlign: 'center', border: '3px solid #00AD6E'}} />
+                                                            </div>
+                                                            <button onClick={submitCount} disabled={!countQuantity} className="btn btn-secondary btn-block" style={{fontSize: '18px', padding: '18px'}}>Submit</button>
+                                                        </div>
+                                                    ) : (
+                                                        <div>
+                                                            <div className="alert alert-error" style={{fontSize: '18px', padding: '20px'}}>
+                                                                <strong>MISMATCH:</strong> Counted {countQuantity}, System shows {currentItem.onHand}. Please recount.
+                                                            </div>
+                                                            <div className="form-group">
+                                                                <label className="form-label" style={{fontSize: '18px'}}>Recount</label>
+                                                                <input type="number" className="form-input" value={recountQuantity} onChange={(e) => setRecountQuantity(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && submitCount()} autoFocus style={{fontSize: '28px', padding: '20px', textAlign: 'center', border: '3px solid #FF5B45'}} />
+                                                            </div>
+                                                            <button onClick={submitCount} disabled={!recountQuantity} className="btn btn-secondary btn-block" style={{fontSize: '18px', padding: '18px'}}>Submit Recount</button>
+                                                        </div>
+                                                    )}
+                                                    <button onClick={() => { setCurrentItem(null); setScannedSKU(''); setCountQuantity(''); setRecountQuantity(''); setNeedsRecount(false); }} className="btn btn-gray btn-block" style={{marginTop: '12px'}}>Cancel</button>
+                                                </div>
+                                            )}
+                                            {countedItems.length > 0 && (
+                                                <div style={{marginTop: '32px', paddingTop: '32px', borderTop: '3px solid #e5e7eb'}}>
+                                                    <h3>Count Log ({countedItems.length} items)</h3>
+                                                    <div style={{overflowX: 'auto'}}>
+                                                        <table>
+                                                            <thead><tr><th className="text-center">Found At</th><th className="text-center">Expected</th><th className="text-center">SKU</th><th>Item</th><th className="text-center">UoM</th><th className="text-center">System</th><th className="text-center">Counted</th><th className="text-center">Variance</th></tr></thead>
+                                                            <tbody>{countedItems.map((it, i) => <tr key={i} style={{background: it.variance !== 0 || it.misplaced ? '#FFDECD' : 'white'}}><td className="text-center text-mono" style={{fontWeight: 'bold', fontSize: '12px'}}>{it.countedAt}</td><td className="text-center text-mono" style={{fontSize: '12px', color: it.misplaced ? '#FF5B45' : '#666'}}>{it.expectedLocation}</td><td className="text-center text-mono" style={{fontSize: '12px'}}>{it.sku}</td><td style={{fontSize: '14px'}}>{it.itemName}</td><td className="text-center">{it.uom}</td><td className="text-center">{it.onHand}</td><td className="text-center" style={{fontWeight: 'bold', fontSize: '16px'}}>{it.counted}</td><td className="text-center" style={{fontWeight: 'bold', fontSize: '16px', color: it.variance === 0 ? '#00AD6E' : '#FF5B45'}}>{it.variance > 0 ? '+' : ''}{it.variance}</td></tr>)}</tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            {activeTab === 'hazmat' && (
+                                <div className="card">
+                                    <h2>Hazmat Bill of Lading</h2>
+                                    <p>Hazmat form coming...</p>
+                                </div>
+                            )}
                         </div>
                         <div className="footer">
                             {fileLastModified ? `Database updated: ${fileLastModified.toLocaleDateString()} ${fileLastModified.toLocaleTimeString()}` : 'Inventory Status Report'}
                         </div>
                     </div>
+                    {cycleCountSession && countedItems.length > 0 && activeTab === 'cyclecount' && (
+                        <div className="print-only">
+                            <div style={{padding: '20px'}}>
+                                <div style={{textAlign: 'center', marginBottom: '20px', borderBottom: '3px solid black', paddingBottom: '12px'}}>
+                                    <h1 style={{fontSize: '24px', margin: 0}}>Cycle Count Report</h1>
+                                    <p style={{fontSize: '14px', margin: '8px 0'}}>Section {cycleCountSession.section} - Rack {cycleCountSession.rack}</p>
+                                    <p style={{fontSize: '12px', margin: '4px 0'}}>Date: {new Date().toLocaleDateString()}</p>
+                                </div>
+                                <table>
+                                    <thead><tr><th>Found At</th><th>Expected</th><th>SKU</th><th>Item</th><th>UoM</th><th>System</th><th>Counted</th><th>Variance</th></tr></thead>
+                                    <tbody>{countedItems.map((it, i) => <tr key={i} style={{background: it.variance !== 0 || it.misplaced ? '#FFDECD' : 'white'}}><td className="text-mono" style={{fontSize: '10px'}}>{it.countedAt}</td><td className="text-mono" style={{fontSize: '10px', color: it.misplaced ? '#FF5B45' : '#000'}}>{it.expectedLocation}</td><td className="text-mono" style={{fontSize: '10px'}}>{it.sku}</td><td style={{fontSize: '10px'}}>{it.itemName}</td><td style={{fontSize: '10px'}}>{it.uom}</td><td style={{fontSize: '10px'}}>{it.onHand}</td><td style={{fontSize: '10px', fontWeight: 'bold'}}>{it.counted}</td><td style={{fontSize: '10px', fontWeight: 'bold', color: it.variance === 0 ? '#00AD6E' : '#FF5B45'}}>{it.variance > 0 ? '+' : ''}{it.variance}</td></tr>)}</tbody>
+                                </table>
+                                <div style={{marginTop: '24px', padding: '16px', border: '2px solid black'}}>
+                                    <p style={{fontSize: '12px', margin: '0 0 8px 0'}}><strong>Summary:</strong></p>
+                                    <p style={{fontSize: '11px', margin: '4px 0'}}>Total items counted: {countedItems.length}</p>
+                                    <p style={{fontSize: '11px', margin: '4px 0'}}>Items with variance: {countedItems.filter(i => i.variance !== 0).length}</p>
+                                    <p style={{fontSize: '11px', margin: '4px 0'}}>Misplaced items: {countedItems.filter(i => i.misplaced).length}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    {packingSlip.items.length > 0 && activeTab === 'packing' && (
+                        <div className="print-only">
+                            <div style={{padding: '20px'}}>
+                                <div style={{textAlign: 'center', marginBottom: '16px', borderBottom: '2px solid black', paddingBottom: '8px'}}><h1 style={{fontSize: '20px', margin: 0}}>Dietrich School Scientific Stockroom - Packing Slip</h1></div>
+                                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px', fontSize: '12px'}}>
+                                    <div><p><strong>Supplier:</strong> {packingSlip.supplier}</p><p><strong>PO:</strong> {packingSlip.poNumber}</p></div>
+                                    <div><p><strong>Date:</strong> {packingSlip.dateReceived}</p><p><strong>By:</strong> {packingSlip.receivedBy}</p></div>
+                                </div>
+                                <table>
+                                    <thead><tr><th style={{width: '30px'}}>☐</th><th>Location</th><th>Qty</th><th>Item</th><th>SKU</th><th>Vendor SKUs</th><th>Exp</th></tr></thead>
+                                    <tbody>{packingSlip.items.map((it, i) => <tr key={i}><td>☐</td><td className="text-mono" style={{fontWeight: 'bold'}}>{it.location}</td><td>{it.quantity}</td><td>{it.itemName}</td><td className="text-mono" style={{fontSize: '10px'}}>{it.internalSKU}</td><td className="text-mono" style={{fontSize: '10px'}}>{it.vendorSKUs}</td><td style={{fontSize: '10px'}}>{it.expiration || '-'}</td></tr>)}</tbody>
+                                </table>
+                                {packingSlip.notes?.trim() && <div style={{marginTop: '16px', padding: '12px', border: '2px solid black'}}><p style={{fontSize: '12px', margin: '0 0 4px 0'}}><strong>Notes:</strong></p><p style={{fontSize: '12px', margin: 0, whiteSpace: 'pre-wrap'}}>{packingSlip.notes}</p></div>}
+                                {packingSlip.notFoundSKUs?.length > 0 && <div style={{marginTop: '16px', padding: '12px', border: '2px solid black', background: '#FFDECD'}}><p style={{fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0', color: '#770538'}}>Not Found:</p><ul style={{margin: 0, paddingLeft: '20px', fontSize: '12px', color: '#770538'}}>{packingSlip.notFoundSKUs.map((x, i) => <li key={i} className="text-mono">{x.sku} (Qty: {x.quantity})</li>)}</ul></div>}
+                            </div>
+                        </div>
+                    )}
+                    {selectedSlip && activeTab === 'history' && (
+                        <div className="print-only">
+                            <div style={{padding: '20px'}}>
+                                <div style={{textAlign: 'center', marginBottom: '16px', borderBottom: '2px solid black', paddingBottom: '8px'}}><h1 style={{fontSize: '20px', margin: 0}}>Dietrich School Scientific Stockroom - Packing Slip</h1></div>
+                                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px', fontSize: '12px'}}>
+                                    <div><p><strong>Supplier:</strong> {selectedSlip.supplier}</p><p><strong>PO:</strong> {selectedSlip.poNumber}</p></div>
+                                    <div><p><strong>Date:</strong> {selectedSlip.dateReceived}</p><p><strong>By:</strong> {selectedSlip.receivedBy}</p></div>
+                                </div>
+                                <table>
+                                    <thead><tr><th style={{width: '30px'}}>☐</th><th>Location</th><th>Qty</th><th>Item</th><th>SKU</th><th>Vendor SKUs</th><th>Exp</th></tr></thead>
+                                    <tbody>{selectedSlip.items.map((it, i) => <tr key={i}><td>☐</td><td className="text-mono" style={{fontWeight: 'bold'}}>{it.location}</td><td>{it.quantity}</td><td>{it.itemName}</td><td className="text-mono" style={{fontSize: '10px'}}>{it.internalSKU}</td><td className="text-mono" style={{fontSize: '10px'}}>{it.vendorSKUs}</td><td style={{fontSize: '10px'}}>{it.expiration || '-'}</td></tr>)}</tbody>
+                                </table>
+                                {selectedSlip.notes?.trim() && <div style={{marginTop: '16px', padding: '12px', border: '2px solid black'}}><p style={{fontSize: '12px', margin: '0 0 4px 0'}}><strong>Notes:</strong></p><p style={{fontSize: '12px', margin: 0, whiteSpace: 'pre-wrap'}}>{selectedSlip.notes}</p></div>}
+                                {selectedSlip.notFoundSKUs?.length > 0 && <div style={{marginTop: '16px', padding: '12px', border: '2px solid black', background: '#FFDECD'}}><p style={{fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0', color: '#770538'}}>Not Found:</p><ul style={{margin: 0, paddingLeft: '20px', fontSize: '12px', color: '#770538'}}>{selectedSlip.notFoundSKUs.map((x, i) => <li key={i} className="text-mono">{typeof x === 'string' ? x : `${x.sku} (Qty: ${x.quantity})`}</li>)}</ul></div>}
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         }
