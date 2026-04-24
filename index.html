@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Catalog Lookup – Dietrich School Scientific Stockroom</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.typekit.net/myu6uxh.css">
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 0; font-family: 'Roboto', sans-serif; background: #f8f9fa; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Instrument Serif', Georgia, serif; font-weight: normal; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 32px 20px; }
+        .header { text-align: center; border-bottom: 3px solid #003594; padding-bottom: 24px; margin-bottom: 40px; }
+        .header img { height: 80px; margin-bottom: 12px; }
+        .header h1 { color: #003594; font-size: 32px; margin: 8px 0; letter-spacing: -0.5px; }
+        .header p { color: #00205B; margin: 4px 0; font-size: 15px; font-family: 'alternate-gothic-no-3-d', 'Roboto', sans-serif; letter-spacing: 0.5px; text-transform: uppercase; }
+        .card { background: white; border: 2px solid #e5e7eb; border-radius: 8px; padding: 32px; margin-bottom: 24px; }
+        .card h2 { color: #003594; font-size: 28px; margin: 0 0 24px 0; letter-spacing: -0.5px; }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-weight: 600; font-size: 13px; color: #00205B; margin-bottom: 8px; font-family: 'alternate-gothic-no-3-d', 'Roboto', sans-serif; letter-spacing: 0.5px; text-transform: uppercase; }
+        .form-input { width: 100%; padding: 12px 16px; border: 2px solid #C8C9C7; border-radius: 6px; font-size: 15px; font-family: 'Roboto', sans-serif; transition: all 0.2s; background: white; }
+        .form-input:focus { outline: none; border-color: #003594; box-shadow: 0 0 0 3px #DBEEFF; }
+        .btn { padding: 14px 28px; font-weight: 700; border-radius: 6px; cursor: pointer; border: 2px solid; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s; font-family: 'alternate-gothic-no-3-d', 'Roboto', sans-serif; letter-spacing: 0.8px; text-transform: uppercase; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background: #003594; color: white; border-color: #003594; }
+        .btn-primary:hover:not(:disabled) { background: #00205B; border-color: #00205B; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,53,148,0.3); }
+        .btn-block { width: 100%; }
+        .alert { padding: 16px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: start; gap: 12px; border: 2px solid; }
+        .alert-error { background: #FFDECD; border-color: #FF5B45; color: #770538; }
+        .alert-info { background: #DBEEFF; border-color: #66B2E3; color: #00205B; }
+        .alert-loading { background: #fff9e6; border-color: #FFB81C; color: #7a5700; }
+        table { width: 100%; border-collapse: collapse; border: 2px solid #00205B; background: white; }
+        th, td { padding: 14px 10px; border: 1px solid #C8C9C7; text-align: left; }
+        th { background: #DBEEFF; font-weight: 700; cursor: pointer; user-select: none; color: #00205B; font-family: 'alternate-gothic-no-3-d', 'Roboto', sans-serif; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; transition: all 0.15s; }
+        th:hover { background: #66B2E3; color: white; }
+        tbody tr:hover { background: #DBEEFF; }
+        tbody tr { transition: background 0.15s; }
+        .text-center { text-align: center; }
+        .text-mono { font-family: monospace; }
+        .price-ours { color: #00AD6E; font-weight: 700; }
+        .price-theirs { color: #FF5B45; font-weight: 700; }
+        .price-label { font-size: 10px; font-family: 'alternate-gothic-no-3-d', 'Roboto', sans-serif; letter-spacing: 0.4px; text-transform: uppercase; opacity: 0.8; display: block; }
+        .footer-notice { background: white; border: 2px solid #e5e7eb; border-radius: 8px; padding: 20px 32px; margin-top: 8px; text-align: center; color: #555; font-size: 13px; line-height: 1.6; }
+        .footer-notice strong { color: #00205B; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function App() {
+            const [inventory, setInventory] = useState([]);
+            const [loadStatus, setLoadStatus] = useState('loading'); // 'loading' | 'ready' | 'error'
+            const [loadError, setLoadError] = useState('');
+            const [searchQuery, setSearchQuery] = useState('');
+            const [searchResults, setSearchResults] = useState(null);
+            const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+            const [searchError, setSearchError] = useState('');
+
+            useEffect(() => {
+                fetch('inventory-status-report.xlsx')
+                    .then(res => {
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        return res.arrayBuffer();
+                    })
+                    .then(buffer => {
+                        try {
+                            const workbook = XLSX.read(buffer, { type: 'array' });
+                            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, defval: '' });
+                            if (jsonData.length < 2) { setLoadStatus('error'); setLoadError('The inventory file appears to be empty.'); return; }
+                            const data = [];
+                            for (let i = 1; i < jsonData.length; i++) {
+                                const row = jsonData[i];
+                                if (row.length >= 15 && row[4]) {
+                                    const item = {
+                                        location: String(row[2] || '').trim(),
+                                        internalSKU: String(row[4] || '').trim(),
+                                        manufacturerSKUs: [String(row[5] || '').trim(), String(row[6] || '').trim(), String(row[7] || '').trim(), String(row[8] || '').trim()].filter(sku => sku.length > 0),
+                                        itemName: String(row[13] || '').trim(),
+                                        uom: String(row[14] || '').trim(),
+                                        altUom: String(row[15] || '').trim(),
+                                        convFactor: String(row[16] || '').trim(),
+                                        childPartNbr: String(row[17] || '').trim(),
+                                        childConvFactor: String(row[18] || '').trim(),
+                                        vendor: String(row[12] || '').trim(),
+                                        // col AB (index 27) = our price, col AA (index 26) = external supplier price
+                                        ourPrice: String(row[27] || '').trim(),
+                                        externalPrice: String(row[26] || '').trim()
+                                    };
+                                    if (item.internalSKU && item.location) data.push(item);
+                                }
+                            }
+                            if (data.length === 0) { setLoadStatus('error'); setLoadError('No valid inventory data found in the file.'); return; }
+                            setInventory(data);
+                            setLoadStatus('ready');
+                        } catch (err) {
+                            setLoadStatus('error');
+                            setLoadError('Failed to parse the inventory file.');
+                        }
+                    })
+                    .catch(err => {
+                        setLoadStatus('error');
+                        setLoadError('Could not load inventory-status-report.xlsx. Please ensure the file is present in the same directory as this page.');
+                    });
+            }, []);
+
+            const normalizeSKU = (sku) => sku.replace(/-/g, '').toUpperCase();
+
+            const handleGeneralSearch = () => {
+                if (loadStatus !== 'ready') return;
+                const query = searchQuery.trim().toLowerCase();
+                if (query.length === 0) { setSearchError('Please enter a search term.'); return; }
+                const queryWords = query.split(/\s+/).filter(w => w.length > 0);
+                const normalizedQuery = normalizeSKU(query);
+                const found = inventory.filter(item => {
+                    const normalizedInternalSKU = normalizeSKU(item.internalSKU);
+                    const normalizedMfgSKUs = item.manufacturerSKUs.map(sku => normalizeSKU(sku));
+                    if (normalizedInternalSKU.includes(normalizedQuery) || normalizedQuery.includes(normalizedInternalSKU)) return true;
+                    if (normalizedMfgSKUs.some(sku => sku.includes(normalizedQuery) || normalizedQuery.includes(sku))) return true;
+                    const itemNameLower = item.itemName.toLowerCase();
+                    if (queryWords.every(word => itemNameLower.includes(word))) return true;
+                    if (item.vendor) { const vendorLower = item.vendor.toLowerCase(); if (queryWords.every(word => vendorLower.includes(word))) return true; }
+                    return false;
+                });
+                setSearchResults(found);
+                setSortConfig({ key: null, direction: 'asc' });
+                setSearchError('');
+            };
+
+            const handleSort = (key) => {
+                let direction = 'asc';
+                if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
+                setSortConfig({ key, direction });
+            };
+
+            const getSortedResults = (results) => {
+                if (!sortConfig.key || !results) return results;
+                const sorted = [...results].sort((a, b) => {
+                    let aValue = a[sortConfig.key], bValue = b[sortConfig.key];
+                    if (sortConfig.key === 'manufacturerSKUs') { aValue = a.manufacturerSKUs.join(', '); bValue = b.manufacturerSKUs.join(', '); }
+                    if (sortConfig.key === 'ourPrice') { aValue = parseFloat(aValue || 0); bValue = parseFloat(bValue || 0); }
+                    if (sortConfig.key === 'location') {
+                        const locA = parseLocation(a.location), locB = parseLocation(b.location);
+                        if (locA.section !== locB.section) { const result = locA.section.localeCompare(locB.section); return sortConfig.direction === 'asc' ? result : -result; }
+                        if (locA.rack !== locB.rack) { const result = locA.rack - locB.rack; return sortConfig.direction === 'asc' ? result : -result; }
+                        const result = locA.shelf - locB.shelf; return sortConfig.direction === 'asc' ? result : -result;
+                    }
+                    if (typeof aValue === 'string') { aValue = aValue.toLowerCase(); bValue = bValue ? bValue.toLowerCase() : ''; }
+                    if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+                    if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+                return sorted;
+            };
+
+            const parseLocation = (location) => {
+                const normalized = location.replace(/\s+/g, '').replace(/-+/g, '-');
+                const excludeKeywords = ['HALLWAY', 'WASTEROOM', 'DOCKCAGE', 'THOMAS'];
+                const upperLocation = location.toUpperCase();
+                for (const keyword of excludeKeywords) { if (upperLocation.includes(keyword)) return { section: null, rack: 999, shelf: 999, original: location }; }
+                if (upperLocation === 'NEW' || upperLocation === 'NEW-' || upperLocation === 'NEW--') return { section: null, rack: 999, shelf: 999, original: location };
+                let sectionMatch = normalized.match(/(?:DISC|NEW)\s*([A-Za-z])-?(\d+)-?(\d+)/i);
+                if (sectionMatch) return { section: sectionMatch[1].toUpperCase(), rack: parseInt(sectionMatch[2]), shelf: parseInt(sectionMatch[3]), original: location };
+                const match = normalized.match(/^([A-Za-z])-?(\d+)-?([A-Za-z]?\d+[A-Za-z]?)/);
+                if (match) { const shelfNum = parseInt(match[3].replace(/[A-Za-z]/g, '')) || 0; return { section: match[1].toUpperCase(), rack: parseInt(match[2]), shelf: shelfNum, original: location }; }
+                return { section: 'Z', rack: 999, shelf: 999, original: location };
+            };
+
+            const SortIcon = ({ columnKey }) => {
+                if (sortConfig.key !== columnKey) return <span style={{color: '#9ca3af', marginLeft: '4px'}}>⇅</span>;
+                return sortConfig.direction === 'asc' ? <span style={{marginLeft: '4px'}}>↑</span> : <span style={{marginLeft: '4px'}}>↓</span>;
+            };
+
+            const formatPrice = (priceStr) => {
+                const num = parseFloat(priceStr);
+                if (isNaN(num) || num === 0) return null;
+                return num.toFixed(2);
+            };
+
+            return (
+                <div className="container">
+                    <div className="header">
+                        <img src="https://upload.wikimedia.org/wikipedia/en/f/fb/University_of_Pittsburgh_seal.svg" alt="University of Pittsburgh" />
+                        <h1>Dietrich School Scientific Stockroom</h1>
+                        <p>Inventory Catalog Lookup</p>
+                    </div>
+
+                    {loadStatus === 'loading' && (
+                        <div className="alert alert-loading">
+                            <div>⏳ <strong>Loading inventory database…</strong> Please wait.</div>
+                        </div>
+                    )}
+                    {loadStatus === 'error' && (
+                        <div className="alert alert-error">
+                            <div><strong>Unable to load inventory:</strong> {loadError}</div>
+                        </div>
+                    )}
+
+                    {loadStatus === 'ready' && (
+                        <div className="card">
+                            <h2>Search Inventory</h2>
+                            <div className="form-group">
+                                <label className="form-label">Search by SKU or Item Name</label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Enter SKU or item name…"
+                                    onKeyPress={(e) => e.key === 'Enter' && handleGeneralSearch()}
+                                />
+                            </div>
+                            {searchError && <div className="alert alert-error">{searchError}</div>}
+                            <button onClick={handleGeneralSearch} className="btn btn-primary btn-block">Search Inventory</button>
+                        </div>
+                    )}
+
+                    {searchResults && (
+                        <div className="card">
+                            <h2>Search Results ({searchResults.length} item{searchResults.length !== 1 ? 's' : ''} found)</h2>
+                            {searchResults.length > 0 ? (
+                                <div style={{overflowX: 'auto'}}>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th onClick={() => handleSort('itemName')}>Item Name <SortIcon columnKey="itemName" /></th>
+                                                <th onClick={() => handleSort('internalSKU')} className="text-center">Internal SKU <SortIcon columnKey="internalSKU" /></th>
+                                                <th onClick={() => handleSort('manufacturerSKUs')}>Vendor SKUs <SortIcon columnKey="manufacturerSKUs" /></th>
+                                                <th onClick={() => handleSort('vendor')} className="text-center">Vendor <SortIcon columnKey="vendor" /></th>
+                                                <th onClick={() => handleSort('uom')} className="text-center">UoM <SortIcon columnKey="uom" /></th>
+                                                <th onClick={() => handleSort('ourPrice')} className="text-center">Pricing <SortIcon columnKey="ourPrice" /></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {getSortedResults(searchResults).map((item, idx) => {
+                                                const ourPriceFmt = formatPrice(item.ourPrice);
+                                                const extRaw = parseFloat(item.externalPrice);
+                                                const theirPriceFmt = (!isNaN(extRaw) && extRaw > 0) ? (extRaw * 1.54).toFixed(2) : null;
+                                                return (
+                                                    <tr key={idx}>
+                                                        <td>{item.itemName}</td>
+                                                        <td className="text-center text-mono" style={{fontSize: '12px'}}>{item.internalSKU}</td>
+                                                        <td className="text-mono" style={{fontSize: '12px'}}>{item.manufacturerSKUs.join(', ')}</td>
+                                                        <td className="text-center" style={{fontSize: '12px'}}>{item.vendor || '—'}</td>
+                                                        <td className="text-center">
+                                                            <div>{item.uom}</div>
+                                                            {item.childPartNbr && (
+                                                                <div style={{fontSize: '11px', color: '#666', marginTop: '4px'}}>→ {item.childPartNbr}{item.childConvFactor && ` (${item.childConvFactor})`}</div>
+                                                            )}
+                                                            {item.altUom && (
+                                                                <div style={{fontSize: '11px', color: '#888'}}>Alt: {item.altUom}{item.convFactor && ` ×${item.convFactor}`}</div>
+                                                            )}
+                                                        </td>
+                                                        <td className="text-center" style={{minWidth: '130px'}}>
+                                                            {ourPriceFmt ? (
+                                                                <div style={{marginBottom: theirPriceFmt ? '8px' : '0'}}>
+                                                                    <span className="price-label">Our Price</span>
+                                                                    <span className="price-ours">${ourPriceFmt}</span>
+                                                                </div>
+                                                            ) : null}
+                                                            {theirPriceFmt ? (
+                                                                <div>
+                                                                    <span className="price-label">External Supplier</span>
+                                                                    <span className="price-theirs">${theirPriceFmt}</span>
+                                                                </div>
+                                                            ) : null}
+                                                            {!ourPriceFmt && !theirPriceFmt && <span style={{color: '#aaa'}}>—</span>}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <p style={{textAlign: 'center', color: '#666', padding: '32px'}}>No items found matching your search.</p>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="footer-notice">
+                        <strong>Pricing Notice:</strong> All listed prices are subject to change and should not be considered a formal quote.
+                        Please inquire with a sales representative to confirm current pricing before placing an order.
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
