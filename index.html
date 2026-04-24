@@ -96,12 +96,14 @@
             const [cycleCountSession, setCycleCountSession] = useState(null);
             const [cycleCountSection, setCycleCountSection] = useState('');
             const [cycleCountRack, setCycleCountRack] = useState('');
+            const [cycleCountShelf, setCycleCountShelf] = useState('');
             const [scannedSKU, setScannedSKU] = useState('');
             const [countQuantity, setCountQuantity] = useState('');
             const [recountQuantity, setRecountQuantity] = useState('');
             const [currentItem, setCurrentItem] = useState(null);
             const [needsRecount, setNeedsRecount] = useState(false);
             const [countedItems, setCountedItems] = useState([]);
+            const [misplacedItem, setMisplacedItem] = useState(null);
             
             const [hazmatBOL, setHazmatBOL] = useState({
                 shipperName: 'UNIVERSITY OF PITTSBURGH', shipperAttn: '', shipperAddress: 'CHEMISTRY STOCKROOM', shipperAddress2: '219 PARKMAN AVE RM326',
@@ -243,24 +245,58 @@
 
             const startCycleCount = () => {
                 if (!cycleCountSection || !cycleCountRack) return;
+                // Start with first shelf
+                const shelves = getUniqueShelves(cycleCountSection, cycleCountRack);
                 setCycleCountSession({ section: cycleCountSection, rack: cycleCountRack, startTime: new Date().toISOString() });
+                setCycleCountShelf(shelves[0]?.toString() || '');
                 setCountedItems([]);
             };
 
             const handleScan = () => {
                 if (!scannedSKU.trim()) return;
                 const ns = normalizeSKU(scannedSKU);
+                
+                // Check if already counted
+                const alreadyCounted = countedItems.find(i => normalizeSKU(i.sku) === ns);
+                if (alreadyCounted) {
+                    if (confirm(`Already counted ${alreadyCounted.sku}. Edit previous entry?`)) {
+                        // Remove from list and allow re-entry
+                        setCountedItems(countedItems.filter(i => normalizeSKU(i.sku) !== ns));
+                    } else {
+                        setScannedSKU('');
+                        return;
+                    }
+                }
+                
                 const item = inventory.find(i => normalizeSKU(i.internalSKU) === ns || i.manufacturerSKUs.some(m => normalizeSKU(m) === ns));
                 if (!item) { alert('SKU not found'); setScannedSKU(''); return; }
+                
                 const loc = parseLocation(item.location);
-                if (loc.section !== cycleCountSession.section || loc.rack !== parseInt(cycleCountSession.rack)) {
-                    alert(`Item in ${item.location}, not ${cycleCountSession.section}-${cycleCountSession.rack}`);
-                    setScannedSKU(''); return;
+                const currentLoc = `${cycleCountSession.section}-${cycleCountSession.rack}-${cycleCountShelf}`;
+                const expectedLoc = `${loc.section}-${loc.rack}-${loc.shelf}`;
+                
+                if (currentLoc !== expectedLoc) {
+                    setMisplacedItem({ item, expectedLoc });
+                    return;
                 }
+                
                 setCurrentItem(item);
                 setCountQuantity('');
                 setRecountQuantity('');
                 setNeedsRecount(false);
+            };
+            
+            const countMisplacedItem = () => {
+                setCurrentItem(misplacedItem.item);
+                setMisplacedItem(null);
+                setCountQuantity('');
+                setRecountQuantity('');
+                setNeedsRecount(false);
+            };
+            
+            const cancelMisplaced = () => {
+                setMisplacedItem(null);
+                setScannedSKU('');
             };
 
             const submitCount = () => {
@@ -269,26 +305,64 @@
                 const counted = parseInt(needsRecount ? recountQuantity : countQuantity);
                 const onHand = parseInt(currentItem.onHand || 0);
                 if (counted !== onHand && !needsRecount) { setNeedsRecount(true); return; }
+                
+                const loc = parseLocation(currentItem.location);
+                const expectedLoc = `${loc.section}-${loc.rack}-${loc.shelf}`;
+                const actualLoc = `${cycleCountSession.section}-${cycleCountSession.rack}-${cycleCountShelf}`;
+                const isMisplaced = expectedLoc !== actualLoc;
+                
                 setCountedItems([...countedItems, {
                     sku: currentItem.internalSKU, itemName: currentItem.itemName, location: currentItem.location,
-                    uom: currentItem.uom, onHand, counted, variance: counted - onHand, timestamp: new Date().toISOString()
+                    countedAt: actualLoc, uom: currentItem.uom, onHand, counted, variance: counted - onHand, 
+                    misplaced: isMisplaced, timestamp: new Date().toISOString()
                 }]);
                 setScannedSKU(''); setCurrentItem(null); setCountQuantity(''); setRecountQuantity(''); setNeedsRecount(false);
+            };
+            
+            const nextShelf = () => {
+                const shelves = getUniqueShelves(cycleCountSession.section, cycleCountSession.rack);
+                const currentIdx = shelves.indexOf(parseInt(cycleCountShelf));
+                if (currentIdx < shelves.length - 1) {
+                    setCycleCountShelf(shelves[currentIdx + 1].toString());
+                } else {
+                    alert('Last shelf in this rack');
+                }
+            };
+            
+            const getExpectedItems = () => {
+                return inventory.filter(item => {
+                    const loc = parseLocation(item.location);
+                    return loc.section === cycleCountSession.section && 
+                           loc.rack === parseInt(cycleCountSession.rack) && 
+                           loc.shelf === parseInt(cycleCountShelf);
+                });
+            };
+            
+            const getMissingItems = () => {
+                const expected = getExpectedItems();
+                const countedSKUs = new Set(countedItems.filter(i => !i.misplaced).map(i => normalizeSKU(i.sku)));
+                return expected.filter(item => !countedSKUs.has(normalizeSKU(item.internalSKU)));
             };
 
             const exportCycleCount = () => {
                 if (!countedItems.length) return;
-                const csv = 'Location,SKU,Item,UoM,OnHand,Counted,Variance,Time\n' + countedItems.map(i => `${i.location},${i.sku},"${i.itemName}",${i.uom},${i.onHand},${i.counted},${i.variance},${i.timestamp}`).join('\n');
+                const csv = 'Location,Expected Location,SKU,Item,UoM,OnHand,Counted,Variance,Misplaced,Time\n' + 
+                    countedItems.map(i => `${i.countedAt},${i.location},${i.sku},"${i.itemName}",${i.uom},${i.onHand},${i.counted},${i.variance},${i.misplaced ? 'YES' : 'NO'},${i.timestamp}`).join('\n');
                 const blob = new Blob([csv], { type: 'text/csv' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url; a.download = `cycle_count_${cycleCountSession.section}${cycleCountSession.rack}_${new Date().toISOString().split('T')[0]}.csv`;
                 document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
             };
+            
+            const printCycleCount = () => {
+                window.print();
+            };
 
             const endCycleCount = () => {
                 if (confirm('End session? Export first!')) {
-                    setCycleCountSession(null); setCountedItems([]); setCurrentItem(null); setCycleCountSection(''); setCycleCountRack('');
+                    setCycleCountSession(null); setCountedItems([]); setCurrentItem(null); 
+                    setCycleCountSection(''); setCycleCountRack(''); setCycleCountShelf('');
                 }
             };
 
@@ -309,6 +383,15 @@
                     if (p.section === section) racks.add(p.rack);
                 });
                 return Array.from(racks).sort((a, b) => a - b);
+            };
+            
+            const getUniqueShelves = (section, rack) => {
+                const shelves = new Set();
+                inventory.forEach(i => {
+                    const p = parseLocation(i.location);
+                    if (p.section === section && p.rack === parseInt(rack)) shelves.add(p.shelf);
+                });
+                return Array.from(shelves).sort((a, b) => a - b);
             };
 
             const CycleCountTab = () => (
