@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventory Catalog Lookup – Dietrich School Scientific Stockroom</title>
+    <title>Inventory Catalog Lookup</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -21,21 +21,37 @@
         .header img { height: 80px; margin-bottom: 12px; }
         .header h1 { color: #003594; font-size: 32px; margin: 8px 0; letter-spacing: -0.5px; }
         .header p { color: #00205B; margin: 4px 0; font-size: 15px; font-family: 'alternate-gothic-no-3-d', 'Roboto', sans-serif; letter-spacing: 0.5px; text-transform: uppercase; }
-        .card { background: white; border: 2px solid #e5e7eb; border-radius: 8px; padding: 32px; margin-bottom: 24px; }
+        .tabs { display: flex; gap: 4px; background: white; border-radius: 8px 8px 0 0; padding: 8px 8px 0 8px; margin-bottom: 0; border: 2px solid #e5e7eb; border-bottom: none; }
+        .tab { padding: 14px 28px; font-weight: 600; background: none; border: none; color: #6b7280; cursor: pointer; border-radius: 6px 6px 0 0; transition: all 0.2s; font-size: 14px; font-family: 'alternate-gothic-no-3-d', 'Roboto', sans-serif; letter-spacing: 0.8px; text-transform: uppercase; }
+        .tab:hover { background: #DBEEFF; color: #003594; }
+        .tab.active { background: #003594; color: #FFB81C; font-weight: 700; }
+        .card { background: white; border: 2px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 32px; margin-bottom: 24px; }
+        .card:not(:first-child) { border-top: 2px solid #e5e7eb; border-radius: 8px; }
         .card h2 { color: #003594; font-size: 28px; margin: 0 0 24px 0; letter-spacing: -0.5px; }
+        .card h3 { color: #00205B; font-size: 20px; margin: 24px 0 16px 0; }
         .form-group { margin-bottom: 20px; }
         .form-label { display: block; font-weight: 600; font-size: 13px; color: #00205B; margin-bottom: 8px; font-family: 'alternate-gothic-no-3-d', 'Roboto', sans-serif; letter-spacing: 0.5px; text-transform: uppercase; }
-        .form-input { width: 100%; padding: 12px 16px; border: 2px solid #C8C9C7; border-radius: 6px; font-size: 15px; font-family: 'Roboto', sans-serif; transition: all 0.2s; background: white; }
-        .form-input:focus { outline: none; border-color: #003594; box-shadow: 0 0 0 3px #DBEEFF; }
+        .form-input, .form-textarea { width: 100%; padding: 12px 16px; border: 2px solid #C8C9C7; border-radius: 6px; font-size: 15px; font-family: 'Roboto', sans-serif; transition: all 0.2s; background: white; }
+        .form-input:focus, .form-textarea:focus { outline: none; border-color: #003594; box-shadow: 0 0 0 3px #DBEEFF; }
+        .form-textarea { font-family: monospace; resize: vertical; }
         .btn { padding: 14px 28px; font-weight: 700; border-radius: 6px; cursor: pointer; border: 2px solid; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s; font-family: 'alternate-gothic-no-3-d', 'Roboto', sans-serif; letter-spacing: 0.8px; text-transform: uppercase; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-primary { background: #003594; color: white; border-color: #003594; }
         .btn-primary:hover:not(:disabled) { background: #00205B; border-color: #00205B; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,53,148,0.3); }
+        .btn-secondary { background: #FFB81C; color: #003594; border-color: #FFB81C; }
+        .btn-secondary:hover { background: #e6a513; border-color: #e6a513; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,184,28,0.4); }
+        .btn-gray { background: white; color: #00205B; border-color: #C8C9C7; }
+        .btn-gray:hover { background: #f8f9fa; border-color: #00205B; }
+        .btn-red { background: #FF5B45; color: white; border-color: #FF5B45; }
+        .btn-red:hover { background: #e54a35; border-color: #e54a35; }
         .btn-block { width: 100%; }
+        .btn-group { display: flex; gap: 16px; }
+        .btn-group .btn { flex: 1; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .alert { padding: 16px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: start; gap: 12px; border: 2px solid; }
+        .alert-success { background: #d1fae5; border-color: #00AD6E; color: #065f46; }
         .alert-error { background: #FFDECD; border-color: #FF5B45; color: #770538; }
         .alert-info { background: #DBEEFF; border-color: #66B2E3; color: #00205B; }
-        .alert-loading { background: #fff9e6; border-color: #FFB81C; color: #7a5700; }
         table { width: 100%; border-collapse: collapse; border: 2px solid #00205B; background: white; }
         th, td { padding: 14px 10px; border: 1px solid #C8C9C7; text-align: left; }
         th { background: #DBEEFF; font-weight: 700; cursor: pointer; user-select: none; color: #00205B; font-family: 'alternate-gothic-no-3-d', 'Roboto', sans-serif; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; transition: all 0.15s; }
@@ -44,11 +60,22 @@
         tbody tr { transition: background 0.15s; }
         .text-center { text-align: center; }
         .text-mono { font-family: monospace; }
-        .price-ours { color: #00AD6E; font-weight: 700; }
-        .price-theirs { color: #FF5B45; font-weight: 700; }
-        .price-label { font-size: 10px; font-family: 'alternate-gothic-no-3-d', 'Roboto', sans-serif; letter-spacing: 0.4px; text-transform: uppercase; opacity: 0.8; display: block; }
-        .footer-notice { background: white; border: 2px solid #e5e7eb; border-radius: 8px; padding: 20px 32px; margin-top: 8px; text-align: center; color: #555; font-size: 13px; line-height: 1.6; }
-        .footer-notice strong { color: #00205B; }
+        .history-item { border: 2px solid #C8C9C7; border-radius: 8px; padding: 20px; margin-bottom: 16px; background: white; transition: all 0.2s; }
+        .history-item:hover { border-color: #003594; box-shadow: 0 4px 12px rgba(0,53,148,0.15); transform: translateY(-2px); }
+        .history-item h3 { font-family: 'alternate-gothic-no-3-d', 'Roboto', sans-serif; letter-spacing: 0.5px; }
+        .history-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; }
+        .preview-box { max-height: 400px; overflow-y: auto; border: 2px solid #C8C9C7; border-radius: 6px; }
+        @media screen { .print-only { display: none !important; } }
+        @media print {
+            body { margin: 0; padding: 20px; background: white; }
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            table { font-size: 11px; page-break-inside: auto; border-color: #000; }
+            th, td { border-color: #000; }
+            th { background: #f9fafb !important; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            th, td { padding: 6px 4px; }
+        }
     </style>
 </head>
 <body>
@@ -58,109 +85,89 @@
 
         function App() {
             const [inventory, setInventory] = useState([]);
-            const [loadStatus, setLoadStatus] = useState('loading'); // 'loading' | 'ready' | 'error'
-            const [loadError, setLoadError] = useState('');
+            const [activeTab, setActiveTab] = useState('search');
             const [searchQuery, setSearchQuery] = useState('');
             const [searchResults, setSearchResults] = useState(null);
             const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
-            const [searchError, setSearchError] = useState('');
+            const [error, setError] = useState('');
+            const [uploadSuccess, setUploadSuccess] = useState(false);
+            const [fileName, setFileName] = useState('');
+            const [fileLastModified, setFileLastModified] = useState(null);
+            const [packingSlip, setPackingSlip] = useState({ supplier: '', poNumber: '', dateReceived: '', receivedBy: '', items: [], notes: '', notFoundSKUs: [] });
+            const [itemInput, setItemInput] = useState('');
+            const [packingSlipError, setPackingSlipError] = useState('');
+            const [savedPackingSlips, setSavedPackingSlips] = useState([]);
+            const [historySearchQuery, setHistorySearchQuery] = useState('');
+            const [selectedSlip, setSelectedSlip] = useState(null);
+            const [hazmatBOL, setHazmatBOL] = useState({
+                shipperName: 'UNIVERSITY OF PITTSBURGH', shipperAttn: '', shipperAddress: 'CHEMISTRY STOCKROOM', shipperAddress2: '219 PARKMAN AVE RM326',
+                shipperCity: 'PITTSBURGH', shipperState: 'PA', shipperZip: '15213', shipperPhone: '412-624-8551',
+                consigneeName: '', consigneeAttn: '', consigneeAddress: '', consigneeAddress2: '', consigneeCity: '', consigneeState: '', consigneeZip: '', consigneePhone: '',
+                carrierName: '', carrierPhone: '', shipDate: '', emergencyContact: '', emergencyPhone: '', materials: []
+            });
+            const [hazmatInput, setHazmatInput] = useState('');
 
             useEffect(() => {
-                const fileUrl = new URL('inventory-status-report.xlsx', window.location.href).href;
-                fetch(fileUrl)
-                    .then(res => {
-                        if (!res.ok) throw new Error(`HTTP ${res.status} – The server returned an error. Attempted URL: ${fileUrl}`);
-                        return res.arrayBuffer();
-                    })
-                    .then(buffer => {
+                // Load inventory from embedded file
+                fetch('inventory-status-report.xlsx')
+                    .then(response => response.arrayBuffer())
+                    .then(arrayBuffer => {
                         try {
-                            const workbook = XLSX.read(buffer, { type: 'array' });
+                            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                             const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                             const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, defval: '' });
-                            if (jsonData.length < 2) { setLoadStatus('error'); setLoadError('The inventory file appears to be empty.'); return; }
+                            if (jsonData.length < 2) return;
                             const data = [];
                             for (let i = 1; i < jsonData.length; i++) {
                                 const row = jsonData[i];
                                 if (row.length >= 15 && row[4]) {
                                     const item = {
-                                        location: String(row[2] || '').trim(),
+                                        location: String(row[2] || '').trim(), 
                                         internalSKU: String(row[4] || '').trim(),
                                         manufacturerSKUs: [String(row[5] || '').trim(), String(row[6] || '').trim(), String(row[7] || '').trim(), String(row[8] || '').trim()].filter(sku => sku.length > 0),
-                                        itemName: String(row[13] || '').trim(),
-                                        uom: String(row[14] || '').trim(),
+                                        itemName: String(row[13] || '').trim(), 
+                                        uom: String(row[14] || '').trim(), 
                                         altUom: String(row[15] || '').trim(),
-                                        convFactor: String(row[16] || '').trim(),
-                                        childPartNbr: String(row[17] || '').trim(),
+                                        convFactor: String(row[16] || '').trim(), 
+                                        childPartNbr: String(row[17] || '').trim(), 
                                         childConvFactor: String(row[18] || '').trim(),
-                                        vendor: String(row[12] || '').trim(),
-                                        // col AB (index 27) = our price, col AA (index 26) = external supplier price
-                                        ourPrice: String(row[27] || '').trim(),
-                                        externalPrice: String(row[26] || '').trim()
+                                        vendor: String(row[12] || '').trim(), 
+                                        externalPrice: String(row[26] || '').trim(),
+                                        ourPrice: String(row[27] || '').trim()
                                     };
                                     if (item.internalSKU && item.location) data.push(item);
                                 }
                             }
-                            if (data.length === 0) { setLoadStatus('error'); setLoadError('No valid inventory data found in the file.'); return; }
                             setInventory(data);
-                            setLoadStatus('ready');
+                            setFileName('inventory-status-report.xlsx');
                         } catch (err) {
-                            setLoadStatus('error');
-                            setLoadError('Failed to parse the inventory file.');
+                            console.error('Error reading embedded file:', err);
                         }
                     })
-                    .catch(err => {
-                        setLoadStatus('error');
-                        setLoadError(err.message || `Could not load inventory-status-report.xlsx. Attempted: ${fileUrl}`);
-                    });
+                    .catch(err => console.error('Error loading inventory file:', err));
+
+                // Check file modification time
+                fetch('inventory-status-report.xlsx', { method: 'HEAD' })
+                    .then(response => {
+                        const lastModified = response.headers.get('Last-Modified');
+                        if (lastModified) setFileLastModified(new Date(lastModified));
+                    })
+                    .catch(() => {});
+
+                // Load saved packing slips
+                try {
+                    const savedSlips = localStorage.getItem('stockroom_packing_slips');
+                    if (savedSlips) setSavedPackingSlips(JSON.parse(savedSlips));
+                } catch (err) { console.error('Error loading saved data:', err); }
             }, []);
 
-            const normalizeSKU = (sku) => sku.replace(/-/g, '').toUpperCase();
-
-            const handleGeneralSearch = () => {
-                if (loadStatus !== 'ready') return;
-                const query = searchQuery.trim().toLowerCase();
-                if (query.length === 0) { setSearchError('Please enter a search term.'); return; }
-                const queryWords = query.split(/\s+/).filter(w => w.length > 0);
-                const normalizedQuery = normalizeSKU(query);
-                const found = inventory.filter(item => {
-                    const normalizedInternalSKU = normalizeSKU(item.internalSKU);
-                    const normalizedMfgSKUs = item.manufacturerSKUs.map(sku => normalizeSKU(sku));
-                    if (normalizedInternalSKU.includes(normalizedQuery) || normalizedQuery.includes(normalizedInternalSKU)) return true;
-                    if (normalizedMfgSKUs.some(sku => sku.includes(normalizedQuery) || normalizedQuery.includes(sku))) return true;
-                    const itemNameLower = item.itemName.toLowerCase();
-                    if (queryWords.every(word => itemNameLower.includes(word))) return true;
-                    if (item.vendor) { const vendorLower = item.vendor.toLowerCase(); if (queryWords.every(word => vendorLower.includes(word))) return true; }
-                    return false;
-                });
-                setSearchResults(found);
-                setSortConfig({ key: null, direction: 'asc' });
-                setSearchError('');
+            const handleFileUpload = (e) => {
+                // This function is no longer used but kept for compatibility
             };
 
-            const handleSort = (key) => {
-                let direction = 'asc';
-                if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
-                setSortConfig({ key, direction });
-            };
-
-            const getSortedResults = (results) => {
-                if (!sortConfig.key || !results) return results;
-                const sorted = [...results].sort((a, b) => {
-                    let aValue = a[sortConfig.key], bValue = b[sortConfig.key];
-                    if (sortConfig.key === 'manufacturerSKUs') { aValue = a.manufacturerSKUs.join(', '); bValue = b.manufacturerSKUs.join(', '); }
-                    if (sortConfig.key === 'ourPrice') { aValue = parseFloat(aValue || 0); bValue = parseFloat(bValue || 0); }
-                    if (sortConfig.key === 'location') {
-                        const locA = parseLocation(a.location), locB = parseLocation(b.location);
-                        if (locA.section !== locB.section) { const result = locA.section.localeCompare(locB.section); return sortConfig.direction === 'asc' ? result : -result; }
-                        if (locA.rack !== locB.rack) { const result = locA.rack - locB.rack; return sortConfig.direction === 'asc' ? result : -result; }
-                        const result = locA.shelf - locB.shelf; return sortConfig.direction === 'asc' ? result : -result;
-                    }
-                    if (typeof aValue === 'string') { aValue = aValue.toLowerCase(); bValue = bValue ? bValue.toLowerCase() : ''; }
-                    if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-                    if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-                    return 0;
-                });
-                return sorted;
+            const getUploadDate = () => {
+                if (fileLastModified) return fileLastModified.toLocaleDateString() + ' at ' + fileLastModified.toLocaleTimeString();
+                return null;
             };
 
             const parseLocation = (location) => {
@@ -176,122 +183,534 @@
                 return { section: 'Z', rack: 999, shelf: 999, original: location };
             };
 
+            const sortByLocation = (items) => [...items].sort((a, b) => {
+                const locA = parseLocation(a.location), locB = parseLocation(b.location);
+                if (locA.section !== locB.section) return locA.section.localeCompare(locB.section);
+                if (locA.rack !== locB.rack) return locA.rack - locB.rack;
+                return locA.shelf - locB.shelf;
+            });
+
+            const normalizeSKU = (sku) => sku.replace(/-/g, '').toUpperCase();
+
+            const handleGeneralSearch = () => {
+                if (!inventory.length) { setError('Please upload a database file first'); return; }
+                const query = searchQuery.trim().toLowerCase();
+                if (query.length === 0) { setError('Please enter a search term'); return; }
+                const queryWords = query.split(/\s+/).filter(w => w.length > 0);
+                const normalizedQuery = normalizeSKU(query);
+                const found = inventory.filter(item => {
+                    const normalizedInternalSKU = normalizeSKU(item.internalSKU);
+                    const normalizedMfgSKUs = item.manufacturerSKUs.map(sku => normalizeSKU(sku));
+                    if (normalizedInternalSKU.includes(normalizedQuery) || normalizedQuery.includes(normalizedInternalSKU)) return true;
+                    if (normalizedMfgSKUs.some(sku => sku.includes(normalizedQuery) || normalizedQuery.includes(sku))) return true;
+                    const itemNameLower = item.itemName.toLowerCase();
+                    if (queryWords.every(word => itemNameLower.includes(word))) return true;
+                    if (item.vendor) { const vendorLower = item.vendor.toLowerCase(); if (queryWords.every(word => vendorLower.includes(word))) return true; }
+                    return false;
+                });
+                setSearchResults(found); setSortConfig({ key: null, direction: 'asc' }); setError('');
+            };
+
+            const handleSort = (key) => {
+                let direction = 'asc';
+                if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
+                setSortConfig({ key, direction });
+            };
+
+            const getSortedResults = (results) => {
+                if (!sortConfig.key || !results) return results;
+                const sorted = [...results].sort((a, b) => {
+                    let aValue = a[sortConfig.key], bValue = b[sortConfig.key];
+                    if (sortConfig.key === 'manufacturerSKUs') { aValue = a.manufacturerSKUs.join(', '); bValue = b.manufacturerSKUs.join(', '); }
+                    if (sortConfig.key === 'ourPrice' || sortConfig.key === 'externalPrice') { 
+                        aValue = parseFloat(aValue || 0); 
+                        bValue = parseFloat(bValue || 0); 
+                        if (sortConfig.key === 'externalPrice') {
+                            aValue = aValue * 1.54;
+                            bValue = bValue * 1.54;
+                        }
+                    }
+                    if (sortConfig.key === 'location') {
+                        const locA = parseLocation(a.location), locB = parseLocation(b.location);
+                        if (locA.section !== locB.section) { const result = locA.section.localeCompare(locB.section); return sortConfig.direction === 'asc' ? result : -result; }
+                        if (locA.rack !== locB.rack) { const result = locA.rack - locB.rack; return sortConfig.direction === 'asc' ? result : -result; }
+                        const result = locA.shelf - locB.shelf; return sortConfig.direction === 'asc' ? result : -result;
+                    }
+                    if (typeof aValue === 'string') { aValue = aValue.toLowerCase(); bValue = bValue ? bValue.toLowerCase() : ''; }
+                    if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+                    if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+                return sorted;
+            };
+
             const SortIcon = ({ columnKey }) => {
                 if (sortConfig.key !== columnKey) return <span style={{color: '#9ca3af', marginLeft: '4px'}}>⇅</span>;
                 return sortConfig.direction === 'asc' ? <span style={{marginLeft: '4px'}}>↑</span> : <span style={{marginLeft: '4px'}}>↓</span>;
             };
 
-            const formatPrice = (priceStr) => {
-                const num = parseFloat(priceStr);
-                if (isNaN(num) || num === 0) return null;
-                return num.toFixed(2);
+            const handlePackingSlipItems = () => {
+                if (!inventory.length) { setPackingSlipError('Please upload database first'); return; }
+                const lines = itemInput.split('\n').filter(line => line.trim().length > 0);
+                const items = [], notFoundSKUs = [], uomSuffixes = ['PK', 'CS', 'EA', 'BX', 'DZ', 'CT', 'RL', 'PL', 'BT', 'TB'];
+                lines.forEach(line => {
+                    const parts = line.split(',').map(p => p.trim());
+                    if (parts.length < 2) return;
+                    const sku = parts[0], quantity = parts[1], expiration = parts[2] || '';
+                    const normalizedSearchSKU = normalizeSKU(sku);
+                    let item = inventory.find(i => normalizeSKU(i.internalSKU) === normalizedSearchSKU || i.manufacturerSKUs.some(mfgSKU => normalizeSKU(mfgSKU) === normalizedSearchSKU));
+                    if (!item) { for (const suffix of uomSuffixes) { const skuWithSuffix = normalizedSearchSKU + suffix; item = inventory.find(i => normalizeSKU(i.internalSKU) === skuWithSuffix || i.manufacturerSKUs.some(mfgSKU => normalizeSKU(mfgSKU) === skuWithSuffix)); if (item) break; } }
+                    if (!item) { for (const suffix of uomSuffixes) { if (normalizedSearchSKU.endsWith(suffix)) { const skuWithoutSuffix = normalizedSearchSKU.slice(0, -suffix.length); item = inventory.find(i => normalizeSKU(i.internalSKU) === skuWithoutSuffix || i.manufacturerSKUs.some(mfgSKU => normalizeSKU(mfgSKU) === skuWithoutSuffix)); if (item) break; } } }
+                    if (item) items.push({ quantity, itemName: item.itemName, internalSKU: item.internalSKU, vendorSKUs: item.manufacturerSKUs.join(', '), expiration, location: item.location });
+                    else notFoundSKUs.push({ sku, quantity });
+                });
+                const sortedItems = sortByLocation(items);
+                const updatedSlip = { ...packingSlip, items: sortedItems, notFoundSKUs };
+                setPackingSlip(updatedSlip); setPackingSlipError('');
+                if (updatedSlip.items.length) {
+                    const slipWithMetadata = { ...updatedSlip, id: Date.now(), createdAt: new Date().toISOString() };
+                    try { const updatedSlips = [slipWithMetadata, ...savedPackingSlips]; localStorage.setItem('stockroom_packing_slips', JSON.stringify(updatedSlips)); setSavedPackingSlips(updatedSlips); } catch (e) {}
+                }
+            };
+
+            const deletePackingSlip = (id) => {
+                try {
+                    const updatedSlips = savedPackingSlips.filter(slip => slip.id !== id);
+                    localStorage.setItem('stockroom_packing_slips', JSON.stringify(updatedSlips));
+                    setSavedPackingSlips(updatedSlips);
+                    if (selectedSlip && selectedSlip.id === id) setSelectedSlip(null);
+                } catch (err) {}
+            };
+
+            const viewPackingSlip = (slip) => setSelectedSlip(slip);
+
+            const exportPackingSlips = () => {
+                try {
+                    const dataStr = JSON.stringify(savedPackingSlips, null, 2);
+                    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(dataBlob);
+                    const link = document.createElement('a');
+                    link.href = url; link.download = `packing_slips_backup_${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url);
+                } catch (err) { alert('Export error'); }
+            };
+
+            const importPackingSlips = (e) => {
+                const file = e.target.files[0]; if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const importedSlips = JSON.parse(event.target.result);
+                        if (!Array.isArray(importedSlips)) { alert('Invalid format'); return; }
+                        const existingIds = new Set(savedPackingSlips.map(s => s.id));
+                        const newSlips = importedSlips.filter(s => !existingIds.has(s.id));
+                        const mergedSlips = [...savedPackingSlips, ...newSlips];
+                        localStorage.setItem('stockroom_packing_slips', JSON.stringify(mergedSlips));
+                        setSavedPackingSlips(mergedSlips); alert(`Imported ${newSlips.length} slip(s)`);
+                    } catch (err) { alert('Import error'); }
+                };
+                reader.readAsText(file); e.target.value = '';
+            };
+
+            const handleHazmatMaterials = () => {
+                const lines = hazmatInput.split('\n').filter(line => line.trim().length > 0);
+                const materials = lines.map(line => {
+                    const parts = line.split(',').map(p => p.trim());
+                    return { unNumber: parts[0] || '', properShippingName: parts[1] || '', hazardClass: parts[2] || '', packingGroup: parts[3] || '', quantity: parts[4] || '', type: parts[5] || '' };
+                });
+                setHazmatBOL({ ...hazmatBOL, materials });
+            };
+
+            const clearHazmatBOL = () => {
+                setHazmatBOL({
+                    shipperName: 'UNIVERSITY OF PITTSBURGH', shipperAttn: '', shipperAddress: 'CHEMISTRY STOCKROOM', shipperAddress2: '219 PARKMAN AVE RM326',
+                    shipperCity: 'PITTSBURGH', shipperState: 'PA', shipperZip: '15213', shipperPhone: '412-624-8551',
+                    consigneeName: '', consigneeAttn: '', consigneeAddress: '', consigneeAddress2: '', consigneeCity: '', consigneeState: '', consigneeZip: '', consigneePhone: '',
+                    carrierName: '', carrierPhone: '', shipDate: '', emergencyContact: '', emergencyPhone: '', materials: []
+                });
+                setHazmatInput('');
             };
 
             return (
-                <div className="container">
-                    <div className="header">
-                        <img src="https://upload.wikimedia.org/wikipedia/en/f/fb/University_of_Pittsburgh_seal.svg" alt="University of Pittsburgh" />
-                        <h1>Dietrich School Scientific Stockroom</h1>
-                        <p>Inventory Catalog Lookup</p>
-                    </div>
-
-                    {loadStatus === 'loading' && (
-                        <div className="alert alert-loading">
-                            <div>⏳ <strong>Loading inventory database…</strong> Please wait.</div>
-                        </div>
-                    )}
-                    {loadStatus === 'error' && (
-                        <div className="alert alert-error">
-                            <div><strong>Unable to load inventory:</strong> {loadError}</div>
-                        </div>
-                    )}
-
-                    {loadStatus === 'ready' && (
-                        <div className="card">
-                            <h2>Search Inventory</h2>
-                            <div className="form-group">
-                                <label className="form-label">Search by SKU or Item Name</label>
-                                <input
-                                    type="text"
-                                    className="form-input"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Enter SKU or item name…"
-                                    onKeyPress={(e) => e.key === 'Enter' && handleGeneralSearch()}
-                                />
+                <div>
+                    <div className="no-print">
+                        <div className="container">
+                            <div className="header">
+                                <img src="https://upload.wikimedia.org/wikipedia/en/f/fb/University_of_Pittsburgh_seal.svg" alt="Pitt" />
+                                <h1>Dietrich School Scientific Stockroom</h1>
+                                <p>Inventory Catalog Lookup System</p>
                             </div>
-                            {searchError && <div className="alert alert-error">{searchError}</div>}
-                            <button onClick={handleGeneralSearch} className="btn btn-primary btn-block">Search Inventory</button>
-                        </div>
-                    )}
-
-                    {searchResults && (
-                        <div className="card">
-                            <h2>Search Results ({searchResults.length} item{searchResults.length !== 1 ? 's' : ''} found)</h2>
-                            {searchResults.length > 0 ? (
-                                <div style={{overflowX: 'auto'}}>
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th onClick={() => handleSort('itemName')}>Item Name <SortIcon columnKey="itemName" /></th>
-                                                <th onClick={() => handleSort('internalSKU')} className="text-center">Internal SKU <SortIcon columnKey="internalSKU" /></th>
-                                                <th onClick={() => handleSort('manufacturerSKUs')}>Vendor SKUs <SortIcon columnKey="manufacturerSKUs" /></th>
-                                                <th onClick={() => handleSort('vendor')} className="text-center">Vendor <SortIcon columnKey="vendor" /></th>
-                                                <th onClick={() => handleSort('uom')} className="text-center">UoM <SortIcon columnKey="uom" /></th>
-                                                <th onClick={() => handleSort('ourPrice')} className="text-center">Pricing <SortIcon columnKey="ourPrice" /></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {getSortedResults(searchResults).map((item, idx) => {
-                                                const ourPriceFmt = formatPrice(item.ourPrice);
-                                                const extRaw = parseFloat(item.externalPrice);
-                                                const theirPriceFmt = (!isNaN(extRaw) && extRaw > 0) ? (extRaw * 1.54).toFixed(2) : null;
-                                                return (
-                                                    <tr key={idx}>
-                                                        <td>{item.itemName}</td>
-                                                        <td className="text-center text-mono" style={{fontSize: '12px'}}>{item.internalSKU}</td>
-                                                        <td className="text-mono" style={{fontSize: '12px'}}>{item.manufacturerSKUs.join(', ')}</td>
-                                                        <td className="text-center" style={{fontSize: '12px'}}>{item.vendor || '—'}</td>
-                                                        <td className="text-center">
-                                                            <div>{item.uom}</div>
-                                                            {item.childPartNbr && (
-                                                                <div style={{fontSize: '11px', color: '#666', marginTop: '4px'}}>→ {item.childPartNbr}{item.childConvFactor && ` (${item.childConvFactor})`}</div>
-                                                            )}
-                                                            {item.altUom && (
-                                                                <div style={{fontSize: '11px', color: '#888'}}>Alt: {item.altUom}{item.convFactor && ` ×${item.convFactor}`}</div>
-                                                            )}
-                                                        </td>
-                                                        <td className="text-center" style={{minWidth: '130px'}}>
-                                                            {ourPriceFmt ? (
-                                                                <div style={{marginBottom: theirPriceFmt ? '8px' : '0'}}>
-                                                                    <span className="price-label">Our Price</span>
-                                                                    <span className="price-ours">${ourPriceFmt}</span>
-                                                                </div>
-                                                            ) : null}
-                                                            {theirPriceFmt ? (
-                                                                <div>
-                                                                    <span className="price-label">External Supplier</span>
-                                                                    <span className="price-theirs">${theirPriceFmt}</span>
-                                                                </div>
-                                                            ) : null}
-                                                            {!ourPriceFmt && !theirPriceFmt && <span style={{color: '#aaa'}}>—</span>}
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
+                            <div className="tabs">
+                                <button className={`tab ${activeTab === 'search' ? 'active' : ''}`} onClick={() => setActiveTab('search')}>General Search</button>
+                                <button className={`tab ${activeTab === 'packing' ? 'active' : ''}`} onClick={() => setActiveTab('packing')}>Packing Slip</button>
+                                <button className={`tab ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>History ({savedPackingSlips.length})</button>
+                                <button className={`tab ${activeTab === 'hazmat' ? 'active' : ''}`} onClick={() => setActiveTab('hazmat')}>Hazmat BOL</button>
+                            </div>
+                            <div className="card">
+                                <h2>Database Status</h2>
+                                {inventory.length > 0 ? (
+                                    <div className="alert alert-success">
+                                        <div>
+                                            <strong>Database loaded:</strong> {inventory.length} items
+                                            {fileName && <div style={{fontSize: '13px', marginTop: '4px'}}>File: {fileName}</div>}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="alert alert-info">Loading inventory database...</div>
+                                )}
+                            </div>
+                            {activeTab === 'search' && (
+                                <>
+                                    <div className="card">
+                                        <h2>General Search</h2>
+                                        <div className="form-group">
+                                            <label className="form-label">Search by SKU or Item Name</label>
+                                            <input type="text" className="form-input" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Enter SKU or item name..." onKeyPress={(e) => e.key === 'Enter' && handleGeneralSearch()} />
+                                        </div>
+                                        {error && <div className="alert alert-error">{error}</div>}
+                                        <button onClick={handleGeneralSearch} className="btn btn-primary btn-block">Search Inventory</button>
+                                    </div>
+                                    {searchResults && (
+                                        <div className="card">
+                                            <h2>Search Results ({searchResults.length} items found)</h2>
+                                            {searchResults.length > 0 ? (
+                                                <div style={{overflowX: 'auto'}}>
+                                                    <table>
+                                                        <thead>
+                                                            <tr>
+                                                                <th onClick={() => handleSort('location')} className="text-center">Location <SortIcon columnKey="location" /></th>
+                                                                <th onClick={() => handleSort('itemName')}>Item Name <SortIcon columnKey="itemName" /></th>
+                                                                <th onClick={() => handleSort('internalSKU')} className="text-center">Internal SKU <SortIcon columnKey="internalSKU" /></th>
+                                                                <th onClick={() => handleSort('manufacturerSKUs')}>Vendor SKUs <SortIcon columnKey="manufacturerSKUs" /></th>
+                                                                <th onClick={() => handleSort('vendor')} className="text-center">Vendor <SortIcon columnKey="vendor" /></th>
+                                                                <th onClick={() => handleSort('uom')} className="text-center">UoM <SortIcon columnKey="uom" /></th>
+                                                                <th onClick={() => handleSort('altUom')} className="text-center">Alt UoM <SortIcon columnKey="altUom" /></th>
+                                                                <th onClick={() => handleSort('ourPrice')} className="text-center">Our Price <SortIcon columnKey="ourPrice" /></th>
+                                                                <th onClick={() => handleSort('externalPrice')} className="text-center">External Price <SortIcon columnKey="externalPrice" /></th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {getSortedResults(searchResults).map((item, idx) => (
+                                                                <tr key={idx}>
+                                                                    <td className="text-center text-mono" style={{fontWeight: 'bold'}}>{item.location}</td>
+                                                                    <td>{item.itemName}</td>
+                                                                    <td className="text-center text-mono" style={{fontSize: '12px'}}>{item.internalSKU}</td>
+                                                                    <td className="text-mono" style={{fontSize: '12px'}}>{item.manufacturerSKUs.join(', ')}</td>
+                                                                    <td className="text-center" style={{fontSize: '12px'}}>{item.vendor || '-'}</td>
+                                                                    <td className="text-center">
+                                                                        <div>{item.uom}</div>
+                                                                        {item.childPartNbr && (<div style={{fontSize: '11px', color: '#666', marginTop: '4px'}}>→ {item.childPartNbr}{item.childConvFactor && ` (${item.childConvFactor})`}</div>)}
+                                                                    </td>
+                                                                    <td className="text-center">
+                                                                        {item.altUom ? (<div><div>{item.altUom}</div>{item.convFactor && (<div style={{fontSize: '11px', color: '#666'}}>×{item.convFactor}</div>)}</div>) : '-'}
+                                                                    </td>
+                                                                    <td className="text-center" style={{fontWeight: 'bold', color: '#00AD6E'}}>{item.ourPrice ? `${item.ourPrice}` : '-'}</td>
+                                                                    <td className="text-center" style={{fontWeight: 'bold', color: '#FF5B45'}}>{item.externalPrice ? `${(parseFloat(item.externalPrice) * 1.54).toFixed(2)}` : '-'}</td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                    <div style={{marginTop: '20px', padding: '16px', background: '#DBEEFF', borderRadius: '6px', border: '2px solid #66B2E3'}}>
+                                                        <p style={{fontSize: '13px', color: '#00205B', margin: 0, lineHeight: '1.6'}}>
+                                                            <strong>Note:</strong> Prices listed are subject to change and should not be considered a quote. Please inquire with a sales representative to confirm current pricing.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ) : (<p style={{textAlign: 'center', color: '#666', padding: '32px'}}>No items found.</p>)}
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                            {activeTab === 'packing' && (
+                                <div className="card">
+                                    <h2>Generate Packing Slip</h2>
+                                    <div className="grid-2">
+                                        <div className="form-group"><label className="form-label">Supplier</label><input type="text" className="form-input" value={packingSlip.supplier} onChange={(e) => setPackingSlip({...packingSlip, supplier: e.target.value})} /></div>
+                                        <div className="form-group"><label className="form-label">Purchase Order #</label><input type="text" className="form-input" value={packingSlip.poNumber} onChange={(e) => setPackingSlip({...packingSlip, poNumber: e.target.value})} /></div>
+                                    </div>
+                                    <div className="grid-2">
+                                        <div className="form-group"><label className="form-label">Date Received</label><input type="date" className="form-input" value={packingSlip.dateReceived} onChange={(e) => setPackingSlip({...packingSlip, dateReceived: e.target.value})} /></div>
+                                        <div className="form-group"><label className="form-label">Received By</label><input type="text" className="form-input" value={packingSlip.receivedBy} onChange={(e) => setPackingSlip({...packingSlip, receivedBy: e.target.value})} /></div>
+                                    </div>
+                                    <div className="form-group"><label className="form-label">Items (Format: SKU, Quantity, Expiration)</label><textarea className="form-textarea" rows="10" value={itemInput} onChange={(e) => setItemInput(e.target.value)} placeholder="SKU-001, 5, 12/31/2025" /></div>
+                                    <div className="form-group"><label className="form-label">Notes (Optional)</label><textarea className="form-textarea" rows="4" value={packingSlip.notes} onChange={(e) => setPackingSlip({...packingSlip, notes: e.target.value})} /></div>
+                                    {packingSlipError && <div className="alert alert-error">{packingSlipError}</div>}
+                                    <div className="btn-group">
+                                        <button onClick={() => { handlePackingSlipItems(); setTimeout(() => window.print(), 100); }} className="btn btn-secondary">Print Packing Slip</button>
+                                        <button onClick={() => { setPackingSlip({ supplier: '', poNumber: '', dateReceived: '', receivedBy: '', items: [], notes: '', notFoundSKUs: [] }); setItemInput(''); }} className="btn btn-gray">Clear Form</button>
+                                    </div>
                                 </div>
-                            ) : (
-                                <p style={{textAlign: 'center', color: '#666', padding: '32px'}}>No items found matching your search.</p>
+                            )}
+                            {activeTab === 'history' && (
+                                <>
+                                    <div className="card">
+                                        <h2>Packing Slip History</h2>
+                                        <div className="form-group">
+                                            <label className="form-label">Search by PO#, Supplier, Date, or Item</label>
+                                            <input type="text" className="form-input" value={historySearchQuery} onChange={(e) => setHistorySearchQuery(e.target.value)} placeholder="Enter search term..." />
+                                        </div>
+                                        <div className="btn-group" style={{marginTop: '16px'}}>
+                                            <button onClick={exportPackingSlips} disabled={savedPackingSlips.length === 0} className="btn btn-primary">Export All to File</button>
+                                            <label className="btn btn-secondary" style={{margin: 0}}>
+                                                <input type="file" accept=".json" onChange={importPackingSlips} style={{display: 'none'}} />
+                                                Import from File
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {selectedSlip && (
+                                        <div className="card">
+                                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px'}}>
+                                                <h2 style={{margin: 0}}>Viewing: PO# {selectedSlip.poNumber}</h2>
+                                                <button onClick={() => setSelectedSlip(null)} className="btn btn-gray">Close Preview</button>
+                                            </div>
+                                            <div className="btn-group" style={{marginBottom: '16px'}}>
+                                                <button onClick={() => window.print()} className="btn btn-secondary">Print / Save as PDF</button>
+                                            </div>
+                                            <div style={{border: '2px solid #C8C9C7', borderRadius: '6px', padding: '16px'}}>
+                                                <div className="grid-2" style={{marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid #e5e7eb'}}>
+                                                    <div>
+                                                        <p style={{margin: '4px 0', fontSize: '14px'}}><strong>Supplier:</strong> {selectedSlip.supplier}</p>
+                                                        <p style={{margin: '4px 0', fontSize: '14px'}}><strong>PO #:</strong> {selectedSlip.poNumber}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p style={{margin: '4px 0', fontSize: '14px'}}><strong>Date:</strong> {selectedSlip.dateReceived}</p>
+                                                        <p style={{margin: '4px 0', fontSize: '14px'}}><strong>By:</strong> {selectedSlip.receivedBy}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="preview-box">
+                                                    <table>
+                                                        <thead style={{position: 'sticky', top: 0}}>
+                                                            <tr>
+                                                                <th className="text-center" style={{fontSize: '12px'}}>Location</th>
+                                                                <th className="text-center" style={{fontSize: '12px'}}>Qty</th>
+                                                                <th style={{fontSize: '12px'}}>Item Name</th>
+                                                                <th className="text-center" style={{fontSize: '12px'}}>Internal SKU</th>
+                                                                <th style={{fontSize: '12px'}}>Vendor SKUs</th>
+                                                                <th className="text-center" style={{fontSize: '12px'}}>Exp. Date</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {selectedSlip.items.map((item, idx) => (
+                                                                <tr key={idx}>
+                                                                    <td className="text-center text-mono" style={{fontSize: '12px', fontWeight: 'bold'}}>{item.location}</td>
+                                                                    <td className="text-center" style={{fontSize: '12px'}}>{item.quantity}</td>
+                                                                    <td style={{fontSize: '12px'}}>{item.itemName}</td>
+                                                                    <td className="text-center text-mono" style={{fontSize: '11px'}}>{item.internalSKU}</td>
+                                                                    <td className="text-mono" style={{fontSize: '11px'}}>{item.vendorSKUs}</td>
+                                                                    <td className="text-center" style={{fontSize: '11px'}}>{item.expiration || '-'}</td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                {selectedSlip.notes && selectedSlip.notes.trim() && (
+                                                    <div style={{marginTop: '16px', padding: '12px', background: '#f9fafb', borderRadius: '4px'}}>
+                                                        <p style={{fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0'}}>Notes:</p>
+                                                        <p style={{fontSize: '12px', margin: 0, whiteSpace: 'pre-wrap'}}>{selectedSlip.notes}</p>
+                                                    </div>
+                                                )}
+                                                {selectedSlip.notFoundSKUs && selectedSlip.notFoundSKUs.length > 0 && (
+                                                    <div style={{marginTop: '16px', padding: '12px', background: '#FFDECD', borderRadius: '4px', border: '2px solid #FF5B45'}}>
+                                                        <p style={{fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0', color: '#770538'}}>SKUs Not Found:</p>
+                                                        <ul style={{margin: 0, paddingLeft: '20px', fontSize: '12px', color: '#770538'}}>
+                                                            {selectedSlip.notFoundSKUs.map((item, idx) => (
+                                                                <li key={idx} className="text-mono">{typeof item === 'string' ? item : `${item.sku} (Qty: ${item.quantity})`}</li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div className="card">
+                                        {savedPackingSlips.length === 0 ? (
+                                            <p style={{textAlign: 'center', color: '#666', padding: '32px'}}>No packing slips saved yet.</p>
+                                        ) : (
+                                            <div>
+                                                {savedPackingSlips.filter(slip => {
+                                                    if (!historySearchQuery) return true;
+                                                    const query = historySearchQuery.toLowerCase();
+                                                    return (slip.poNumber.toLowerCase().includes(query) || slip.supplier.toLowerCase().includes(query) || slip.dateReceived.includes(query) || slip.receivedBy.toLowerCase().includes(query) || slip.items.some(item => item.itemName.toLowerCase().includes(query) || item.internalSKU.toLowerCase().includes(query)));
+                                                }).map(slip => (
+                                                    <div key={slip.id} className="history-item">
+                                                        <div className="history-header">
+                                                            <div>
+                                                                <h3 style={{margin: '0 0 8px 0', fontSize: '18px'}}>PO# {slip.poNumber}</h3>
+                                                                <p style={{margin: '2px 0', fontSize: '14px', color: '#666'}}>Supplier: {slip.supplier}</p>
+                                                                <p style={{margin: '2px 0', fontSize: '14px', color: '#666'}}>Date: {slip.dateReceived} | Received by: {slip.receivedBy}</p>
+                                                                <p style={{margin: '8px 0 2px 0', fontSize: '14px', color: '#666'}}>Created: {new Date(slip.createdAt).toLocaleString()}</p>
+                                                            </div>
+                                                            <div style={{display: 'flex', gap: '8px'}}>
+                                                                <button onClick={() => viewPackingSlip(slip)} className="btn btn-primary" style={{padding: '8px 16px'}}>View</button>
+                                                                <button onClick={() => { if (confirm('Delete?')) deletePackingSlip(slip.id); }} className="btn btn-red" style={{padding: '8px 16px'}}>Delete</button>
+                                                            </div>
+                                                        </div>
+                                                        <div style={{marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #e5e7eb'}}>
+                                                            <p style={{fontSize: '14px', color: '#374151'}}><strong>Items:</strong> {slip.items.length} ({slip.items.map(i => i.itemName).join(', ').substring(0, 100)}{slip.items.map(i => i.itemName).join(', ').length > 100 ? '...' : ''})</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                            {activeTab === 'hazmat' && (
+                                <div className="card">
+                                    <h2>Hazardous Materials Bill of Lading</h2>
+                                    <p style={{fontSize: '14px', color: '#666', marginBottom: '20px'}}>DOT-compliant shipping document (49 CFR)</p>
+                                    <h3>Shipper Information</h3>
+                                    <div className="form-group"><label className="form-label">Shipper Name</label><input type="text" className="form-input" value={hazmatBOL.shipperName} onChange={(e) => setHazmatBOL({...hazmatBOL, shipperName: e.target.value})} /></div>
+                                    <div className="form-group"><label className="form-label">ATTN (Optional)</label><input type="text" className="form-input" value={hazmatBOL.shipperAttn} onChange={(e) => setHazmatBOL({...hazmatBOL, shipperAttn: e.target.value})} /></div>
+                                    <div className="grid-2">
+                                        <div className="form-group"><label className="form-label">Address Line 1</label><input type="text" className="form-input" value={hazmatBOL.shipperAddress} onChange={(e) => setHazmatBOL({...hazmatBOL, shipperAddress: e.target.value})} /></div>
+                                        <div className="form-group"><label className="form-label">Phone</label><input type="text" className="form-input" value={hazmatBOL.shipperPhone} onChange={(e) => setHazmatBOL({...hazmatBOL, shipperPhone: e.target.value})} /></div>
+                                    </div>
+                                    <div className="form-group"><label className="form-label">Address Line 2</label><input type="text" className="form-input" value={hazmatBOL.shipperAddress2} onChange={(e) => setHazmatBOL({...hazmatBOL, shipperAddress2: e.target.value})} /></div>
+                                    <div className="grid-2">
+                                        <div className="form-group"><label className="form-label">City</label><input type="text" className="form-input" value={hazmatBOL.shipperCity} onChange={(e) => setHazmatBOL({...hazmatBOL, shipperCity: e.target.value})} /></div>
+                                        <div style={{display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px'}}>
+                                            <div className="form-group"><label className="form-label">State</label><input type="text" className="form-input" value={hazmatBOL.shipperState} onChange={(e) => setHazmatBOL({...hazmatBOL, shipperState: e.target.value})} /></div>
+                                            <div className="form-group"><label className="form-label">ZIP</label><input type="text" className="form-input" value={hazmatBOL.shipperZip} onChange={(e) => setHazmatBOL({...hazmatBOL, shipperZip: e.target.value})} /></div>
+                                        </div>
+                                    </div>
+                                    <h3>Consignee Information</h3>
+                                    <div className="form-group"><label className="form-label">Consignee Name</label><input type="text" className="form-input" value={hazmatBOL.consigneeName} onChange={(e) => setHazmatBOL({...hazmatBOL, consigneeName: e.target.value})} /></div>
+                                    <div className="form-group"><label className="form-label">ATTN (Optional)</label><input type="text" className="form-input" value={hazmatBOL.consigneeAttn} onChange={(e) => setHazmatBOL({...hazmatBOL, consigneeAttn: e.target.value})} /></div>
+                                    <div className="grid-2">
+                                        <div className="form-group"><label className="form-label">Address Line 1</label><input type="text" className="form-input" value={hazmatBOL.consigneeAddress} onChange={(e) => setHazmatBOL({...hazmatBOL, consigneeAddress: e.target.value})} /></div>
+                                        <div className="form-group"><label className="form-label">Phone</label><input type="text" className="form-input" value={hazmatBOL.consigneePhone} onChange={(e) => setHazmatBOL({...hazmatBOL, consigneePhone: e.target.value})} /></div>
+                                    </div>
+                                    <div className="form-group"><label className="form-label">Address Line 2 (Optional)</label><input type="text" className="form-input" value={hazmatBOL.consigneeAddress2} onChange={(e) => setHazmatBOL({...hazmatBOL, consigneeAddress2: e.target.value})} /></div>
+                                    <div className="grid-2">
+                                        <div className="form-group"><label className="form-label">City</label><input type="text" className="form-input" value={hazmatBOL.consigneeCity} onChange={(e) => setHazmatBOL({...hazmatBOL, consigneeCity: e.target.value})} /></div>
+                                        <div style={{display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px'}}>
+                                            <div className="form-group"><label className="form-label">State</label><input type="text" className="form-input" value={hazmatBOL.consigneeState} onChange={(e) => setHazmatBOL({...hazmatBOL, consigneeState: e.target.value})} /></div>
+                                            <div className="form-group"><label className="form-label">ZIP</label><input type="text" className="form-input" value={hazmatBOL.consigneeZip} onChange={(e) => setHazmatBOL({...hazmatBOL, consigneeZip: e.target.value})} /></div>
+                                        </div>
+                                    </div>
+                                    <h3>Carrier & Shipment</h3>
+                                    <div className="grid-2">
+                                        <div className="form-group"><label className="form-label">Carrier Name</label><input type="text" className="form-input" value={hazmatBOL.carrierName} onChange={(e) => setHazmatBOL({...hazmatBOL, carrierName: e.target.value})} /></div>
+                                        <div className="form-group"><label className="form-label">Carrier Phone</label><input type="text" className="form-input" value={hazmatBOL.carrierPhone} onChange={(e) => setHazmatBOL({...hazmatBOL, carrierPhone: e.target.value})} /></div>
+                                    </div>
+                                    <div className="form-group"><label className="form-label">Ship Date</label><input type="date" className="form-input" value={hazmatBOL.shipDate} onChange={(e) => setHazmatBOL({...hazmatBOL, shipDate: e.target.value})} /></div>
+                                    <h3>Emergency Contact (24-Hour)</h3>
+                                    <div className="grid-2">
+                                        <div className="form-group"><label className="form-label">Contact Name</label><input type="text" className="form-input" value={hazmatBOL.emergencyContact} onChange={(e) => setHazmatBOL({...hazmatBOL, emergencyContact: e.target.value})} /></div>
+                                        <div className="form-group"><label className="form-label">Emergency Phone</label><input type="text" className="form-input" value={hazmatBOL.emergencyPhone} onChange={(e) => setHazmatBOL({...hazmatBOL, emergencyPhone: e.target.value})} /></div>
+                                    </div>
+                                    <h3>Hazardous Materials</h3>
+                                    <div className="form-group">
+                                        <label className="form-label">Materials (UN#, Name, Class, Group, Qty, Type)</label>
+                                        <textarea className="form-textarea" rows="8" value={hazmatInput} onChange={(e) => setHazmatInput(e.target.value)} placeholder="UN1090, Acetone, 3, II, 5 Gallons, Liquid" />
+                                    </div>
+                                    <div className="btn-group">
+                                        <button onClick={() => { handleHazmatMaterials(); setTimeout(() => window.print(), 100); }} className="btn btn-secondary">Print BOL</button>
+                                        <button onClick={clearHazmatBOL} className="btn btn-gray">Clear</button>
+                                    </div>
+                                </div>
                             )}
                         </div>
-                    )}
-
-                    <div className="footer-notice">
-                        <strong>Pricing Notice:</strong> All listed prices are subject to change and should not be considered a formal quote.
-                        Please inquire with a sales representative to confirm current pricing before placing an order.
                     </div>
+                    {packingSlip.items.length > 0 && activeTab === 'packing' && (
+                        <div className="print-only">
+                            <div style={{padding: '20px'}}>
+                                <div style={{textAlign: 'center', marginBottom: '16px', borderBottom: '2px solid black', paddingBottom: '8px'}}>
+                                    <h1 style={{fontSize: '20px', margin: '4px 0'}}>Dietrich School Scientific Stockroom - Packing Slip</h1>
+                                </div>
+                                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px', fontSize: '12px'}}>
+                                    <div><p><strong>Supplier:</strong> {packingSlip.supplier}</p><p><strong>PO #:</strong> {packingSlip.poNumber}</p></div>
+                                    <div><p><strong>Date:</strong> {packingSlip.dateReceived}</p><p><strong>By:</strong> {packingSlip.receivedBy}</p></div>
+                                </div>
+                                <table>
+                                    <thead><tr><th className="text-center" style={{width: '30px'}}>☐</th><th className="text-center">Location</th><th className="text-center">Qty</th><th>Item Name</th><th className="text-center">Internal SKU</th><th>Vendor SKUs</th><th className="text-center">Exp. Date</th></tr></thead>
+                                    <tbody>{packingSlip.items.map((item, idx) => (<tr key={idx}><td className="text-center">☐</td><td className="text-center text-mono" style={{fontWeight: 'bold'}}>{item.location}</td><td className="text-center">{item.quantity}</td><td>{item.itemName}</td><td className="text-center text-mono" style={{fontSize: '11px'}}>{item.internalSKU}</td><td className="text-mono" style={{fontSize: '11px'}}>{item.vendorSKUs}</td><td className="text-center" style={{fontSize: '11px'}}>{item.expiration || '-'}</td></tr>))}</tbody>
+                                </table>
+                                {packingSlip.notes?.trim() && (<div style={{marginTop: '16px', padding: '12px', border: '2px solid black', borderRadius: '4px'}}><p style={{fontSize: '12px', margin: '0 0 4px 0'}}><strong>Notes:</strong></p><p style={{fontSize: '12px', margin: '4px 0', whiteSpace: 'pre-wrap'}}>{packingSlip.notes}</p></div>)}
+                                {packingSlip.notFoundSKUs?.length > 0 && (<div style={{marginTop: '16px', padding: '12px', border: '2px solid black', borderRadius: '4px', background: '#FFDECD'}}><p style={{fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0', color: '#770538'}}>SKUs Not Found:</p><ul style={{margin: '4px 0', paddingLeft: '20px', fontSize: '12px', color: '#770538'}}>{packingSlip.notFoundSKUs.map((item, idx) => (<li key={idx} className="text-mono">{item.sku} (Qty: {item.quantity})</li>))}</ul></div>)}
+                            </div>
+                        </div>
+                    )}
+                    {selectedSlip && activeTab === 'history' && (
+                        <div className="print-only">
+                            <div style={{padding: '20px'}}>
+                                <div style={{textAlign: 'center', marginBottom: '16px', borderBottom: '2px solid black', paddingBottom: '8px'}}>
+                                    <h1 style={{fontSize: '20px', margin: '4px 0'}}>Dietrich School Scientific Stockroom - Packing Slip</h1>
+                                </div>
+                                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px', fontSize: '12px'}}>
+                                    <div><p><strong>Supplier:</strong> {selectedSlip.supplier}</p><p><strong>PO #:</strong> {selectedSlip.poNumber}</p></div>
+                                    <div><p><strong>Date:</strong> {selectedSlip.dateReceived}</p><p><strong>By:</strong> {selectedSlip.receivedBy}</p></div>
+                                </div>
+                                <table>
+                                    <thead><tr><th className="text-center" style={{width: '30px'}}>☐</th><th className="text-center">Location</th><th className="text-center">Qty</th><th>Item Name</th><th className="text-center">Internal SKU</th><th>Vendor SKUs</th><th className="text-center">Exp. Date</th></tr></thead>
+                                    <tbody>{selectedSlip.items.map((item, idx) => (<tr key={idx}><td className="text-center">☐</td><td className="text-center text-mono" style={{fontWeight: 'bold'}}>{item.location}</td><td className="text-center">{item.quantity}</td><td>{item.itemName}</td><td className="text-center text-mono" style={{fontSize: '11px'}}>{item.internalSKU}</td><td className="text-mono" style={{fontSize: '11px'}}>{item.vendorSKUs}</td><td className="text-center" style={{fontSize: '11px'}}>{item.expiration || '-'}</td></tr>))}</tbody>
+                                </table>
+                                {selectedSlip.notes?.trim() && (<div style={{marginTop: '16px', padding: '12px', border: '2px solid black', borderRadius: '4px'}}><p style={{fontSize: '12px', margin: '0 0 4px 0'}}><strong>Notes:</strong></p><p style={{fontSize: '12px', margin: '4px 0', whiteSpace: 'pre-wrap'}}>{selectedSlip.notes}</p></div>)}
+                                {selectedSlip.notFoundSKUs?.length > 0 && (<div style={{marginTop: '16px', padding: '12px', border: '2px solid black', borderRadius: '4px', background: '#FFDECD'}}><p style={{fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0', color: '#770538'}}>SKUs Not Found:</p><ul style={{margin: '4px 0', paddingLeft: '20px', fontSize: '12px', color: '#770538'}}>{selectedSlip.notFoundSKUs.map((item, idx) => (<li key={idx} className="text-mono">{typeof item === 'string' ? item : `${item.sku} (Qty: ${item.quantity})`}</li>))}</ul></div>)}
+                            </div>
+                        </div>
+                    )}
+                    {hazmatBOL.materials.length > 0 && activeTab === 'hazmat' && (
+                        <div className="print-only">
+                            <div style={{padding: '20px'}}>
+                                <div style={{textAlign: 'center', marginBottom: '16px', borderBottom: '4px solid black', paddingBottom: '8px'}}>
+                                    <h1 style={{fontSize: '22px', margin: '4px 0', fontWeight: 'bold'}}>HAZARDOUS MATERIALS BILL OF LADING</h1>
+                                    <p style={{fontSize: '11px', margin: '4px 0'}}>DOT-Compliant (49 CFR)</p>
+                                </div>
+                                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px', fontSize: '11px'}}>
+                                    <div style={{border: '2px solid black', padding: '8px'}}>
+                                        <p style={{fontWeight: 'bold', marginBottom: '4px'}}>SHIPPER:</p>
+                                        <p style={{margin: '2px 0'}}>{hazmatBOL.shipperName}</p>
+                                        {hazmatBOL.shipperAttn && <p style={{margin: '2px 0'}}>ATTN: {hazmatBOL.shipperAttn}</p>}
+                                        <p style={{margin: '2px 0'}}>{hazmatBOL.shipperAddress}</p>
+                                        {hazmatBOL.shipperAddress2 && <p style={{margin: '2px 0'}}>{hazmatBOL.shipperAddress2}</p>}
+                                        <p style={{margin: '2px 0'}}>{hazmatBOL.shipperCity}, {hazmatBOL.shipperState} {hazmatBOL.shipperZip}</p>
+                                        <p style={{margin: '2px 0'}}>Phone: {hazmatBOL.shipperPhone}</p>
+                                    </div>
+                                    <div style={{border: '2px solid black', padding: '8px'}}>
+                                        <p style={{fontWeight: 'bold', marginBottom: '4px'}}>CONSIGNEE:</p>
+                                        <p style={{margin: '2px 0'}}>{hazmatBOL.consigneeName}</p>
+                                        {hazmatBOL.consigneeAttn && <p style={{margin: '2px 0'}}>ATTN: {hazmatBOL.consigneeAttn}</p>}
+                                        <p style={{margin: '2px 0'}}>{hazmatBOL.consigneeAddress}</p>
+                                        {hazmatBOL.consigneeAddress2 && <p style={{margin: '2px 0'}}>{hazmatBOL.consigneeAddress2}</p>}
+                                        <p style={{margin: '2px 0'}}>{hazmatBOL.consigneeCity}, {hazmatBOL.consigneeState} {hazmatBOL.consigneeZip}</p>
+                                        <p style={{margin: '2px 0'}}>Phone: {hazmatBOL.consigneePhone}</p>
+                                    </div>
+                                </div>
+                                <div style={{border: '2px solid black', padding: '8px', marginBottom: '16px', fontSize: '11px'}}>
+                                    <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px'}}>
+                                        <p style={{margin: '2px 0'}}><strong>Carrier:</strong> {hazmatBOL.carrierName}</p>
+                                        <p style={{margin: '2px 0'}}><strong>Ship Date:</strong> {hazmatBOL.shipDate}</p>
+                                    </div>
+                                </div>
+                                <div style={{border: '2px solid black', padding: '8px', marginBottom: '16px', fontSize: '11px', background: '#fff3cd'}}>
+                                    <p style={{margin: '2px 0'}}><strong>24-Hour Emergency:</strong> {hazmatBOL.emergencyContact}</p>
+                                    <p style={{margin: '2px 0'}}><strong>Phone:</strong> {hazmatBOL.emergencyPhone}</p>
+                                </div>
+                                <table>
+                                    <thead><tr><th style={{fontSize: '11px'}}>UN/ID</th><th style={{fontSize: '11px'}}>Proper Shipping Name</th><th style={{fontSize: '11px'}}>Class</th><th style={{fontSize: '11px'}}>Group</th><th style={{fontSize: '11px'}}>Quantity</th><th style={{fontSize: '11px'}}>Type</th></tr></thead>
+                                    <tbody>{hazmatBOL.materials.map((m, i) => (<tr key={i}><td style={{fontSize: '11px'}}>{m.unNumber}</td><td style={{fontSize: '11px'}}>{m.properShippingName}</td><td style={{fontSize: '11px', textAlign: 'center'}}>{m.hazardClass}</td><td style={{fontSize: '11px', textAlign: 'center'}}>{m.packingGroup}</td><td style={{fontSize: '11px'}}>{m.quantity}</td><td style={{fontSize: '11px'}}>{m.type}</td></tr>))}</tbody>
+                                </table>
+                                <div style={{border: '2px solid black', padding: '12px', marginTop: '20px', fontSize: '10px'}}>
+                                    <p style={{fontWeight: 'bold', marginBottom: '8px'}}>SHIPPER CERTIFICATION (49 CFR 172.204):</p>
+                                    <p style={{margin: '4px 0'}}>This is to certify that the above-named materials are properly classified, described, packaged, marked, and labeled, and are in proper condition for transportation according to the applicable regulations of the Department of Transportation.</p>
+                                    <div style={{marginTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px'}}>
+                                        <div><p style={{borderBottom: '1px solid black', paddingBottom: '2px'}}>Shipper Signature</p><p style={{borderBottom: '1px solid black', paddingBottom: '2px', marginTop: '16px'}}>Print Name</p></div>
+                                        <div><p style={{borderBottom: '1px solid black', paddingBottom: '2px'}}>Date</p></div>
+                                    </div>
+                                </div>
+                                <div style={{border: '2px solid black', padding: '12px', marginTop: '12px', fontSize: '10px'}}>
+                                    <p style={{fontWeight: 'bold', marginBottom: '8px'}}>CARRIER ACKNOWLEDGMENT:</p>
+                                    <p style={{margin: '4px 0'}}>Carrier acknowledges receipt of packages and required placards. Carrier certifies emergency response information was made available and/or carrier has the DOT emergency response guidebook or equivalent documentation.</p>
+                                    <div style={{marginTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px'}}>
+                                        <div><p style={{borderBottom: '1px solid black', paddingBottom: '2px'}}>Carrier Signature</p><p style={{borderBottom: '1px solid black', paddingBottom: '2px', marginTop: '16px'}}>Print Name</p></div>
+                                        <div><p style={{borderBottom: '1px solid black', paddingBottom: '2px'}}>Date</p></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         }
