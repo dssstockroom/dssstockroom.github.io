@@ -503,6 +503,157 @@
                                     )}
                                 </>
                             )}
+                            {activeTab === 'cyclecount' && (
+                                <div className="card">
+                                    <h2>Cycle Count</h2>
+                                    {!cycleCountSession ? (
+                                        <div>
+                                            <p style={{fontSize: '14px', color: '#666', marginBottom: '20px'}}>Select section and rack to begin inventory count</p>
+                                            <div className="grid-2">
+                                                <div className="form-group">
+                                                    <label className="form-label">Section (Letter)</label>
+                                                    <select className="form-input" value={cycleCountSection} onChange={(e) => { setCycleCountSection(e.target.value); setCycleCountRack(''); }}>
+                                                        <option value="">Choose section...</option>
+                                                        {getUniqueSections().map(s => <option key={s} value={s}>Section {s}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div className="form-group">
+                                                    <label className="form-label">Rack (Number)</label>
+                                                    <select className="form-input" value={cycleCountRack} onChange={(e) => setCycleCountRack(e.target.value)} disabled={!cycleCountSection}>
+                                                        <option value="">Choose rack...</option>
+                                                        {cycleCountSection && getUniqueRacks(cycleCountSection).map(r => <option key={r} value={r}>Rack {r}</option>)}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <button onClick={startCycleCount} disabled={!cycleCountSection || !cycleCountRack} className="btn btn-primary btn-block">Begin Counting</button>
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '20px'}}>
+                                                <h3 style={{margin: 0}}>Section {cycleCountSession.section} - Rack {cycleCountSession.rack}</h3>
+                                                <div style={{display: 'flex', gap: '8px'}}>
+                                                    <button onClick={exportCycleCount} disabled={!countedItems.length} className="btn btn-primary" style={{padding: '10px 20px'}}>Export CSV</button>
+                                                    <button onClick={endCycleCount} className="btn btn-red" style={{padding: '10px 20px'}}>End Session</button>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="alert alert-info" style={{marginBottom: '20px', fontSize: '16px'}}>
+                                                <strong>Items Counted:</strong> {countedItems.length}
+                                            </div>
+                                            
+                                            {!currentItem ? (
+                                                <div>
+                                                    <div className="form-group">
+                                                        <label className="form-label" style={{fontSize: '16px'}}>Scan Barcode</label>
+                                                        <input 
+                                                            type="text" 
+                                                            className="form-input" 
+                                                            value={scannedSKU} 
+                                                            onChange={(e) => setScannedSKU(e.target.value)}
+                                                            onKeyPress={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleScan(); } }}
+                                                            placeholder="Scan item barcode..."
+                                                            autoFocus
+                                                            style={{fontSize: '22px', padding: '20px', textAlign: 'center', border: '3px solid #003594'}}
+                                                        />
+                                                    </div>
+                                                    <button onClick={handleScan} className="btn btn-primary btn-block" style={{fontSize: '18px', padding: '18px'}}>Look Up Item</button>
+                                                </div>
+                                            ) : (
+                                                <div>
+                                                    <div style={{background: '#DBEEFF', border: '3px solid #003594', borderRadius: '8px', padding: '24px', marginBottom: '24px'}}>
+                                                        <p style={{margin: '8px 0', fontSize: '20px', color: '#003594'}}><strong>SKU:</strong> <span className="text-mono">{currentItem.internalSKU}</span></p>
+                                                        <p style={{margin: '8px 0', fontSize: '18px'}}><strong>Item:</strong> {currentItem.itemName}</p>
+                                                        <p style={{margin: '8px 0', fontSize: '18px'}}><strong>Location:</strong> <span className="text-mono">{currentItem.location}</span></p>
+                                                        <p style={{margin: '12px 0', fontSize: '24px', fontWeight: 'bold', color: '#003594'}}><strong>Unit of Measure:</strong> {currentItem.uom}</p>
+                                                        <p style={{margin: '8px 0', fontSize: '18px'}}><strong>System On-Hand:</strong> {currentItem.onHand || '0'}</p>
+                                                    </div>
+                                                    
+                                                    {!needsRecount ? (
+                                                        <div>
+                                                            <div className="form-group">
+                                                                <label className="form-label" style={{fontSize: '18px'}}>Enter Physical Count</label>
+                                                                <input 
+                                                                    type="number" 
+                                                                    className="form-input" 
+                                                                    value={countQuantity} 
+                                                                    onChange={(e) => setCountQuantity(e.target.value)}
+                                                                    onKeyPress={(e) => { if (e.key === 'Enter') { e.preventDefault(); submitCount(); } }}
+                                                                    placeholder="Enter quantity counted..."
+                                                                    autoFocus
+                                                                    style={{fontSize: '28px', padding: '20px', textAlign: 'center', border: '3px solid #00AD6E'}}
+                                                                />
+                                                            </div>
+                                                            <button onClick={submitCount} disabled={!countQuantity} className="btn btn-secondary btn-block" style={{fontSize: '18px', padding: '18px'}}>Submit Count</button>
+                                                        </div>
+                                                    ) : (
+                                                        <div>
+                                                            <div className="alert alert-error" style={{fontSize: '18px', padding: '20px', marginBottom: '20px'}}>
+                                                                <div>
+                                                                    <strong>COUNT MISMATCH DETECTED</strong>
+                                                                    <p style={{margin: '8px 0 0 0'}}>Your count: <strong>{countQuantity}</strong> | System shows: <strong>{currentItem.onHand}</strong></p>
+                                                                    <p style={{margin: '4px 0 0 0'}}>Please verify and recount this item.</p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="form-group">
+                                                                <label className="form-label" style={{fontSize: '18px'}}>Recount Quantity</label>
+                                                                <input 
+                                                                    type="number" 
+                                                                    className="form-input" 
+                                                                    value={recountQuantity} 
+                                                                    onChange={(e) => setRecountQuantity(e.target.value)}
+                                                                    onKeyPress={(e) => { if (e.key === 'Enter') { e.preventDefault(); submitCount(); } }}
+                                                                    placeholder="Enter recount..."
+                                                                    autoFocus
+                                                                    style={{fontSize: '28px', padding: '20px', textAlign: 'center', border: '3px solid #FF5B45'}}
+                                                                />
+                                                            </div>
+                                                            <button onClick={submitCount} disabled={!recountQuantity} className="btn btn-secondary btn-block" style={{fontSize: '18px', padding: '18px'}}>Submit Recount</button>
+                                                        </div>
+                                                    )}
+                                                    
+                                                    <button onClick={() => { setCurrentItem(null); setScannedSKU(''); setCountQuantity(''); setRecountQuantity(''); setNeedsRecount(false); }} className="btn btn-gray btn-block" style={{marginTop: '12px'}}>Cancel This Item</button>
+                                                </div>
+                                            )}
+                                            
+                                            {countedItems.length > 0 && (
+                                                <div style={{marginTop: '32px', paddingTop: '32px', borderTop: '3px solid #e5e7eb'}}>
+                                                    <h3 style={{marginBottom: '16px'}}>Count Log ({countedItems.length} items)</h3>
+                                                    <div style={{overflowX: 'auto'}}>
+                                                        <table>
+                                                            <thead>
+                                                                <tr>
+                                                                    <th className="text-center">Location</th>
+                                                                    <th className="text-center">SKU</th>
+                                                                    <th>Item Name</th>
+                                                                    <th className="text-center">UoM</th>
+                                                                    <th className="text-center">System</th>
+                                                                    <th className="text-center">Counted</th>
+                                                                    <th className="text-center">Variance</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {countedItems.map((item, idx) => (
+                                                                    <tr key={idx} style={{background: item.variance !== 0 ? '#FFDECD' : 'white'}}>
+                                                                        <td className="text-center text-mono" style={{fontWeight: 'bold'}}>{item.location}</td>
+                                                                        <td className="text-center text-mono" style={{fontSize: '13px'}}>{item.sku}</td>
+                                                                        <td>{item.itemName}</td>
+                                                                        <td className="text-center">{item.uom}</td>
+                                                                        <td className="text-center">{item.onHand}</td>
+                                                                        <td className="text-center" style={{fontWeight: 'bold', fontSize: '16px'}}>{item.counted}</td>
+                                                                        <td className="text-center" style={{fontWeight: 'bold', fontSize: '16px', color: item.variance === 0 ? '#00AD6E' : '#FF5B45'}}>
+                                                                            {item.variance > 0 ? '+' : ''}{item.variance}
+                                                                        </td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            )}
                             {activeTab === 'packing' && (
                                 <div className="card">
                                     <h2>Generate Packing Slip</h2>
