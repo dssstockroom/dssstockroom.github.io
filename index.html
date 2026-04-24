@@ -222,13 +222,9 @@
                 const sorted = [...results].sort((a, b) => {
                     let aValue = a[sortConfig.key], bValue = b[sortConfig.key];
                     if (sortConfig.key === 'manufacturerSKUs') { aValue = a.manufacturerSKUs.join(', '); bValue = b.manufacturerSKUs.join(', '); }
-                    if (sortConfig.key === 'ourPrice' || sortConfig.key === 'externalPrice') { 
+                    if (sortConfig.key === 'ourPrice') { 
                         aValue = parseFloat(aValue || 0); 
                         bValue = parseFloat(bValue || 0); 
-                        if (sortConfig.key === 'externalPrice') {
-                            aValue = aValue * 1.54;
-                            bValue = bValue * 1.54;
-                        }
                     }
                     if (sortConfig.key === 'location') {
                         const locA = parseLocation(a.location), locB = parseLocation(b.location);
@@ -385,8 +381,7 @@
                                                                 <th onClick={() => handleSort('vendor')} className="text-center">Vendor <SortIcon columnKey="vendor" /></th>
                                                                 <th onClick={() => handleSort('uom')} className="text-center">UoM <SortIcon columnKey="uom" /></th>
                                                                 <th onClick={() => handleSort('altUom')} className="text-center">Alt UoM <SortIcon columnKey="altUom" /></th>
-                                                                <th onClick={() => handleSort('ourPrice')} className="text-center">Our Price <SortIcon columnKey="ourPrice" /></th>
-                                                                <th onClick={() => handleSort('externalPrice')} className="text-center">External Price <SortIcon columnKey="externalPrice" /></th>
+                                                                <th onClick={() => handleSort('ourPrice')} className="text-center">Price <SortIcon columnKey="ourPrice" /></th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
