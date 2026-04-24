@@ -359,6 +359,56 @@
                 window.print();
             };
 
+            const deletePackingSlip = (id) => {
+                try { const u = savedPackingSlips.filter(s => s.id !== id); localStorage.setItem('stockroom_packing_slips', JSON.stringify(u)); setSavedPackingSlips(u); if (selectedSlip?.id === id) setSelectedSlip(null); } catch (e) {}
+            };
+
+            const exportPackingSlips = () => {
+                try {
+                    const blob = new Blob([JSON.stringify(savedPackingSlips, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = `packing_slips_${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+                } catch (e) {}
+            };
+
+            const importPackingSlips = (e) => {
+                const file = e.target.files[0]; if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    try {
+                        const imported = JSON.parse(ev.target.result);
+                        if (!Array.isArray(imported)) { alert('Invalid'); return; }
+                        const existingIds = new Set(savedPackingSlips.map(s => s.id));
+                        const newSlips = imported.filter(s => !existingIds.has(s.id));
+                        const merged = [...savedPackingSlips, ...newSlips];
+                        localStorage.setItem('stockroom_packing_slips', JSON.stringify(merged));
+                        setSavedPackingSlips(merged); alert(`Imported ${newSlips.length}`);
+                    } catch (e) { alert('Error'); }
+                };
+                reader.readAsText(file); e.target.value = '';
+            };
+
+            const handleHazmatMaterials = () => {
+                const lines = hazmatInput.split('\n').filter(l => l.trim());
+                const materials = lines.map(line => {
+                    const p = line.split(',').map(x => x.trim());
+                    return { unNumber: p[0] || '', properShippingName: p[1] || '', hazardClass: p[2] || '', packingGroup: p[3] || '', quantity: p[4] || '', type: p[5] || '' };
+                });
+                setHazmatBOL({ ...hazmatBOL, materials });
+            };
+
+            const clearHazmatBOL = () => {
+                setHazmatBOL({
+                    shipperName: 'UNIVERSITY OF PITTSBURGH', shipperAttn: '', shipperAddress: 'CHEMISTRY STOCKROOM', shipperAddress2: '219 PARKMAN AVE RM326',
+                    shipperCity: 'PITTSBURGH', shipperState: 'PA', shipperZip: '15213', shipperPhone: '412-624-8551',
+                    consigneeName: '', consigneeAttn: '', consigneeAddress: '', consigneeAddress2: '', consigneeCity: '', consigneeState: '', consigneeZip: '', consigneePhone: '',
+                    carrierName: '', carrierPhone: '', shipDate: '', emergencyContact: '', emergencyPhone: '', materials: []
+                });
+                setHazmatInput('');
+            };
+
             const endCycleCount = () => {
                 if (confirm('End session? Export first!')) {
                     setCycleCountSession(null); setCountedItems([]); setCurrentItem(null); 
