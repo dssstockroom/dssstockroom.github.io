@@ -101,11 +101,22 @@
 
             useEffect(() => {
                 fetch('inventory-status-report.xlsx')
-                    .then(r => r.arrayBuffer())
+                    .then(r => {
+                        // Try to get Last-Modified from headers
+                        const lastMod = r.headers.get('Last-Modified');
+                        if (lastMod) setFileLastModified(new Date(lastMod));
+                        return r.arrayBuffer();
+                    })
                     .then(ab => {
                         try {
-                            const wb = XLSX.read(ab, { type: 'array' });
+                            const wb = XLSX.read(ab, { type: 'array', cellDates: true });
                             const ws = wb.Sheets[wb.SheetNames[0]];
+                            
+                            // Try to read modification date from Excel file properties
+                            if (wb.Props && wb.Props.ModifiedDate) {
+                                setFileLastModified(new Date(wb.Props.ModifiedDate));
+                            }
+                            
                             const json = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' });
                             if (json.length < 2) return;
                             const data = [];
@@ -123,16 +134,9 @@
                                 }
                             }
                             setInventory(data);
-                        } catch (e) {}
+                        } catch (e) { console.error('Error reading file:', e); }
                     })
-                    .catch(() => {});
-
-                fetch('inventory-status-report.xlsx', { method: 'HEAD' })
-                    .then(r => {
-                        const lm = r.headers.get('Last-Modified');
-                        if (lm) setFileLastModified(new Date(lm));
-                    })
-                    .catch(() => {});
+                    .catch(e => console.error('Error loading file:', e));
 
                 try {
                     const slips = localStorage.getItem('stockroom_packing_slips');
