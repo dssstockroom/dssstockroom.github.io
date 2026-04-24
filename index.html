@@ -379,7 +379,20 @@
                     setScannedSKU('');
                     setCurrentItem(null);
                 } else {
-                    alert('Last shelf in this rack');
+                    // Last shelf - show missing items summary
+                    const allExpected = inventory.filter(item => {
+                        if (item.location.toUpperCase().includes('SS')) return false;
+                        const loc = parseLocation(item.location);
+                        return loc.section === cycleCountSession.section && loc.rack === parseInt(cycleCountSession.rack);
+                    });
+                    const countedSKUs = new Set(countedItems.map(i => normalizeSKU(i.sku)));
+                    const missing = allExpected.filter(item => !countedSKUs.has(normalizeSKU(item.internalSKU)));
+                    
+                    if (missing.length > 0) {
+                        alert(`Rack complete. ${missing.length} items not found. Check export for details.`);
+                    } else {
+                        alert('Rack complete. All expected items counted!');
+                    }
                 }
             };
 
@@ -398,11 +411,50 @@
                 const countedSKUs = new Set(countedItems.filter(i => !i.misplaced && i.countedAt === `${cycleCountSession.section}-${cycleCountSession.rack}-${cycleCountShelf}`).map(i => normalizeSKU(i.sku)));
                 return expected.filter(item => !countedSKUs.has(normalizeSKU(item.internalSKU)));
             };
+            
+            const getAllMissingItems = () => {
+                const allExpected = inventory.filter(item => {
+                    if (item.location.toUpperCase().includes('SS')) return false;
+                    const loc = parseLocation(item.location);
+                    return loc.section === cycleCountSession.section && loc.rack === parseInt(cycleCountSession.rack);
+                });
+                const countedSKUs = new Set(countedItems.map(i => normalizeSKU(i.sku)));
+                return allExpected.filter(item => !countedSKUs.has(normalizeSKU(item.internalSKU)));
+            };
 
             const exportCycleCount = () => {
-                if (!countedItems.length) return;
-                const csv = 'Counted At,Expected Location,SKU,Item,UoM,OnHand,Counted,Variance,Misplaced,Time\n' + 
-                    countedItems.map(i => `${i.countedAt},${i.expectedLocation},${i.sku},"${i.itemName}",${i.uom},${i.onHand},${i.counted},${i.variance},${i.misplaced ? 'YES' : 'NO'},${i.timestamp}`).join('\n');
+                if (!countedItems.length && !getAllMissingItems().length) return;
+                
+                const missing = getAllMissingItems();
+                const allRows = [
+                    ...countedItems.map(i => ({
+                        countedAt: i.countedAt,
+                        expectedLocation: i.expectedLocation,
+                        sku: i.sku,
+                        itemName: i.itemName,
+                        uom: i.uom,
+                        onHand: i.onHand,
+                        counted: i.counted,
+                        variance: i.variance,
+                        status: i.misplaced ? 'MISPLACED' : (i.variance === 0 ? 'OK' : 'VARIANCE'),
+                        timestamp: i.timestamp
+                    })),
+                    ...missing.map(item => ({
+                        countedAt: '-',
+                        expectedLocation: item.location,
+                        sku: item.internalSKU,
+                        itemName: item.itemName,
+                        uom: item.uom,
+                        onHand: item.onHand || 0,
+                        counted: 0,
+                        variance: -(parseInt(item.onHand) || 0),
+                        status: 'MISSING',
+                        timestamp: new Date().toISOString()
+                    }))
+                ];
+                
+                const csv = 'Counted At,Expected Location,SKU,Item,UoM,System On-Hand,Counted,Variance,Status,Time\n' + 
+                    allRows.map(i => `${i.countedAt},${i.expectedLocation},${i.sku},"${i.itemName}",${i.uom},${i.onHand},${i.counted},${i.variance},${i.status},${i.timestamp}`).join('\n');
                 const blob = new Blob([csv], { type: 'text/csv' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -636,6 +688,18 @@
                                                     <button onClick={endCycleCount} className="btn btn-red" style={{padding: '10px 20px'}}>End</button>
                                                 </div>
                                             </div>
+                                            
+                                            {getMissingItems().length > 0 && (
+                                                <div className="alert alert-error">
+                                                    <div>
+                                                        <strong>Missing Items on This Shelf:</strong> {getMissingItems().length}
+                                                        <div style={{fontSize: '12px', marginTop: '8px'}}>
+                                                            {getMissingItems().slice(0, 5).map((i, idx) => <div key={idx}>{i.internalSKU} - {i.itemName}</div>)}
+                                                            {getMissingItems().length > 5 && <div>... and {getMissingItems().length - 5} more</div>}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                             
                                             {getMissingItems().length > 0 && (
                                                 <div className="alert alert-error">
