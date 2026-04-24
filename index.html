@@ -297,10 +297,12 @@
             // Cycle Count Functions
             const startCycleCount = () => {
                 if (!cycleCountSection || !cycleCountRack) return;
-                const shelves = getUniqueShelves(cycleCountSession.section, cycleCountSession.rack);
+                const shelves = getUniqueShelves(cycleCountSection, cycleCountRack);
                 setCycleCountSession({ section: cycleCountSection, rack: cycleCountRack, startTime: new Date().toISOString() });
                 setCycleCountShelf(shelves[0]?.toString() || '1');
                 setCountedItems([]);
+                setScannedSKU('');
+                setCurrentItem(null);
             };
 
             const handleScan = () => {
