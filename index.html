@@ -111,9 +111,9 @@
             const [countedItems, setCountedItems] = useState([]);
 
             useEffect(() => {
+                // Try to load from embedded file first (for production)
                 fetch('inventory-status-report.xlsx')
                     .then(r => {
-                        // Try to get Last-Modified from headers
                         const lastMod = r.headers.get('Last-Modified');
                         if (lastMod) setFileLastModified(new Date(lastMod));
                         return r.arrayBuffer();
@@ -122,12 +122,7 @@
                         try {
                             const wb = XLSX.read(ab, { type: 'array', cellDates: true });
                             const ws = wb.Sheets[wb.SheetNames[0]];
-                            
-                            // Try to read modification date from Excel file properties
-                            if (wb.Props && wb.Props.ModifiedDate) {
-                                setFileLastModified(new Date(wb.Props.ModifiedDate));
-                            }
-                            
+                            if (wb.Props && wb.Props.ModifiedDate) setFileLastModified(new Date(wb.Props.ModifiedDate));
                             const json = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' });
                             if (json.length < 2) return;
                             const data = [];
@@ -148,7 +143,14 @@
                             setInventory(data);
                         } catch (e) { console.error('Error reading file:', e); }
                     })
-                    .catch(e => console.error('Error loading file:', e));
+                    .catch(e => {
+                        console.log('Embedded file not found, checking localStorage...');
+                        // Fall back to localStorage for local development
+                        try {
+                            const savedInventory = localStorage.getItem('stockroom_inventory');
+                            if (savedInventory) setInventory(JSON.parse(savedInventory));
+                        } catch (err) {}
+                    });
 
                 try {
                     const slips = localStorage.getItem('stockroom_packing_slips');
@@ -432,9 +434,9 @@
                             <div className="card">
                                 <h2>Database Status</h2>
                                 {inventory.length > 0 ? (
-                                    <div className="alert alert-success"><strong>Database loaded:</strong> {inventory.length} items</div>
+                                    <div className="alert alert-success"><strong>Database loaded:</strong> {inventory.length} items from inventory-status-report.xlsx</div>
                                 ) : (
-                                    <div className="alert alert-info">Loading database...</div>
+                                    <div className="alert alert-info">Loading database from inventory-status-report.xlsx...</div>
                                 )}
                             </div>
                             {activeTab === 'search' && (
