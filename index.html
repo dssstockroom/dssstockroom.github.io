@@ -66,9 +66,10 @@
             const [searchError, setSearchError] = useState('');
 
             useEffect(() => {
-                fetch('inventory-status-report.xlsx')
+                const fileUrl = new URL('inventory-status-report.xlsx', window.location.href).href;
+                fetch(fileUrl)
                     .then(res => {
-                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        if (!res.ok) throw new Error(`HTTP ${res.status} – The server returned an error. Attempted URL: ${fileUrl}`);
                         return res.arrayBuffer();
                     })
                     .then(buffer => {
@@ -109,7 +110,7 @@
                     })
                     .catch(err => {
                         setLoadStatus('error');
-                        setLoadError('Could not load inventory-status-report.xlsx. Please ensure the file is present in the same directory as this page.');
+                        setLoadError(err.message || `Could not load inventory-status-report.xlsx. Attempted: ${fileUrl}`);
                     });
             }, []);
 
