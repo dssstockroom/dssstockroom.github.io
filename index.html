@@ -86,20 +86,13 @@
             const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
             const [error, setError] = useState('');
             const [fileLastModified, setFileLastModified] = useState(null);
+            
             const [packingSlip, setPackingSlip] = useState({ supplier: '', poNumber: '', dateReceived: '', receivedBy: '', items: [], notes: '', notFoundSKUs: [] });
             const [itemInput, setItemInput] = useState('');
             const [savedPackingSlips, setSavedPackingSlips] = useState([]);
             const [historySearchQuery, setHistorySearchQuery] = useState('');
             const [selectedSlip, setSelectedSlip] = useState(null);
-            const [hazmatBOL, setHazmatBOL] = useState({
-                shipperName: 'UNIVERSITY OF PITTSBURGH', shipperAttn: '', shipperAddress: 'CHEMISTRY STOCKROOM', shipperAddress2: '219 PARKMAN AVE RM326',
-                shipperCity: 'PITTSBURGH', shipperState: 'PA', shipperZip: '15213', shipperPhone: '412-624-8551',
-                consigneeName: '', consigneeAttn: '', consigneeAddress: '', consigneeAddress2: '', consigneeCity: '', consigneeState: '', consigneeZip: '', consigneePhone: '',
-                carrierName: '', carrierPhone: '', shipDate: '', emergencyContact: '', emergencyPhone: '', materials: []
-            });
-            const [hazmatInput, setHazmatInput] = useState('');
             
-            // Cycle Count states
             const [cycleCountSession, setCycleCountSession] = useState(null);
             const [cycleCountSection, setCycleCountSection] = useState('');
             const [cycleCountRack, setCycleCountRack] = useState('');
@@ -109,20 +102,27 @@
             const [currentItem, setCurrentItem] = useState(null);
             const [needsRecount, setNeedsRecount] = useState(false);
             const [countedItems, setCountedItems] = useState([]);
+            
+            const [hazmatBOL, setHazmatBOL] = useState({
+                shipperName: 'UNIVERSITY OF PITTSBURGH', shipperAttn: '', shipperAddress: 'CHEMISTRY STOCKROOM', shipperAddress2: '219 PARKMAN AVE RM326',
+                shipperCity: 'PITTSBURGH', shipperState: 'PA', shipperZip: '15213', shipperPhone: '412-624-8551',
+                consigneeName: '', consigneeAttn: '', consigneeAddress: '', consigneeAddress2: '', consigneeCity: '', consigneeState: '', consigneeZip: '', consigneePhone: '',
+                carrierName: '', carrierPhone: '', shipDate: '', emergencyContact: '', emergencyPhone: '', materials: []
+            });
+            const [hazmatInput, setHazmatInput] = useState('');
 
             useEffect(() => {
-                // Try to load from embedded file first (for production)
                 fetch('inventory-status-report.xlsx')
                     .then(r => {
-                        const lastMod = r.headers.get('Last-Modified');
-                        if (lastMod) setFileLastModified(new Date(lastMod));
+                        const lm = r.headers.get('Last-Modified');
+                        if (lm) setFileLastModified(new Date(lm));
                         return r.arrayBuffer();
                     })
                     .then(ab => {
                         try {
                             const wb = XLSX.read(ab, { type: 'array', cellDates: true });
                             const ws = wb.Sheets[wb.SheetNames[0]];
-                            if (wb.Props && wb.Props.ModifiedDate) setFileLastModified(new Date(wb.Props.ModifiedDate));
+                            if (wb.Props?.ModifiedDate) setFileLastModified(new Date(wb.Props.ModifiedDate));
                             const json = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' });
                             if (json.length < 2) return;
                             const data = [];
@@ -141,15 +141,13 @@
                                 }
                             }
                             setInventory(data);
-                        } catch (e) { console.error('Error reading file:', e); }
+                        } catch (e) {}
                     })
-                    .catch(e => {
-                        console.log('Embedded file not found, checking localStorage...');
-                        // Fall back to localStorage for local development
+                    .catch(() => {
                         try {
-                            const savedInventory = localStorage.getItem('stockroom_inventory');
-                            if (savedInventory) setInventory(JSON.parse(savedInventory));
-                        } catch (err) {}
+                            const saved = localStorage.getItem('stockroom_inventory');
+                            if (saved) setInventory(JSON.parse(saved));
+                        } catch (e) {}
                     });
 
                 try {
@@ -183,7 +181,7 @@
             const handleGeneralSearch = () => {
                 if (!inventory.length) { setError('Database loading...'); return; }
                 const q = searchQuery.trim().toLowerCase();
-                if (!q) { setError('Enter search term'); return; }
+                if (!q) { setError('Enter search'); return; }
                 const words = q.split(/\s+/);
                 const nq = normalizeSKU(q);
                 const found = inventory.filter(item => {
@@ -219,10 +217,7 @@
                 });
             };
 
-            const SortIcon = ({ columnKey }) => {
-                if (sortConfig.key !== columnKey) return <span style={{color: '#9ca3af', marginLeft: '4px'}}>⇅</span>;
-                return sortConfig.direction === 'asc' ? <span style={{marginLeft: '4px'}}>↑</span> : <span style={{marginLeft: '4px'}}>↓</span>;
-            };
+            const SortIcon = ({ columnKey }) => sortConfig.key !== columnKey ? <span style={{color: '#9ca3af', marginLeft: '4px'}}>⇅</span> : sortConfig.direction === 'asc' ? <span style={{marginLeft: '4px'}}>↑</span> : <span style={{marginLeft: '4px'}}>↓</span>;
 
             const handlePackingSlipItems = () => {
                 if (!inventory.length) return;
@@ -246,174 +241,165 @@
                 }
             };
 
-            const deletePackingSlip = (id) => {
-                try { const u = savedPackingSlips.filter(s => s.id !== id); localStorage.setItem('stockroom_packing_slips', JSON.stringify(u)); setSavedPackingSlips(u); if (selectedSlip?.id === id) setSelectedSlip(null); } catch (e) {}
-            };
-
-            const exportPackingSlips = () => {
-                try {
-                    const blob = new Blob([JSON.stringify(savedPackingSlips, null, 2)], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url; a.download = `packing_slips_${new Date().toISOString().split('T')[0]}.json`;
-                    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-                } catch (e) {}
-            };
-
-            const importPackingSlips = (e) => {
-                const file = e.target.files[0]; if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    try {
-                        const imported = JSON.parse(ev.target.result);
-                        if (!Array.isArray(imported)) { alert('Invalid'); return; }
-                        const existingIds = new Set(savedPackingSlips.map(s => s.id));
-                        const newSlips = imported.filter(s => !existingIds.has(s.id));
-                        const merged = [...savedPackingSlips, ...newSlips];
-                        localStorage.setItem('stockroom_packing_slips', JSON.stringify(merged));
-                        setSavedPackingSlips(merged); alert(`Imported ${newSlips.length}`);
-                    } catch (e) { alert('Error'); }
-                };
-                reader.readAsText(file); e.target.value = '';
-            };
-
-            const handleHazmatMaterials = () => {
-                const lines = hazmatInput.split('\n').filter(l => l.trim());
-                const materials = lines.map(line => {
-                    const p = line.split(',').map(x => x.trim());
-                    return { unNumber: p[0] || '', properShippingName: p[1] || '', hazardClass: p[2] || '', packingGroup: p[3] || '', quantity: p[4] || '', type: p[5] || '' };
-                });
-                setHazmatBOL({ ...hazmatBOL, materials });
-            };
-
-            const clearHazmatBOL = () => {
-                setHazmatBOL({
-                    shipperName: 'UNIVERSITY OF PITTSBURGH', shipperAttn: '', shipperAddress: 'CHEMISTRY STOCKROOM', shipperAddress2: '219 PARKMAN AVE RM326',
-                    shipperCity: 'PITTSBURGH', shipperState: 'PA', shipperZip: '15213', shipperPhone: '412-624-8551',
-                    consigneeName: '', consigneeAttn: '', consigneeAddress: '', consigneeAddress2: '', consigneeCity: '', consigneeState: '', consigneeZip: '', consigneePhone: '',
-                    carrierName: '', carrierPhone: '', shipDate: '', emergencyContact: '', emergencyPhone: '', materials: []
-                });
-                setHazmatInput('');
-            };
-            
             const startCycleCount = () => {
-                if (!cycleCountSection || !cycleCountRack) {
-                    alert('Please select section and rack');
-                    return;
-                }
-                setCycleCountSession({
-                    section: cycleCountSection,
-                    rack: cycleCountRack,
-                    startTime: new Date().toISOString(),
-                    counter: ''
-                });
+                if (!cycleCountSection || !cycleCountRack) return;
+                setCycleCountSession({ section: cycleCountSection, rack: cycleCountRack, startTime: new Date().toISOString() });
                 setCountedItems([]);
-                setScannedSKU('');
-                setCurrentItem(null);
             };
-            
+
             const handleScan = () => {
                 if (!scannedSKU.trim()) return;
-                
-                const normalizedSKU = normalizeSKU(scannedSKU);
-                const item = inventory.find(i => {
-                    if (normalizeSKU(i.internalSKU) === normalizedSKU) return true;
-                    return i.manufacturerSKUs.some(m => normalizeSKU(m) === normalizedSKU);
-                });
-                
-                if (!item) {
-                    alert('SKU not found in database');
-                    setScannedSKU('');
-                    return;
-                }
-                
-                // Check if item is in correct section/rack
+                const ns = normalizeSKU(scannedSKU);
+                const item = inventory.find(i => normalizeSKU(i.internalSKU) === ns || i.manufacturerSKUs.some(m => normalizeSKU(m) === ns));
+                if (!item) { alert('SKU not found'); setScannedSKU(''); return; }
                 const loc = parseLocation(item.location);
                 if (loc.section !== cycleCountSession.section || loc.rack !== parseInt(cycleCountSession.rack)) {
-                    alert(`Item is in ${item.location}, not in ${cycleCountSession.section}-${cycleCountSession.rack}`);
-                    setScannedSKU('');
-                    return;
+                    alert(`Item in ${item.location}, not ${cycleCountSession.section}-${cycleCountSession.rack}`);
+                    setScannedSKU(''); return;
                 }
-                
                 setCurrentItem(item);
                 setCountQuantity('');
                 setRecountQuantity('');
                 setNeedsRecount(false);
             };
-            
+
             const submitCount = () => {
-                if (!countQuantity) return;
-                
-                const counted = parseInt(countQuantity);
+                if (!countQuantity && !needsRecount) return;
+                if (needsRecount && !recountQuantity) return;
+                const counted = parseInt(needsRecount ? recountQuantity : countQuantity);
                 const onHand = parseInt(currentItem.onHand || 0);
-                
-                if (counted !== onHand && !needsRecount) {
-                    setNeedsRecount(true);
-                    return;
-                }
-                
-                const finalCount = needsRecount ? parseInt(recountQuantity) : counted;
-                const variance = finalCount - onHand;
-                
+                if (counted !== onHand && !needsRecount) { setNeedsRecount(true); return; }
                 setCountedItems([...countedItems, {
-                    sku: currentItem.internalSKU,
-                    itemName: currentItem.itemName,
-                    location: currentItem.location,
-                    uom: currentItem.uom,
-                    onHand: onHand,
-                    counted: finalCount,
-                    variance: variance,
-                    timestamp: new Date().toISOString()
+                    sku: currentItem.internalSKU, itemName: currentItem.itemName, location: currentItem.location,
+                    uom: currentItem.uom, onHand, counted, variance: counted - onHand, timestamp: new Date().toISOString()
                 }]);
-                
-                setScannedSKU('');
-                setCurrentItem(null);
-                setCountQuantity('');
-                setRecountQuantity('');
-                setNeedsRecount(false);
+                setScannedSKU(''); setCurrentItem(null); setCountQuantity(''); setRecountQuantity(''); setNeedsRecount(false);
             };
-            
+
             const exportCycleCount = () => {
                 if (!countedItems.length) return;
-                const csv = 'Location,SKU,Item Name,UoM,On Hand,Counted,Variance,Timestamp\n' + 
-                    countedItems.map(i => `${i.location},${i.sku},"${i.itemName}",${i.uom},${i.onHand},${i.counted},${i.variance},${i.timestamp}`).join('\n');
+                const csv = 'Location,SKU,Item,UoM,OnHand,Counted,Variance,Time\n' + countedItems.map(i => `${i.location},${i.sku},"${i.itemName}",${i.uom},${i.onHand},${i.counted},${i.variance},${i.timestamp}`).join('\n');
                 const blob = new Blob([csv], { type: 'text/csv' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = url; 
-                a.download = `cycle_count_${cycleCountSession.section}-${cycleCountSession.rack}_${new Date().toISOString().split('T')[0]}.csv`;
+                a.href = url; a.download = `cycle_count_${cycleCountSession.section}${cycleCountSession.rack}_${new Date().toISOString().split('T')[0]}.csv`;
                 document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
             };
-            
+
             const endCycleCount = () => {
-                if (confirm('End cycle count session? Make sure to export first.')) {
-                    setCycleCountSession(null);
-                    setCountedItems([]);
-                    setCurrentItem(null);
-                    setCycleCountSection('');
-                    setCycleCountRack('');
+                if (confirm('End session? Export first!')) {
+                    setCycleCountSession(null); setCountedItems([]); setCurrentItem(null); setCycleCountSection(''); setCycleCountRack('');
                 }
             };
-            
+
             const getUniqueSections = () => {
-                const sections = new Set();
-                inventory.forEach(item => {
-                    if (item.location.toUpperCase().includes('SS')) return;
-                    const parsed = parseLocation(item.location);
-                    if (parsed.section === null) return;
-                    sections.add(parsed.section);
+                const sec = new Set();
+                inventory.forEach(i => {
+                    if (i.location.toUpperCase().includes('SS')) return;
+                    const p = parseLocation(i.location);
+                    if (p.section) sec.add(p.section);
                 });
-                return Array.from(sections).sort();
+                return Array.from(sec).sort();
             };
-            
+
             const getUniqueRacks = (section) => {
                 const racks = new Set();
-                inventory.forEach(item => {
-                    const parsed = parseLocation(item.location);
-                    if (parsed.section === section) racks.add(parsed.rack);
+                inventory.forEach(i => {
+                    const p = parseLocation(i.location);
+                    if (p.section === section) racks.add(p.rack);
                 });
                 return Array.from(racks).sort((a, b) => a - b);
             };
+
+            const CycleCountTab = () => (
+                <div className="card">
+                    <h2>Cycle Count</h2>
+                    {!cycleCountSession ? (
+                        <div>
+                            <p style={{fontSize: '14px', color: '#666', marginBottom: '20px'}}>Select section and rack</p>
+                            <div className="grid-2">
+                                <div className="form-group">
+                                    <label className="form-label">Section</label>
+                                    <select className="form-input" value={cycleCountSection} onChange={(e) => { setCycleCountSection(e.target.value); setCycleCountRack(''); }}>
+                                        <option value="">Select...</option>
+                                        {getUniqueSections().map(s => <option key={s} value={s}>Section {s}</option>)}
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Rack</label>
+                                    <select className="form-input" value={cycleCountRack} onChange={(e) => setCycleCountRack(e.target.value)} disabled={!cycleCountSection}>
+                                        <option value="">Select...</option>
+                                        {cycleCountSection && getUniqueRacks(cycleCountSection).map(r => <option key={r} value={r}>Rack {r}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                            <button onClick={startCycleCount} disabled={!cycleCountSection || !cycleCountRack} className="btn btn-primary btn-block">Start</button>
+                        </div>
+                    ) : (
+                        <div>
+                            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '20px'}}>
+                                <h3 style={{margin: 0}}>Section {cycleCountSession.section} - Rack {cycleCountSession.rack}</h3>
+                                <div style={{display: 'flex', gap: '8px'}}>
+                                    <button onClick={exportCycleCount} disabled={!countedItems.length} className="btn btn-primary" style={{padding: '10px 20px'}}>Export</button>
+                                    <button onClick={endCycleCount} className="btn btn-red" style={{padding: '10px 20px'}}>End</button>
+                                </div>
+                            </div>
+                            <div className="alert alert-info"><strong>Counted:</strong> {countedItems.length}</div>
+                            {!currentItem ? (
+                                <div>
+                                    <div className="form-group">
+                                        <label className="form-label" style={{fontSize: '16px'}}>Scan SKU</label>
+                                        <input type="text" className="form-input" value={scannedSKU} onChange={(e) => setScannedSKU(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleScan()} autoFocus style={{fontSize: '22px', padding: '20px', textAlign: 'center', border: '3px solid #003594'}} />
+                                    </div>
+                                    <button onClick={handleScan} className="btn btn-primary btn-block" style={{fontSize: '18px', padding: '18px'}}>Lookup</button>
+                                </div>
+                            ) : (
+                                <div>
+                                    <div style={{background: '#DBEEFF', border: '3px solid #003594', borderRadius: '8px', padding: '24px', marginBottom: '24px'}}>
+                                        <p style={{margin: '8px 0', fontSize: '20px', color: '#003594'}}><strong>SKU:</strong> {currentItem.internalSKU}</p>
+                                        <p style={{margin: '8px 0', fontSize: '18px'}}><strong>Item:</strong> {currentItem.itemName}</p>
+                                        <p style={{margin: '8px 0', fontSize: '18px'}}><strong>Location:</strong> {currentItem.location}</p>
+                                        <p style={{margin: '12px 0', fontSize: '24px', fontWeight: 'bold', color: '#003594'}}><strong>UoM:</strong> {currentItem.uom}</p>
+                                        <p style={{margin: '8px 0', fontSize: '18px'}}><strong>On-Hand:</strong> {currentItem.onHand || '0'}</p>
+                                    </div>
+                                    {!needsRecount ? (
+                                        <div>
+                                            <div className="form-group">
+                                                <label className="form-label" style={{fontSize: '18px'}}>Count</label>
+                                                <input type="number" className="form-input" value={countQuantity} onChange={(e) => setCountQuantity(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && submitCount()} autoFocus style={{fontSize: '28px', padding: '20px', textAlign: 'center', border: '3px solid #00AD6E'}} />
+                                            </div>
+                                            <button onClick={submitCount} disabled={!countQuantity} className="btn btn-secondary btn-block" style={{fontSize: '18px', padding: '18px'}}>Submit</button>
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <div className="alert alert-error" style={{fontSize: '18px', padding: '20px'}}>
+                                                <strong>MISMATCH:</strong> Counted {countQuantity}, System {currentItem.onHand}. Recount.
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="form-label" style={{fontSize: '18px'}}>Recount</label>
+                                                <input type="number" className="form-input" value={recountQuantity} onChange={(e) => setRecountQuantity(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && submitCount()} autoFocus style={{fontSize: '28px', padding: '20px', textAlign: 'center', border: '3px solid #FF5B45'}} />
+                                            </div>
+                                            <button onClick={submitCount} disabled={!recountQuantity} className="btn btn-secondary btn-block" style={{fontSize: '18px', padding: '18px'}}>Submit</button>
+                                        </div>
+                                    )}
+                                    <button onClick={() => { setCurrentItem(null); setScannedSKU(''); setCountQuantity(''); setRecountQuantity(''); setNeedsRecount(false); }} className="btn btn-gray btn-block" style={{marginTop: '12px'}}>Cancel</button>
+                                </div>
+                            )}
+                            {countedItems.length > 0 && (
+                                <div style={{marginTop: '32px', paddingTop: '32px', borderTop: '3px solid #e5e7eb'}}>
+                                    <h3>Log ({countedItems.length})</h3>
+                                    <div style={{overflowX: 'auto'}}>
+                                        <table>
+                                            <thead><tr><th className="text-center">Loc</th><th className="text-center">SKU</th><th>Item</th><th className="text-center">UoM</th><th className="text-center">System</th><th className="text-center">Count</th><th className="text-center">Var</th></tr></thead>
+                                            <tbody>{countedItems.map((it, i) => <tr key={i} style={{background: it.variance !== 0 ? '#FFDECD' : 'white'}}><td className="text-center text-mono" style={{fontWeight: 'bold'}}>{it.location}</td><td className="text-center text-mono" style={{fontSize: '13px'}}>{it.sku}</td><td>{it.itemName}</td><td className="text-center">{it.uom}</td><td className="text-center">{it.onHand}</td><td className="text-center" style={{fontWeight: 'bold', fontSize: '16px'}}>{it.counted}</td><td className="text-center" style={{fontWeight: 'bold', fontSize: '16px', color: it.variance === 0 ? '#00AD6E' : '#FF5B45'}}>{it.variance > 0 ? '+' : ''}{it.variance}</td></tr>)}</tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            );
 
             return (
                 <div>
@@ -433,402 +419,18 @@
                             </div>
                             <div className="card">
                                 <h2>Database Status</h2>
-                                {inventory.length > 0 ? (
-                                    <div className="alert alert-success"><strong>Database loaded:</strong> {inventory.length} items from inventory-status-report.xlsx</div>
-                                ) : (
-                                    <div className="alert alert-info">Loading database from inventory-status-report.xlsx...</div>
-                                )}
+                                {inventory.length > 0 ? <div className="alert alert-success"><strong>Loaded:</strong> {inventory.length} items</div> : <div className="alert alert-info">Loading...</div>}
                             </div>
-                            {activeTab === 'search' && (
-                                <>
-                                    <div className="card">
-                                        <h2>General Search</h2>
-                                        <div className="form-group">
-                                            <label className="form-label">Search by SKU or Item Name</label>
-                                            <input type="text" className="form-input" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleGeneralSearch()} />
-                                        </div>
-                                        {error && <div className="alert alert-error">{error}</div>}
-                                        <button onClick={handleGeneralSearch} className="btn btn-primary btn-block">Search</button>
-                                    </div>
-                                    {searchResults && (
-                                        <div className="card">
-                                            <h2>Results ({searchResults.length})</h2>
-                                            {searchResults.length > 0 ? (
-                                                <>
-                                                    <div style={{overflowX: 'auto'}}>
-                                                        <table>
-                                                            <thead>
-                                                                <tr>
-                                                                    <th onClick={() => handleSort('location')} className="text-center">Location <SortIcon columnKey="location" /></th>
-                                                                    <th onClick={() => handleSort('itemName')}>Item <SortIcon columnKey="itemName" /></th>
-                                                                    <th onClick={() => handleSort('internalSKU')} className="text-center">Internal SKU <SortIcon columnKey="internalSKU" /></th>
-                                                                    <th onClick={() => handleSort('manufacturerSKUs')}>Vendor SKUs <SortIcon columnKey="manufacturerSKUs" /></th>
-                                                                    <th onClick={() => handleSort('vendor')} className="text-center">Vendor <SortIcon columnKey="vendor" /></th>
-                                                                    <th onClick={() => handleSort('uom')} className="text-center">UoM <SortIcon columnKey="uom" /></th>
-                                                                    <th onClick={() => handleSort('altUom')} className="text-center">Alt UoM <SortIcon columnKey="altUom" /></th>
-                                                                    <th onClick={() => handleSort('ourPrice')} className="text-center">Price <SortIcon columnKey="ourPrice" /></th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {getSortedResults(searchResults).map((item, idx) => (
-                                                                    <tr key={idx}>
-                                                                        <td className="text-center text-mono" style={{fontWeight: 'bold'}}>{item.location}</td>
-                                                                        <td>{item.itemName}</td>
-                                                                        <td className="text-center text-mono" style={{fontSize: '12px'}}>{item.internalSKU}</td>
-                                                                        <td className="text-mono" style={{fontSize: '12px'}}>{item.manufacturerSKUs.join(', ')}</td>
-                                                                        <td className="text-center" style={{fontSize: '12px'}}>{item.vendor || '-'}</td>
-                                                                        <td className="text-center">
-                                                                            <div>{item.uom}</div>
-                                                                            {item.childPartNbr && <div style={{fontSize: '11px', color: '#666', marginTop: '2px'}}>→ {item.childPartNbr}{item.childConvFactor && ` (${item.childConvFactor})`}</div>}
-                                                                        </td>
-                                                                        <td className="text-center">
-                                                                            {item.altUom ? <div><div>{item.altUom}</div>{item.convFactor && <div style={{fontSize: '11px', color: '#666'}}>×{item.convFactor}</div>}</div> : '-'}
-                                                                        </td>
-                                                                        <td className="text-center">
-                                                                            {item.ourPrice && <div style={{fontWeight: 'bold', color: '#00AD6E'}}>${item.ourPrice}</div>}
-                                                                            {item.externalPrice && <div style={{fontWeight: 'bold', color: '#FF5B45', fontSize: '12px', marginTop: '2px'}}>${(parseFloat(item.externalPrice) * 1.54).toFixed(2)}</div>}
-                                                                            {!item.ourPrice && !item.externalPrice && '-'}
-                                                                        </td>
-                                                                    </tr>
-                                                                ))}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                    <div style={{marginTop: '20px', padding: '16px', background: '#DBEEFF', borderRadius: '6px', border: '2px solid #66B2E3'}}>
-                                                        <p style={{fontSize: '13px', color: '#00205B', margin: 0}}><strong>Note:</strong> Prices are subject to change and should not be considered a quote. Please inquire with a sales representative to confirm current pricing.</p>
-                                                    </div>
-                                                </>
-                                            ) : <p style={{textAlign: 'center', color: '#666', padding: '32px'}}>No items found.</p>}
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                            {activeTab === 'cyclecount' && (
-                                <div className="card">
-                                    <h2>Cycle Count</h2>
-                                    {!cycleCountSession ? (
-                                        <div>
-                                            <p style={{fontSize: '14px', color: '#666', marginBottom: '20px'}}>Select section and rack to begin inventory count</p>
-                                            <div className="grid-2">
-                                                <div className="form-group">
-                                                    <label className="form-label">Section (Letter)</label>
-                                                    <select className="form-input" value={cycleCountSection} onChange={(e) => { setCycleCountSection(e.target.value); setCycleCountRack(''); }}>
-                                                        <option value="">Choose section...</option>
-                                                        {getUniqueSections().map(s => <option key={s} value={s}>Section {s}</option>)}
-                                                    </select>
-                                                </div>
-                                                <div className="form-group">
-                                                    <label className="form-label">Rack (Number)</label>
-                                                    <select className="form-input" value={cycleCountRack} onChange={(e) => setCycleCountRack(e.target.value)} disabled={!cycleCountSection}>
-                                                        <option value="">Choose rack...</option>
-                                                        {cycleCountSection && getUniqueRacks(cycleCountSection).map(r => <option key={r} value={r}>Rack {r}</option>)}
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <button onClick={startCycleCount} disabled={!cycleCountSection || !cycleCountRack} className="btn btn-primary btn-block">Begin Counting</button>
-                                        </div>
-                                    ) : (
-                                        <div>
-                                            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '20px'}}>
-                                                <h3 style={{margin: 0}}>Section {cycleCountSession.section} - Rack {cycleCountSession.rack}</h3>
-                                                <div style={{display: 'flex', gap: '8px'}}>
-                                                    <button onClick={exportCycleCount} disabled={!countedItems.length} className="btn btn-primary" style={{padding: '10px 20px'}}>Export CSV</button>
-                                                    <button onClick={endCycleCount} className="btn btn-red" style={{padding: '10px 20px'}}>End Session</button>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="alert alert-info" style={{marginBottom: '20px', fontSize: '16px'}}>
-                                                <strong>Items Counted:</strong> {countedItems.length}
-                                            </div>
-                                            
-                                            {!currentItem ? (
-                                                <div>
-                                                    <div className="form-group">
-                                                        <label className="form-label" style={{fontSize: '16px'}}>Scan Barcode</label>
-                                                        <input 
-                                                            type="text" 
-                                                            className="form-input" 
-                                                            value={scannedSKU} 
-                                                            onChange={(e) => setScannedSKU(e.target.value)}
-                                                            onKeyPress={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleScan(); } }}
-                                                            placeholder="Scan item barcode..."
-                                                            autoFocus
-                                                            style={{fontSize: '22px', padding: '20px', textAlign: 'center', border: '3px solid #003594'}}
-                                                        />
-                                                    </div>
-                                                    <button onClick={handleScan} className="btn btn-primary btn-block" style={{fontSize: '18px', padding: '18px'}}>Look Up Item</button>
-                                                </div>
-                                            ) : (
-                                                <div>
-                                                    <div style={{background: '#DBEEFF', border: '3px solid #003594', borderRadius: '8px', padding: '24px', marginBottom: '24px'}}>
-                                                        <p style={{margin: '8px 0', fontSize: '20px', color: '#003594'}}><strong>SKU:</strong> <span className="text-mono">{currentItem.internalSKU}</span></p>
-                                                        <p style={{margin: '8px 0', fontSize: '18px'}}><strong>Item:</strong> {currentItem.itemName}</p>
-                                                        <p style={{margin: '8px 0', fontSize: '18px'}}><strong>Location:</strong> <span className="text-mono">{currentItem.location}</span></p>
-                                                        <p style={{margin: '12px 0', fontSize: '24px', fontWeight: 'bold', color: '#003594'}}><strong>Unit of Measure:</strong> {currentItem.uom}</p>
-                                                        <p style={{margin: '8px 0', fontSize: '18px'}}><strong>System On-Hand:</strong> {currentItem.onHand || '0'}</p>
-                                                    </div>
-                                                    
-                                                    {!needsRecount ? (
-                                                        <div>
-                                                            <div className="form-group">
-                                                                <label className="form-label" style={{fontSize: '18px'}}>Enter Physical Count</label>
-                                                                <input 
-                                                                    type="number" 
-                                                                    className="form-input" 
-                                                                    value={countQuantity} 
-                                                                    onChange={(e) => setCountQuantity(e.target.value)}
-                                                                    onKeyPress={(e) => { if (e.key === 'Enter') { e.preventDefault(); submitCount(); } }}
-                                                                    placeholder="Enter quantity counted..."
-                                                                    autoFocus
-                                                                    style={{fontSize: '28px', padding: '20px', textAlign: 'center', border: '3px solid #00AD6E'}}
-                                                                />
-                                                            </div>
-                                                            <button onClick={submitCount} disabled={!countQuantity} className="btn btn-secondary btn-block" style={{fontSize: '18px', padding: '18px'}}>Submit Count</button>
-                                                        </div>
-                                                    ) : (
-                                                        <div>
-                                                            <div className="alert alert-error" style={{fontSize: '18px', padding: '20px', marginBottom: '20px'}}>
-                                                                <div>
-                                                                    <strong>COUNT MISMATCH DETECTED</strong>
-                                                                    <p style={{margin: '8px 0 0 0'}}>Your count: <strong>{countQuantity}</strong> | System shows: <strong>{currentItem.onHand}</strong></p>
-                                                                    <p style={{margin: '4px 0 0 0'}}>Please verify and recount this item.</p>
-                                                                </div>
-                                                            </div>
-                                                            <div className="form-group">
-                                                                <label className="form-label" style={{fontSize: '18px'}}>Recount Quantity</label>
-                                                                <input 
-                                                                    type="number" 
-                                                                    className="form-input" 
-                                                                    value={recountQuantity} 
-                                                                    onChange={(e) => setRecountQuantity(e.target.value)}
-                                                                    onKeyPress={(e) => { if (e.key === 'Enter') { e.preventDefault(); submitCount(); } }}
-                                                                    placeholder="Enter recount..."
-                                                                    autoFocus
-                                                                    style={{fontSize: '28px', padding: '20px', textAlign: 'center', border: '3px solid #FF5B45'}}
-                                                                />
-                                                            </div>
-                                                            <button onClick={submitCount} disabled={!recountQuantity} className="btn btn-secondary btn-block" style={{fontSize: '18px', padding: '18px'}}>Submit Recount</button>
-                                                        </div>
-                                                    )}
-                                                    
-                                                    <button onClick={() => { setCurrentItem(null); setScannedSKU(''); setCountQuantity(''); setRecountQuantity(''); setNeedsRecount(false); }} className="btn btn-gray btn-block" style={{marginTop: '12px'}}>Cancel This Item</button>
-                                                </div>
-                                            )}
-                                            
-                                            {countedItems.length > 0 && (
-                                                <div style={{marginTop: '32px', paddingTop: '32px', borderTop: '3px solid #e5e7eb'}}>
-                                                    <h3 style={{marginBottom: '16px'}}>Count Log ({countedItems.length} items)</h3>
-                                                    <div style={{overflowX: 'auto'}}>
-                                                        <table>
-                                                            <thead>
-                                                                <tr>
-                                                                    <th className="text-center">Location</th>
-                                                                    <th className="text-center">SKU</th>
-                                                                    <th>Item Name</th>
-                                                                    <th className="text-center">UoM</th>
-                                                                    <th className="text-center">System</th>
-                                                                    <th className="text-center">Counted</th>
-                                                                    <th className="text-center">Variance</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {countedItems.map((item, idx) => (
-                                                                    <tr key={idx} style={{background: item.variance !== 0 ? '#FFDECD' : 'white'}}>
-                                                                        <td className="text-center text-mono" style={{fontWeight: 'bold'}}>{item.location}</td>
-                                                                        <td className="text-center text-mono" style={{fontSize: '13px'}}>{item.sku}</td>
-                                                                        <td>{item.itemName}</td>
-                                                                        <td className="text-center">{item.uom}</td>
-                                                                        <td className="text-center">{item.onHand}</td>
-                                                                        <td className="text-center" style={{fontWeight: 'bold', fontSize: '16px'}}>{item.counted}</td>
-                                                                        <td className="text-center" style={{fontWeight: 'bold', fontSize: '16px', color: item.variance === 0 ? '#00AD6E' : '#FF5B45'}}>
-                                                                            {item.variance > 0 ? '+' : ''}{item.variance}
-                                                                        </td>
-                                                                    </tr>
-                                                                ))}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </>
-                                    )}
-                                </div>
-                            )}
-                            {activeTab === 'packing' && (
-                                <div className="card">
-                                    <h2>Generate Packing Slip</h2>
-                                    <div className="grid-2">
-                                        <div className="form-group"><label className="form-label">Supplier</label><input type="text" className="form-input" value={packingSlip.supplier} onChange={(e) => setPackingSlip({...packingSlip, supplier: e.target.value})} /></div>
-                                        <div className="form-group"><label className="form-label">Purchase Order #</label><input type="text" className="form-input" value={packingSlip.poNumber} onChange={(e) => setPackingSlip({...packingSlip, poNumber: e.target.value})} /></div>
-                                    </div>
-                                    <div className="grid-2">
-                                        <div className="form-group"><label className="form-label">Date Received</label><input type="date" className="form-input" value={packingSlip.dateReceived} onChange={(e) => setPackingSlip({...packingSlip, dateReceived: e.target.value})} /></div>
-                                        <div className="form-group"><label className="form-label">Received By</label><input type="text" className="form-input" value={packingSlip.receivedBy} onChange={(e) => setPackingSlip({...packingSlip, receivedBy: e.target.value})} /></div>
-                                    </div>
-                                    <div className="form-group"><label className="form-label">Items (SKU, Qty, Exp)</label><textarea className="form-textarea" rows="10" value={itemInput} onChange={(e) => setItemInput(e.target.value)} placeholder="SKU-001, 5, 12/31/2025" /></div>
-                                    <div className="form-group"><label className="form-label">Notes</label><textarea className="form-textarea" rows="4" value={packingSlip.notes} onChange={(e) => setPackingSlip({...packingSlip, notes: e.target.value})} /></div>
-                                    <div className="btn-group">
-                                        <button onClick={() => { handlePackingSlipItems(); setTimeout(() => window.print(), 100); }} className="btn btn-secondary">Print</button>
-                                        <button onClick={() => { setPackingSlip({ supplier: '', poNumber: '', dateReceived: '', receivedBy: '', items: [], notes: '', notFoundSKUs: [] }); setItemInput(''); }} className="btn btn-gray">Clear</button>
-                                    </div>
-                                </div>
-                            )}
-                            {activeTab === 'history' && (
-                                <>
-                                    <div className="card">
-                                        <h2>History</h2>
-                                        <div className="form-group">
-                                            <label className="form-label">Search</label>
-                                            <input type="text" className="form-input" value={historySearchQuery} onChange={(e) => setHistorySearchQuery(e.target.value)} />
-                                        </div>
-                                        <div className="btn-group">
-                                            <button onClick={exportPackingSlips} disabled={!savedPackingSlips.length} className="btn btn-primary">Export</button>
-                                            <label className="btn btn-secondary" style={{margin: 0}}><input type="file" accept=".json" onChange={importPackingSlips} style={{display: 'none'}} />Import</label>
-                                        </div>
-                                    </div>
-                                    {selectedSlip && (
-                                        <div className="card">
-                                            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '16px'}}>
-                                                <h2 style={{margin: 0}}>PO# {selectedSlip.poNumber}</h2>
-                                                <button onClick={() => setSelectedSlip(null)} className="btn btn-gray">Close</button>
-                                            </div>
-                                            <button onClick={() => window.print()} className="btn btn-secondary btn-block" style={{marginBottom: '16px'}}>Print</button>
-                                            <div style={{border: '2px solid #C8C9C7', borderRadius: '6px', padding: '16px'}}>
-                                                <div className="grid-2" style={{marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid #e5e7eb'}}>
-                                                    <div><p style={{margin: '4px 0', fontSize: '14px'}}><strong>Supplier:</strong> {selectedSlip.supplier}</p><p style={{margin: '4px 0', fontSize: '14px'}}><strong>PO:</strong> {selectedSlip.poNumber}</p></div>
-                                                    <div><p style={{margin: '4px 0', fontSize: '14px'}}><strong>Date:</strong> {selectedSlip.dateReceived}</p><p style={{margin: '4px 0', fontSize: '14px'}}><strong>By:</strong> {selectedSlip.receivedBy}</p></div>
-                                                </div>
-                                                <div className="preview-box">
-                                                    <table>
-                                                        <thead style={{position: 'sticky', top: 0}}><tr><th className="text-center" style={{fontSize: '12px'}}>Loc</th><th className="text-center" style={{fontSize: '12px'}}>Qty</th><th style={{fontSize: '12px'}}>Item</th><th className="text-center" style={{fontSize: '12px'}}>SKU</th><th style={{fontSize: '12px'}}>Vendor SKUs</th><th className="text-center" style={{fontSize: '12px'}}>Exp</th></tr></thead>
-                                                        <tbody>{selectedSlip.items.map((it, i) => <tr key={i}><td className="text-center text-mono" style={{fontSize: '12px', fontWeight: 'bold'}}>{it.location}</td><td className="text-center" style={{fontSize: '12px'}}>{it.quantity}</td><td style={{fontSize: '12px'}}>{it.itemName}</td><td className="text-center text-mono" style={{fontSize: '11px'}}>{it.internalSKU}</td><td className="text-mono" style={{fontSize: '11px'}}>{it.vendorSKUs}</td><td className="text-center" style={{fontSize: '11px'}}>{it.expiration || '-'}</td></tr>)}</tbody>
-                                                    </table>
-                                                </div>
-                                                {selectedSlip.notes?.trim() && <div style={{marginTop: '16px', padding: '12px', background: '#f9fafb', borderRadius: '4px'}}><p style={{fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0'}}>Notes:</p><p style={{fontSize: '12px', margin: 0, whiteSpace: 'pre-wrap'}}>{selectedSlip.notes}</p></div>}
-                                                {selectedSlip.notFoundSKUs?.length > 0 && <div style={{marginTop: '16px', padding: '12px', background: '#FFDECD', borderRadius: '4px', border: '2px solid #FF5B45'}}><p style={{fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0', color: '#770538'}}>Not Found:</p><ul style={{margin: 0, paddingLeft: '20px', fontSize: '12px', color: '#770538'}}>{selectedSlip.notFoundSKUs.map((x, i) => <li key={i} className="text-mono">{typeof x === 'string' ? x : `${x.sku} (Qty: ${x.quantity})`}</li>)}</ul></div>}
-                                            </div>
-                                        </div>
-                                    )}
-                                    <div className="card">
-                                        {!savedPackingSlips.length ? <p style={{textAlign: 'center', color: '#666', padding: '32px'}}>No slips saved.</p> : savedPackingSlips.filter(s => !historySearchQuery || s.poNumber.toLowerCase().includes(historySearchQuery.toLowerCase()) || s.supplier.toLowerCase().includes(historySearchQuery.toLowerCase()) || s.items.some(i => i.itemName.toLowerCase().includes(historySearchQuery.toLowerCase()))).map(s => (
-                                            <div key={s.id} className="history-item">
-                                                <div className="history-header">
-                                                    <div><h3 style={{margin: '0 0 8px 0', fontSize: '18px'}}>PO# {s.poNumber}</h3><p style={{margin: '2px 0', fontSize: '14px', color: '#666'}}>Supplier: {s.supplier}</p><p style={{margin: '2px 0', fontSize: '14px', color: '#666'}}>Date: {s.dateReceived} | By: {s.receivedBy}</p></div>
-                                                    <div style={{display: 'flex', gap: '8px'}}><button onClick={() => setSelectedSlip(s)} className="btn btn-primary" style={{padding: '8px 16px'}}>View</button><button onClick={() => confirm('Delete?') && deletePackingSlip(s.id)} className="btn btn-red" style={{padding: '8px 16px'}}>Delete</button></div>
-                                                </div>
-                                                <div style={{marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #e5e7eb'}}><p style={{fontSize: '14px'}}><strong>Items:</strong> {s.items.length}</p></div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </>
-                            )}
-                            {activeTab === 'hazmat' && (
-                                <div className="card">
-                                    <h2>Hazmat Bill of Lading</h2>
-                                    <h3>Shipper</h3>
-                                    <div className="form-group"><label className="form-label">Name</label><input type="text" className="form-input" value={hazmatBOL.shipperName} onChange={(e) => setHazmatBOL({...hazmatBOL, shipperName: e.target.value})} /></div>
-                                    <div className="form-group"><label className="form-label">ATTN</label><input type="text" className="form-input" value={hazmatBOL.shipperAttn} onChange={(e) => setHazmatBOL({...hazmatBOL, shipperAttn: e.target.value})} /></div>
-                                    <div className="grid-2">
-                                        <div className="form-group"><label className="form-label">Address 1</label><input type="text" className="form-input" value={hazmatBOL.shipperAddress} onChange={(e) => setHazmatBOL({...hazmatBOL, shipperAddress: e.target.value})} /></div>
-                                        <div className="form-group"><label className="form-label">Phone</label><input type="text" className="form-input" value={hazmatBOL.shipperPhone} onChange={(e) => setHazmatBOL({...hazmatBOL, shipperPhone: e.target.value})} /></div>
-                                    </div>
-                                    <div className="form-group"><label className="form-label">Address 2</label><input type="text" className="form-input" value={hazmatBOL.shipperAddress2} onChange={(e) => setHazmatBOL({...hazmatBOL, shipperAddress2: e.target.value})} /></div>
-                                    <div className="grid-2">
-                                        <div className="form-group"><label className="form-label">City</label><input type="text" className="form-input" value={hazmatBOL.shipperCity} onChange={(e) => setHazmatBOL({...hazmatBOL, shipperCity: e.target.value})} /></div>
-                                        <div style={{display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px'}}>
-                                            <div className="form-group"><label className="form-label">State</label><input type="text" className="form-input" value={hazmatBOL.shipperState} onChange={(e) => setHazmatBOL({...hazmatBOL, shipperState: e.target.value})} /></div>
-                                            <div className="form-group"><label className="form-label">ZIP</label><input type="text" className="form-input" value={hazmatBOL.shipperZip} onChange={(e) => setHazmatBOL({...hazmatBOL, shipperZip: e.target.value})} /></div>
-                                        </div>
-                                    </div>
-                                    <h3>Consignee</h3>
-                                    <div className="form-group"><label className="form-label">Name</label><input type="text" className="form-input" value={hazmatBOL.consigneeName} onChange={(e) => setHazmatBOL({...hazmatBOL, consigneeName: e.target.value})} /></div>
-                                    <div className="form-group"><label className="form-label">ATTN</label><input type="text" className="form-input" value={hazmatBOL.consigneeAttn} onChange={(e) => setHazmatBOL({...hazmatBOL, consigneeAttn: e.target.value})} /></div>
-                                    <div className="grid-2">
-                                        <div className="form-group"><label className="form-label">Address 1</label><input type="text" className="form-input" value={hazmatBOL.consigneeAddress} onChange={(e) => setHazmatBOL({...hazmatBOL, consigneeAddress: e.target.value})} /></div>
-                                        <div className="form-group"><label className="form-label">Phone</label><input type="text" className="form-input" value={hazmatBOL.consigneePhone} onChange={(e) => setHazmatBOL({...hazmatBOL, consigneePhone: e.target.value})} /></div>
-                                    </div>
-                                    <div className="form-group"><label className="form-label">Address 2</label><input type="text" className="form-input" value={hazmatBOL.consigneeAddress2} onChange={(e) => setHazmatBOL({...hazmatBOL, consigneeAddress2: e.target.value})} /></div>
-                                    <div className="grid-2">
-                                        <div className="form-group"><label className="form-label">City</label><input type="text" className="form-input" value={hazmatBOL.consigneeCity} onChange={(e) => setHazmatBOL({...hazmatBOL, consigneeCity: e.target.value})} /></div>
-                                        <div style={{display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px'}}>
-                                            <div className="form-group"><label className="form-label">State</label><input type="text" className="form-input" value={hazmatBOL.consigneeState} onChange={(e) => setHazmatBOL({...hazmatBOL, consigneeState: e.target.value})} /></div>
-                                            <div className="form-group"><label className="form-label">ZIP</label><input type="text" className="form-input" value={hazmatBOL.consigneeZip} onChange={(e) => setHazmatBOL({...hazmatBOL, consigneeZip: e.target.value})} /></div>
-                                        </div>
-                                    </div>
-                                    <h3>Carrier</h3>
-                                    <div className="grid-2">
-                                        <div className="form-group"><label className="form-label">Carrier</label><input type="text" className="form-input" value={hazmatBOL.carrierName} onChange={(e) => setHazmatBOL({...hazmatBOL, carrierName: e.target.value})} /></div>
-                                        <div className="form-group"><label className="form-label">Phone</label><input type="text" className="form-input" value={hazmatBOL.carrierPhone} onChange={(e) => setHazmatBOL({...hazmatBOL, carrierPhone: e.target.value})} /></div>
-                                    </div>
-                                    <div className="form-group"><label className="form-label">Ship Date</label><input type="date" className="form-input" value={hazmatBOL.shipDate} onChange={(e) => setHazmatBOL({...hazmatBOL, shipDate: e.target.value})} /></div>
-                                    <h3>Emergency (24hr)</h3>
-                                    <div className="grid-2">
-                                        <div className="form-group"><label className="form-label">Name</label><input type="text" className="form-input" value={hazmatBOL.emergencyContact} onChange={(e) => setHazmatBOL({...hazmatBOL, emergencyContact: e.target.value})} /></div>
-                                        <div className="form-group"><label className="form-label">Phone</label><input type="text" className="form-input" value={hazmatBOL.emergencyPhone} onChange={(e) => setHazmatBOL({...hazmatBOL, emergencyPhone: e.target.value})} /></div>
-                                    </div>
-                                    <h3>Materials</h3>
-                                    <div className="form-group"><label className="form-label">UN#, Name, Class, Group, Qty, Type</label><textarea className="form-textarea" rows="8" value={hazmatInput} onChange={(e) => setHazmatInput(e.target.value)} placeholder="UN1090, Acetone, 3, II, 5 Gallons, Liquid" /></div>
-                                    <div className="btn-group">
-                                        <button onClick={() => { handleHazmatMaterials(); setTimeout(() => window.print(), 100); }} className="btn btn-secondary">Print</button>
-                                        <button onClick={clearHazmatBOL} className="btn btn-gray">Clear</button>
-                                    </div>
-                                </div>
-                            )}
+                            {activeTab === 'search' && <div>SEARCH</div>}
+                            {activeTab === 'packing' && <div>PACKING</div>}
+                            {activeTab === 'history' && <div>HISTORY</div>}
+                            {activeTab === 'cyclecount' && <CycleCountTab />}
+                            {activeTab === 'hazmat' && <div>HAZMAT</div>}
                         </div>
                         <div className="footer">
                             {fileLastModified ? `Database updated: ${fileLastModified.toLocaleDateString()} ${fileLastModified.toLocaleTimeString()}` : 'Inventory Status Report'}
                         </div>
                     </div>
-                    {packingSlip.items.length > 0 && activeTab === 'packing' && (
-                        <div className="print-only">
-                            <div style={{padding: '20px'}}>
-                                <div style={{textAlign: 'center', marginBottom: '16px', borderBottom: '2px solid black', paddingBottom: '8px'}}><h1 style={{fontSize: '20px', margin: 0}}>Dietrich School Scientific Stockroom - Packing Slip</h1></div>
-                                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px', fontSize: '12px'}}>
-                                    <div><p><strong>Supplier:</strong> {packingSlip.supplier}</p><p><strong>PO:</strong> {packingSlip.poNumber}</p></div>
-                                    <div><p><strong>Date:</strong> {packingSlip.dateReceived}</p><p><strong>By:</strong> {packingSlip.receivedBy}</p></div>
-                                </div>
-                                <table>
-                                    <thead><tr><th style={{width: '30px'}}>☐</th><th>Location</th><th>Qty</th><th>Item</th><th>SKU</th><th>Vendor SKUs</th><th>Exp</th></tr></thead>
-                                    <tbody>{packingSlip.items.map((it, i) => <tr key={i}><td>☐</td><td className="text-mono" style={{fontWeight: 'bold'}}>{it.location}</td><td>{it.quantity}</td><td>{it.itemName}</td><td className="text-mono" style={{fontSize: '10px'}}>{it.internalSKU}</td><td className="text-mono" style={{fontSize: '10px'}}>{it.vendorSKUs}</td><td style={{fontSize: '10px'}}>{it.expiration || '-'}</td></tr>)}</tbody>
-                                </table>
-                                {packingSlip.notes?.trim() && <div style={{marginTop: '16px', padding: '12px', border: '2px solid black'}}><p style={{fontSize: '12px', margin: '0 0 4px 0'}}><strong>Notes:</strong></p><p style={{fontSize: '12px', margin: 0, whiteSpace: 'pre-wrap'}}>{packingSlip.notes}</p></div>}
-                                {packingSlip.notFoundSKUs?.length > 0 && <div style={{marginTop: '16px', padding: '12px', border: '2px solid black', background: '#FFDECD'}}><p style={{fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0', color: '#770538'}}>Not Found:</p><ul style={{margin: 0, paddingLeft: '20px', fontSize: '12px', color: '#770538'}}>{packingSlip.notFoundSKUs.map((x, i) => <li key={i} className="text-mono">{x.sku} (Qty: {x.quantity})</li>)}</ul></div>}
-                            </div>
-                        </div>
-                    )}
-                    {selectedSlip && activeTab === 'history' && (
-                        <div className="print-only">
-                            <div style={{padding: '20px'}}>
-                                <div style={{textAlign: 'center', marginBottom: '16px', borderBottom: '2px solid black', paddingBottom: '8px'}}><h1 style={{fontSize: '20px', margin: 0}}>Dietrich School Scientific Stockroom - Packing Slip</h1></div>
-                                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px', fontSize: '12px'}}>
-                                    <div><p><strong>Supplier:</strong> {selectedSlip.supplier}</p><p><strong>PO:</strong> {selectedSlip.poNumber}</p></div>
-                                    <div><p><strong>Date:</strong> {selectedSlip.dateReceived}</p><p><strong>By:</strong> {selectedSlip.receivedBy}</p></div>
-                                </div>
-                                <table>
-                                    <thead><tr><th style={{width: '30px'}}>☐</th><th>Location</th><th>Qty</th><th>Item</th><th>SKU</th><th>Vendor SKUs</th><th>Exp</th></tr></thead>
-                                    <tbody>{selectedSlip.items.map((it, i) => <tr key={i}><td>☐</td><td className="text-mono" style={{fontWeight: 'bold'}}>{it.location}</td><td>{it.quantity}</td><td>{it.itemName}</td><td className="text-mono" style={{fontSize: '10px'}}>{it.internalSKU}</td><td className="text-mono" style={{fontSize: '10px'}}>{it.vendorSKUs}</td><td style={{fontSize: '10px'}}>{it.expiration || '-'}</td></tr>)}</tbody>
-                                </table>
-                                {selectedSlip.notes?.trim() && <div style={{marginTop: '16px', padding: '12px', border: '2px solid black'}}><p style={{fontSize: '12px', margin: '0 0 4px 0'}}><strong>Notes:</strong></p><p style={{fontSize: '12px', margin: 0, whiteSpace: 'pre-wrap'}}>{selectedSlip.notes}</p></div>}
-                                {selectedSlip.notFoundSKUs?.length > 0 && <div style={{marginTop: '16px', padding: '12px', border: '2px solid black', background: '#FFDECD'}}><p style={{fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0', color: '#770538'}}>Not Found:</p><ul style={{margin: 0, paddingLeft: '20px', fontSize: '12px', color: '#770538'}}>{selectedSlip.notFoundSKUs.map((x, i) => <li key={i} className="text-mono">{typeof x === 'string' ? x : `${x.sku} (Qty: ${x.quantity})`}</li>)}</ul></div>}
-                            </div>
-                        </div>
-                    )}
-                    {hazmatBOL.materials.length > 0 && activeTab === 'hazmat' && (
-                        <div className="print-only">
-                            <div style={{padding: '20px'}}>
-                                <div style={{textAlign: 'center', marginBottom: '16px', borderBottom: '4px solid black', paddingBottom: '8px'}}><h1 style={{fontSize: '22px', margin: 0, fontWeight: 'bold'}}>HAZARDOUS MATERIALS BILL OF LADING</h1><p style={{fontSize: '11px', margin: '4px 0'}}>DOT-Compliant (49 CFR)</p></div>
-                                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px', fontSize: '11px'}}>
-                                    <div style={{border: '2px solid black', padding: '8px'}}><p style={{fontWeight: 'bold', marginBottom: '4px'}}>SHIPPER:</p><p style={{margin: '2px 0'}}>{hazmatBOL.shipperName}</p>{hazmatBOL.shipperAttn && <p style={{margin: '2px 0'}}>ATTN: {hazmatBOL.shipperAttn}</p>}<p style={{margin: '2px 0'}}>{hazmatBOL.shipperAddress}</p>{hazmatBOL.shipperAddress2 && <p style={{margin: '2px 0'}}>{hazmatBOL.shipperAddress2}</p>}<p style={{margin: '2px 0'}}>{hazmatBOL.shipperCity}, {hazmatBOL.shipperState} {hazmatBOL.shipperZip}</p><p style={{margin: '2px 0'}}>Phone: {hazmatBOL.shipperPhone}</p></div>
-                                    <div style={{border: '2px solid black', padding: '8px'}}><p style={{fontWeight: 'bold', marginBottom: '4px'}}>CONSIGNEE:</p><p style={{margin: '2px 0'}}>{hazmatBOL.consigneeName}</p>{hazmatBOL.consigneeAttn && <p style={{margin: '2px 0'}}>ATTN: {hazmatBOL.consigneeAttn}</p>}<p style={{margin: '2px 0'}}>{hazmatBOL.consigneeAddress}</p>{hazmatBOL.consigneeAddress2 && <p style={{margin: '2px 0'}}>{hazmatBOL.consigneeAddress2}</p>}<p style={{margin: '2px 0'}}>{hazmatBOL.consigneeCity}, {hazmatBOL.consigneeState} {hazmatBOL.consigneeZip}</p><p style={{margin: '2px 0'}}>Phone: {hazmatBOL.consigneePhone}</p></div>
-                                </div>
-                                <div style={{border: '2px solid black', padding: '8px', marginBottom: '16px', fontSize: '11px'}}><p style={{margin: '2px 0'}}><strong>Carrier:</strong> {hazmatBOL.carrierName}</p><p style={{margin: '2px 0'}}><strong>Ship Date:</strong> {hazmatBOL.shipDate}</p></div>
-                                <div style={{border: '2px solid black', padding: '8px', marginBottom: '16px', fontSize: '11px', background: '#fff3cd'}}><p style={{margin: '2px 0'}}><strong>24hr Emergency:</strong> {hazmatBOL.emergencyContact}</p><p style={{margin: '2px 0'}}><strong>Phone:</strong> {hazmatBOL.emergencyPhone}</p></div>
-                                <table><thead><tr><th style={{fontSize: '11px'}}>UN/ID</th><th style={{fontSize: '11px'}}>Name</th><th style={{fontSize: '11px'}}>Class</th><th style={{fontSize: '11px'}}>Group</th><th style={{fontSize: '11px'}}>Qty</th><th style={{fontSize: '11px'}}>Type</th></tr></thead><tbody>{hazmatBOL.materials.map((m, i) => <tr key={i}><td style={{fontSize: '11px'}}>{m.unNumber}</td><td style={{fontSize: '11px'}}>{m.properShippingName}</td><td style={{fontSize: '11px', textAlign: 'center'}}>{m.hazardClass}</td><td style={{fontSize: '11px', textAlign: 'center'}}>{m.packingGroup}</td><td style={{fontSize: '11px'}}>{m.quantity}</td><td style={{fontSize: '11px'}}>{m.type}</td></tr>)}</tbody></table>
-                                <div style={{border: '2px solid black', padding: '12px', marginTop: '20px', fontSize: '10px'}}><p style={{fontWeight: 'bold', marginBottom: '8px'}}>SHIPPER CERTIFICATION (49 CFR 172.204):</p><p style={{margin: '4px 0'}}>This is to certify that the above-named materials are properly classified, described, packaged, marked, and labeled, and are in proper condition for transportation according to the applicable regulations of the Department of Transportation.</p><div style={{marginTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px'}}><div><p style={{borderBottom: '1px solid black', paddingBottom: '2px'}}>Signature</p><p style={{borderBottom: '1px solid black', paddingBottom: '2px', marginTop: '16px'}}>Name</p></div><div><p style={{borderBottom: '1px solid black', paddingBottom: '2px'}}>Date</p></div></div></div>
-                                <div style={{border: '2px solid black', padding: '12px', marginTop: '12px', fontSize: '10px'}}><p style={{fontWeight: 'bold', marginBottom: '8px'}}>CARRIER ACKNOWLEDGMENT:</p><p style={{margin: '4px 0'}}>Carrier acknowledges receipt of packages and required placards. Carrier certifies emergency response information was made available and/or carrier has the DOT emergency response guidebook or equivalent documentation.</p><div style={{marginTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px'}}><div><p style={{borderBottom: '1px solid black', paddingBottom: '2px'}}>Signature</p><p style={{borderBottom: '1px solid black', paddingBottom: '2px', marginTop: '16px'}}>Name</p></div><div><p style={{borderBottom: '1px solid black', paddingBottom: '2px'}}>Date</p></div></div></div>
-                            </div>
-                        </div>
-                    )}
                 </div>
             );
         }
