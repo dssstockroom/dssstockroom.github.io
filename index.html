@@ -98,6 +98,17 @@
                 carrierName: '', carrierPhone: '', shipDate: '', emergencyContact: '', emergencyPhone: '', materials: []
             });
             const [hazmatInput, setHazmatInput] = useState('');
+            
+            // Cycle Count states
+            const [cycleCountSession, setCycleCountSession] = useState(null);
+            const [cycleCountSection, setCycleCountSection] = useState('');
+            const [cycleCountRack, setCycleCountRack] = useState('');
+            const [scannedSKU, setScannedSKU] = useState('');
+            const [countQuantity, setCountQuantity] = useState('');
+            const [recountQuantity, setRecountQuantity] = useState('');
+            const [currentItem, setCurrentItem] = useState(null);
+            const [needsRecount, setNeedsRecount] = useState(false);
+            const [countedItems, setCountedItems] = useState([]);
 
             useEffect(() => {
                 fetch('inventory-status-report.xlsx')
@@ -128,7 +139,8 @@
                                         manufacturerSKUs: [String(r[5] || '').trim(), String(r[6] || '').trim(), String(r[7] || '').trim(), String(r[8] || '').trim()].filter(s => s),
                                         itemName: String(r[13] || '').trim(), uom: String(r[14] || '').trim(), altUom: String(r[15] || '').trim(),
                                         convFactor: String(r[16] || '').trim(), childPartNbr: String(r[17] || '').trim(), childConvFactor: String(r[18] || '').trim(),
-                                        vendor: String(r[12] || '').trim(), externalPrice: String(r[26] || '').trim(), ourPrice: String(r[27] || '').trim()
+                                        vendor: String(r[12] || '').trim(), externalPrice: String(r[26] || '').trim(), ourPrice: String(r[27] || '').trim(),
+                                        onHand: String(r[23] || '').trim()
                                     };
                                     if (item.internalSKU && item.location) data.push(item);
                                 }
@@ -281,6 +293,125 @@
                 });
                 setHazmatInput('');
             };
+            
+            const startCycleCount = () => {
+                if (!cycleCountSection || !cycleCountRack) {
+                    alert('Please select section and rack');
+                    return;
+                }
+                setCycleCountSession({
+                    section: cycleCountSection,
+                    rack: cycleCountRack,
+                    startTime: new Date().toISOString(),
+                    counter: ''
+                });
+                setCountedItems([]);
+                setScannedSKU('');
+                setCurrentItem(null);
+            };
+            
+            const handleScan = () => {
+                if (!scannedSKU.trim()) return;
+                
+                const normalizedSKU = normalizeSKU(scannedSKU);
+                const item = inventory.find(i => {
+                    if (normalizeSKU(i.internalSKU) === normalizedSKU) return true;
+                    return i.manufacturerSKUs.some(m => normalizeSKU(m) === normalizedSKU);
+                });
+                
+                if (!item) {
+                    alert('SKU not found in database');
+                    setScannedSKU('');
+                    return;
+                }
+                
+                // Check if item is in correct section/rack
+                const loc = parseLocation(item.location);
+                if (loc.section !== cycleCountSession.section || loc.rack !== parseInt(cycleCountSession.rack)) {
+                    alert(`Item is in ${item.location}, not in ${cycleCountSession.section}-${cycleCountSession.rack}`);
+                    setScannedSKU('');
+                    return;
+                }
+                
+                setCurrentItem(item);
+                setCountQuantity('');
+                setRecountQuantity('');
+                setNeedsRecount(false);
+            };
+            
+            const submitCount = () => {
+                if (!countQuantity) return;
+                
+                const counted = parseInt(countQuantity);
+                const onHand = parseInt(currentItem.onHand || 0);
+                
+                if (counted !== onHand && !needsRecount) {
+                    setNeedsRecount(true);
+                    return;
+                }
+                
+                const finalCount = needsRecount ? parseInt(recountQuantity) : counted;
+                const variance = finalCount - onHand;
+                
+                setCountedItems([...countedItems, {
+                    sku: currentItem.internalSKU,
+                    itemName: currentItem.itemName,
+                    location: currentItem.location,
+                    uom: currentItem.uom,
+                    onHand: onHand,
+                    counted: finalCount,
+                    variance: variance,
+                    timestamp: new Date().toISOString()
+                }]);
+                
+                setScannedSKU('');
+                setCurrentItem(null);
+                setCountQuantity('');
+                setRecountQuantity('');
+                setNeedsRecount(false);
+            };
+            
+            const exportCycleCount = () => {
+                if (!countedItems.length) return;
+                const csv = 'Location,SKU,Item Name,UoM,On Hand,Counted,Variance,Timestamp\n' + 
+                    countedItems.map(i => `${i.location},${i.sku},"${i.itemName}",${i.uom},${i.onHand},${i.counted},${i.variance},${i.timestamp}`).join('\n');
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; 
+                a.download = `cycle_count_${cycleCountSession.section}-${cycleCountSession.rack}_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+            };
+            
+            const endCycleCount = () => {
+                if (confirm('End cycle count session? Make sure to export first.')) {
+                    setCycleCountSession(null);
+                    setCountedItems([]);
+                    setCurrentItem(null);
+                    setCycleCountSection('');
+                    setCycleCountRack('');
+                }
+            };
+            
+            const getUniqueSections = () => {
+                const sections = new Set();
+                inventory.forEach(item => {
+                    if (item.location.toUpperCase().includes('SS')) return;
+                    const parsed = parseLocation(item.location);
+                    if (parsed.section === null) return;
+                    sections.add(parsed.section);
+                });
+                return Array.from(sections).sort();
+            };
+            
+            const getUniqueRacks = (section) => {
+                const racks = new Set();
+                inventory.forEach(item => {
+                    const parsed = parseLocation(item.location);
+                    if (parsed.section === section) racks.add(parsed.rack);
+                });
+                return Array.from(racks).sort((a, b) => a - b);
+            };
 
             return (
                 <div>
@@ -295,6 +426,7 @@
                                 <button className={`tab ${activeTab === 'search' ? 'active' : ''}`} onClick={() => setActiveTab('search')}>General Search</button>
                                 <button className={`tab ${activeTab === 'packing' ? 'active' : ''}`} onClick={() => setActiveTab('packing')}>Packing Slip</button>
                                 <button className={`tab ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>History ({savedPackingSlips.length})</button>
+                                <button className={`tab ${activeTab === 'cyclecount' ? 'active' : ''}`} onClick={() => setActiveTab('cyclecount')}>Cycle Count</button>
                                 <button className={`tab ${activeTab === 'hazmat' ? 'active' : ''}`} onClick={() => setActiveTab('hazmat')}>Hazmat BOL</button>
                             </div>
                             <div className="card">
