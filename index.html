@@ -398,6 +398,11 @@
                 const countedSKUs = new Set(countedItems.map(i => normalizeSKU(i.sku)));
                 return allExpected.filter(item => !countedSKUs.has(normalizeSKU(item.internalSKU)));
             };
+            
+            const getMissingItems = () => {
+                // Don't show missing items during counting - only at end
+                return [];
+            };
 
             const exportCycleCount = () => {
                 if (!countedItems.length && !getAllMissingItems().length) return;
