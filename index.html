@@ -785,15 +785,29 @@
                                     <p style={{fontSize: '14px', margin: '8px 0'}}>Section {cycleCountSession.section} - Rack {cycleCountSession.rack}</p>
                                     <p style={{fontSize: '12px', margin: '4px 0'}}>Date: {new Date().toLocaleDateString()}</p>
                                 </div>
+                                
+                                <h2 style={{fontSize: '16px', marginBottom: '12px'}}>Counted Items</h2>
                                 <table>
                                     <thead><tr><th>Found At</th><th>Expected</th><th>SKU</th><th>Item</th><th>UoM</th><th>System</th><th>Counted</th><th>Variance</th></tr></thead>
                                     <tbody>{countedItems.map((it, i) => <tr key={i} style={{background: it.variance !== 0 || it.misplaced ? '#FFDECD' : 'white'}}><td className="text-mono" style={{fontSize: '10px'}}>{it.countedAt}</td><td className="text-mono" style={{fontSize: '10px', color: it.misplaced ? '#FF5B45' : '#000'}}>{it.expectedLocation}</td><td className="text-mono" style={{fontSize: '10px'}}>{it.sku}</td><td style={{fontSize: '10px'}}>{it.itemName}</td><td style={{fontSize: '10px'}}>{it.uom}</td><td style={{fontSize: '10px'}}>{it.onHand}</td><td style={{fontSize: '10px', fontWeight: 'bold'}}>{it.counted}</td><td style={{fontSize: '10px', fontWeight: 'bold', color: it.variance === 0 ? '#00AD6E' : '#FF5B45'}}>{it.variance > 0 ? '+' : ''}{it.variance}</td></tr>)}</tbody>
                                 </table>
+                                
+                                {getAllMissingItems().length > 0 && (
+                                    <div style={{marginTop: '24px'}}>
+                                        <h2 style={{fontSize: '16px', marginBottom: '12px', color: '#FF5B45'}}>Missing Items (Not Found)</h2>
+                                        <table>
+                                            <thead><tr><th>Expected Location</th><th>SKU</th><th>Item</th><th>UoM</th><th>System On-Hand</th></tr></thead>
+                                            <tbody>{getAllMissingItems().map((item, i) => <tr key={i} style={{background: '#FFDECD'}}><td className="text-mono" style={{fontSize: '10px'}}>{item.location}</td><td className="text-mono" style={{fontSize: '10px'}}>{item.internalSKU}</td><td style={{fontSize: '10px'}}>{item.itemName}</td><td style={{fontSize: '10px'}}>{item.uom}</td><td style={{fontSize: '10px'}}>{item.onHand || 0}</td></tr>)}</tbody>
+                                        </table>
+                                    </div>
+                                )}
+                                
                                 <div style={{marginTop: '24px', padding: '16px', border: '2px solid black'}}>
                                     <p style={{fontSize: '12px', margin: '0 0 8px 0'}}><strong>Summary:</strong></p>
                                     <p style={{fontSize: '11px', margin: '4px 0'}}>Total items counted: {countedItems.length}</p>
                                     <p style={{fontSize: '11px', margin: '4px 0'}}>Items with variance: {countedItems.filter(i => i.variance !== 0).length}</p>
                                     <p style={{fontSize: '11px', margin: '4px 0'}}>Misplaced items: {countedItems.filter(i => i.misplaced).length}</p>
+                                    <p style={{fontSize: '11px', margin: '4px 0', color: '#FF5B45', fontWeight: 'bold'}}>Missing items: {getAllMissingItems().length}</p>
                                 </div>
                             </div>
                         </div>
