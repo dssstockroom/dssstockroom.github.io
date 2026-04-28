@@ -997,6 +997,7 @@
            RESPONSIVE — tablet (≤900px)
         ══════════════════════════════════════════════════════════════════ */
         @media (max-width: 900px) {
+            .container { padding: 0 18px; }
             .nav-links  { display: none; }
             .nav-search { display: none; }
             .nav-hamburger { display: flex; }
@@ -1026,7 +1027,8 @@
             .tool-grid { grid-template-columns: 1fr 1fr; }
 
             .label-app { grid-template-columns: 1fr; }
-            .label-sidebar { position: static; }
+            .label-sidebar { position: static; overflow: visible; max-height: none; }
+            .label-sidebar .card:last-child { margin-bottom: 0; }
             .label-preview-area { padding: 16px 12px; }
             .label-preview-area > div { overflow-x: auto; width: 100%; }
 
@@ -1045,7 +1047,8 @@
            RESPONSIVE — phone (≤600px)
         ══════════════════════════════════════════════════════════════════ */
         @media (max-width: 600px) {
-            .container { padding: 0 14px; }
+            .container { padding: 0 16px; }
+            .page-content { padding-left: 2px; padding-right: 2px; }
 
             .hero-text h1 { font-size: 26px; }
             .hero-search-input { font-size: 15px !important; padding: 13px 14px !important; }
@@ -2586,16 +2589,16 @@
                                             <span>F</span> Mfr # · <span>N</span> Item Name<br/>
                                             <span>O</span> UOM · <span>P</span> Alt Unit · <span>Q</span> Conv.
                                         </div>
-                                        <label className="toggle-row" onClick={toggleFilterY}>
+                                        <div className="toggle-row" onClick={toggleFilterY} role="button" tabIndex={0} onKeyDown={e => e.key === " " || e.key === "Enter" ? toggleFilterY() : null}>
                                             <div className="toggle-label-text">
                                                 Filter Y-prefix items
                                                 <small>Excludes items whose Item # starts with "Y"</small>
                                             </div>
                                             <div className="toggle-switch">
-                                                <input type="checkbox" checked={filterY} onChange={() => {}} />
+                                                <input type="checkbox" checked={filterY} onChange={toggleFilterY} onClick={e => e.stopPropagation()} />
                                                 <div className="toggle-track"></div>
                                             </div>
-                                        </label>
+                                        </div>
                                     </div>
                                 )}
 
