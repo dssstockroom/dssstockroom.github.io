@@ -400,6 +400,7 @@
         footer .status-dot.error   { background: var(--red); }
 
         body { padding-bottom: var(--footer-h); }
+        @media (max-width: 900px) { body { padding-bottom: 56px; } }
 
         /* ── Print ───────────────────────────────────────────────────────── */
         @media screen { .print-only { display: none !important; } }
@@ -998,7 +999,11 @@
            RESPONSIVE — tablet (≤900px)
         ══════════════════════════════════════════════════════════════════ */
         @media (max-width: 900px) {
-            .container { padding: 0 18px; }
+            /* Global side padding for all content */
+            .container    { padding: 0 20px; }
+            .home-hero .container { padding: 0 20px; }
+            .page-banner .container { padding: 0 20px; }
+
             .nav-links  { display: none; }
             .nav-search { display: none; }
             .nav-hamburger { display: flex; }
@@ -1042,14 +1047,20 @@
 
             .history-item { flex-wrap: wrap; gap: 12px; }
             .history-item-actions { width: 100%; justify-content: flex-end; }
+
+            /* Footer — taller on mobile, show status only */
+            footer { height: auto; min-height: 40px; padding: 8px 20px; flex-wrap: wrap; gap: 4px; font-size: 11px; }
+            .footer-right { display: none; }
         }
 
         /* ══════════════════════════════════════════════════════════════════
            RESPONSIVE — phone (≤600px)
         ══════════════════════════════════════════════════════════════════ */
         @media (max-width: 600px) {
-            .container { padding: 0 16px; }
-            .page-content { padding-left: 2px; padding-right: 2px; }
+            /* Global side padding */
+            .container    { padding: 0 16px; }
+            .home-hero .container { padding: 0 16px; }
+            .page-banner .container { padding: 0 16px; }
 
             .hero-text h1 { font-size: 26px; }
             .hero-search-input { font-size: 15px !important; padding: 13px 14px !important; }
@@ -1058,7 +1069,7 @@
             .tool-grid { grid-template-columns: 1fr; }
             .tool-card { padding: 18px 16px; }
 
-            .page-content { padding: 24px 0 56px; }
+            .page-content { padding: 20px 0 60px; }
             .page-banner  { padding: 16px 0; }
             .page-banner h1 { font-size: 22px; }
 
@@ -1082,8 +1093,8 @@
             .history-item { padding: 14px; }
             .history-item-title { font-size: 14px; }
 
-            footer { font-size: 10px; padding: 0 14px; }
-            footer span:last-child { display: none; }
+            /* Footer */
+            footer { font-size: 10px; padding: 6px 16px; }
         }
     </style>
 </head>
@@ -1320,7 +1331,7 @@
                         {dbStatus === 'ok'      && <span>Database loaded — {inventory.length.toLocaleString()} items</span>}
                         {dbStatus === 'error'   && <span>Database unavailable — place inventory-status-report.xlsx alongside this file</span>}
                     </div>
-                    <span>
+                    <span className="footer-right">
                         {fileLastModified
                             ? `Last updated: ${fileLastModified.toLocaleDateString()} ${fileLastModified.toLocaleTimeString()}`
                             : 'Dietrich School Scientific Stockroom · Toolbox'}
