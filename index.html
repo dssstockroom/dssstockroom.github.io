@@ -899,6 +899,188 @@
         }
         .lst-tab:hover { color: var(--royal); }
         .lst-tab.active { background: var(--royal); color: var(--gold); }
+
+        /* ══════════════════════════════════════════════════════════════════
+           MOBILE NAV — hamburger
+        ══════════════════════════════════════════════════════════════════ */
+        .nav-hamburger {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0 20px;
+            margin-left: auto;
+            height: 100%;
+        }
+        .nav-hamburger span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background: rgba(255,255,255,0.85);
+            border-radius: 2px;
+            transition: all 0.22s;
+        }
+        .nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .nav-hamburger.open span:nth-child(2) { opacity: 0; }
+        .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        .nav-mobile-menu {
+            display: none;
+            position: fixed;
+            top: var(--nav-h);
+            left: 0; right: 0;
+            background: var(--navy);
+            border-bottom: 3px solid var(--gold);
+            z-index: 199;
+            flex-direction: column;
+            padding: 8px 0 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        .nav-mobile-menu.open { display: flex; }
+        .nav-mobile-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 24px;
+            color: rgba(255,255,255,0.8);
+            font-family: var(--gothic);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            width: 100%;
+            transition: all 0.15s;
+        }
+        .nav-mobile-link:hover  { background: rgba(255,255,255,0.07); color: #fff; }
+        .nav-mobile-link.active { color: var(--gold); background: rgba(255,184,28,0.08); }
+        .nav-mobile-link .nav-icon { font-size: 18px; }
+        .nav-mobile-search {
+            padding: 10px 24px 4px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: 8px;
+        }
+        .nav-mobile-search-wrap {
+            display: flex;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .nav-mobile-search-input {
+            flex: 1;
+            background: none;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-family: var(--sans);
+            font-size: 15px;
+            padding: 12px 14px;
+        }
+        .nav-mobile-search-input::placeholder { color: rgba(255,255,255,0.4); }
+        .nav-mobile-search-btn {
+            background: var(--gold);
+            border: none;
+            color: var(--royal);
+            cursor: pointer;
+            padding: 12px 16px;
+            font-size: 16px;
+        }
+
+        /* ══════════════════════════════════════════════════════════════════
+           RESPONSIVE — tablet (≤900px)
+        ══════════════════════════════════════════════════════════════════ */
+        @media (max-width: 900px) {
+            .nav-links  { display: none; }
+            .nav-search { display: none; }
+            .nav-hamburger { display: flex; }
+
+            .nav-brand { padding: 0 16px; gap: 10px; }
+            .nav-brand img { height: 30px; width: 30px; }
+            .nav-brand-text .nav-title { font-size: 11px; }
+            .nav-brand-text .nav-sub   { display: none; }
+
+            .hero-layout { grid-template-columns: 1fr; gap: 28px; }
+            .hero-text h1 { font-size: 30px; }
+            .hero-text p  { max-width: 100%; }
+            .home-hero    { padding: 36px 0 32px; }
+
+            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; gap: 14px; }
+
+            .page-banner { padding: 20px 0; }
+            .page-banner h1 { font-size: 24px; }
+            .page-banner-icon { font-size: 36px; }
+
+            .card { padding: 20px 18px; }
+            .card h2 { font-size: 22px; }
+
+            .sub-tabs { flex-wrap: wrap; width: 100%; }
+            .sub-tab  { flex: 1; min-width: 120px; justify-content: center; }
+
+            .tool-grid { grid-template-columns: 1fr 1fr; }
+
+            .label-app { grid-template-columns: 1fr; }
+            .label-sidebar { position: static; }
+            .label-preview-area { padding: 16px 12px; }
+            .label-preview-area > div { overflow-x: auto; width: 100%; }
+
+            .session-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+            .session-header > div:last-child { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+            .session-header > div:last-child .btn { flex: 1; min-width: 80px; }
+
+            .btn-group { flex-direction: column; }
+            .btn-group .btn { width: 100%; }
+
+            .history-item { flex-wrap: wrap; gap: 12px; }
+            .history-item-actions { width: 100%; justify-content: flex-end; }
+        }
+
+        /* ══════════════════════════════════════════════════════════════════
+           RESPONSIVE — phone (≤600px)
+        ══════════════════════════════════════════════════════════════════ */
+        @media (max-width: 600px) {
+            .container { padding: 0 14px; }
+
+            .hero-text h1 { font-size: 26px; }
+            .hero-search-input { font-size: 15px !important; padding: 13px 14px !important; }
+            .hero-search-btn   { font-size: 12px !important; padding: 13px 16px !important; }
+
+            .tool-grid { grid-template-columns: 1fr; }
+            .tool-card { padding: 18px 16px; }
+
+            .page-content { padding: 24px 0 56px; }
+            .page-banner  { padding: 16px 0; }
+            .page-banner h1 { font-size: 22px; }
+
+            .form-input, .form-textarea, .form-select {
+                font-size: 16px;
+                padding: 12px 14px;
+            }
+            .btn     { padding: 13px 18px; font-size: 12px; }
+            .btn-sm  { padding: 10px 14px; }
+
+            .count-input-lg { font-size: 28px; padding: 14px; }
+
+            table   { font-size: 13px; }
+            th, td  { padding: 10px 8px; }
+
+            .card   { padding: 16px 14px; margin-bottom: 16px; }
+            .card h2 { font-size: 20px; margin-bottom: 16px; }
+
+            .sub-tab { padding: 9px 12px; font-size: 10px; }
+
+            .history-item { padding: 14px; }
+            .history-item-title { font-size: 14px; }
+
+            footer { font-size: 10px; padding: 0 14px; }
+            footer span:last-child { display: none; }
+        }
     </style>
 </head>
 <body>
@@ -981,6 +1163,10 @@
         const [dbStatus, setDbStatus] = useState('loading'); // loading | ok | error
         const [fileLastModified, setFileLastModified] = useState(null);
         const [activePage, setActivePage] = useState('home');
+        const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+        // Close mobile menu on page change
+        const navigateTo = (page) => { setActivePage(page); setMobileMenuOpen(false); };
 
         // Load inventory
         useEffect(() => {
@@ -1045,17 +1231,17 @@
         const handleNavSearch = (e) => {
             e.preventDefault();
             if (!navSearch.trim()) return;
-            setActivePage('home');
-            // Signal to HomePage via a shared ref trick — simpler: just pass navSearch as prop
+            navigateTo('home');
             setNavSearchSubmitted(navSearch.trim());
             setNavSearch('');
+            setMobileMenuOpen(false);
         };
 
         return (
             <div className="page-shell">
                 {/* Nav */}
                 <nav>
-                    <div className="nav-brand" onClick={() => setActivePage('home')}>
+                    <div className="nav-brand" onClick={() => navigateTo('home')}>
                         <img src="https://upload.wikimedia.org/wikipedia/en/thumb/f/fb/University_of_Pittsburgh_seal.svg/960px-University_of_Pittsburgh_seal.svg.png" alt="University of Pittsburgh" />
                         <div className="nav-brand-text">
                             <span className="nav-title">Scientific Stockroom</span>
@@ -1064,7 +1250,7 @@
                     </div>
                     <div className="nav-links">
                         {pages.map(p => (
-                            <button key={p.id} className={`nav-link ${activePage === p.id ? 'active' : ''}`} onClick={() => setActivePage(p.id)}>
+                            <button key={p.id} className={`nav-link ${activePage === p.id ? 'active' : ''}`} onClick={() => navigateTo(p.id)}>
                                 <span className="nav-icon">{p.icon}</span>
                                 {p.label}
                             </button>
@@ -1084,7 +1270,37 @@
                             </button>
                         </form>
                     </div>
+                    {/* Hamburger — mobile only */}
+                    <button
+                        className={`nav-hamburger ${mobileMenuOpen ? 'open' : ''}`}
+                        onClick={() => setMobileMenuOpen(o => !o)}
+                        aria-label="Toggle menu"
+                    >
+                        <span></span><span></span><span></span>
+                    </button>
                 </nav>
+
+                {/* Mobile slide-down menu */}
+                <div className={`nav-mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
+                    {pages.map(p => (
+                        <button key={p.id} className={`nav-mobile-link ${activePage === p.id ? 'active' : ''}`} onClick={() => navigateTo(p.id)}>
+                            <span className="nav-icon">{p.icon}</span>
+                            {p.label}
+                        </button>
+                    ))}
+                    <div className="nav-mobile-search">
+                        <form className="nav-mobile-search-wrap" onSubmit={handleNavSearch}>
+                            <input
+                                type="text"
+                                className="nav-mobile-search-input"
+                                placeholder="Search catalog…"
+                                value={navSearch}
+                                onChange={e => setNavSearch(e.target.value)}
+                            />
+                            <button type="submit" className="nav-mobile-search-btn" aria-label="Search">🔍</button>
+                        </form>
+                    </div>
+                </div>
 
                 {/* Page content */}
                 {activePage === 'home'       && <HomePage       inventory={inventory} dbStatus={dbStatus} navigate={setActivePage} externalSearch={navSearchSubmitted} onExternalSearchConsumed={() => setNavSearchSubmitted('')} />}
@@ -1103,7 +1319,7 @@
                     <span>
                         {fileLastModified
                             ? `Last updated: ${fileLastModified.toLocaleDateString()} ${fileLastModified.toLocaleTimeString()}`
-                            : 'Dietrich School Scientific Stockroom · Inventory System'}
+                            : 'Dietrich School Scientific Stockroom · Toolbox'}
                     </span>
                 </footer>
             </div>
