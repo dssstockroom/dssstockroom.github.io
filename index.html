@@ -403,15 +403,8 @@
         @media (max-width: 900px) { body { padding-bottom: 56px; } }
 
         /* ── Print ───────────────────────────────────────────────────────── */
-        @media screen { .print-only { display: none !important; } }
-        @media print {
-            nav, footer, .no-print { display: none !important; }
-            .print-only { display: block !important; }
-            body { background: white; padding: 0; }
-            .card { box-shadow: none; border: 1px solid #ccc; }
-            table { font-size: 11px; }
-            th { background: #f0f0f0 !important; }
-        }
+        /* print-only divs are never shown on screen — printing is handled via iframe */
+        .print-only { display: none !important; }
 
         /* ══════════════════════════════════════════════════════════════════
            HOME PAGE
@@ -1096,12 +1089,94 @@
             /* Footer */
             footer { font-size: 10px; padding: 6px 16px; }
         }
+
+        /* ── Modal overlay ─────────────────────────────────────────────── */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,11,32,0.65);
+            backdrop-filter: blur(3px);
+            z-index: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal {
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+            width: 100%;
+            max-width: 760px;
+            max-height: 88vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px 16px;
+            border-bottom: 2px solid var(--sky);
+            flex-shrink: 0;
+        }
+        .modal-header h2 {
+            margin: 0;
+            font-size: 22px;
+            color: var(--royal);
+            border: none;
+            padding: 0;
+        }
+        .modal-header-actions { display: flex; gap: 10px; align-items: center; }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: var(--muted);
+            cursor: pointer;
+            line-height: 1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: all 0.15s;
+        }
+        .modal-close:hover { background: var(--bg); color: var(--text); }
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        @media (max-width: 600px) {
+            .modal-backdrop { padding: 0; align-items: flex-end; }
+            .modal { max-width: 100%; max-height: 92vh; border-radius: 16px 16px 0 0; }
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
     <script type="text/babel">
     const { useState, useEffect, useRef, useCallback } = React;
+
+    /* ── Print utility — renders into a hidden iframe so only the target
+          document is printed, never the surrounding app UI ──────────── */
+    function printDocument(htmlContent) {
+        // Remove any existing print frame
+        const existing = document.getElementById('__printFrame');
+        if (existing) existing.remove();
+        const iframe = document.createElement('iframe');
+        iframe.id = '__printFrame';
+        iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:none;';
+        document.body.appendChild(iframe);
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(htmlContent);
+        doc.close();
+        iframe.contentWindow.focus();
+        setTimeout(() => {
+            iframe.contentWindow.print();
+            setTimeout(() => iframe.remove(), 1000);
+        }, 300);
+    }
 
     /* ══════════════════════════════════════════════════════════════════════
        LABEL GENERATOR — layout/rendering constants and helpers
@@ -1339,6 +1414,89 @@
                 </footer>
             </div>
         );
+    }
+
+    /* ── Print HTML builders ──────────────────────────────────────────── */
+    function buildPackingSlipHTML(slip) {
+        const rows = (slip.items || []).map(it => `
+            <tr><td>☐</td><td style="font-family:monospace;font-weight:bold">${it.location}</td>
+            <td>${it.quantity}</td><td>${it.itemName}</td>
+            <td style="font-family:monospace;font-size:10px">${it.internalSKU}</td>
+            <td style="font-family:monospace;font-size:10px">${it.vendorSKUs}</td>
+            <td style="font-size:10px">${it.expiration || '—'}</td></tr>`).join('');
+        const notFound = (slip.notFoundSKUs || []).length > 0 ? `
+            <div style="margin-top:16px;padding:12px;border:2px solid #FF5B45;background:#FFF0ED;font-size:12px">
+                <strong style="color:#770538">Not Found:</strong>
+                <ul style="margin:6px 0 0 20px;color:#770538">${(slip.notFoundSKUs||[]).map(x=>`<li style="font-family:monospace">${typeof x==='string'?x:`${x.sku} (Qty: ${x.quantity})`}</li>`).join('')}</ul>
+            </div>` : '';
+        const notes = slip.notes?.trim() ? `<div style="margin-top:16px;padding:12px;border:1px solid black;font-size:12px"><strong>Notes:</strong> ${slip.notes}</div>` : '';
+        return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+            <style>
+                body{font-family:Arial,sans-serif;padding:20px;font-size:12px}
+                h1{font-family:Georgia,serif;font-size:20px;text-align:center;border-bottom:2px solid black;padding-bottom:8px;margin-bottom:16px}
+                .meta{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+                table{width:100%;border-collapse:collapse}
+                th,td{border:1px solid #ccc;padding:6px 8px;text-align:left}
+                th{background:#f0f0f0;font-size:11px;text-transform:uppercase}
+                @media print{body{padding:10px}}
+            </style></head><body>
+            <h1>Dietrich School Scientific Stockroom — Packing Slip</h1>
+            <div class="meta">
+                <div><p><strong>Supplier:</strong> ${slip.supplier||'—'}</p><p><strong>PO #:</strong> ${slip.poNumber||'—'}</p></div>
+                <div><p><strong>Date Received:</strong> ${slip.dateReceived||'—'}</p><p><strong>Received By:</strong> ${slip.receivedBy||'—'}</p></div>
+            </div>
+            <table><thead><tr><th style="width:24px">☐</th><th>Location</th><th>Qty</th><th>Item Name</th><th>Internal SKU</th><th>Vendor SKUs</th><th>Exp.</th></tr></thead>
+            <tbody>${rows}</tbody></table>
+            ${notes}${notFound}
+            </body></html>`;
+    }
+
+    function buildHazmatBOLHTML(bol) {
+        const matRows = (bol.materials || []).map(m => `
+            <tr><td style="font-family:monospace">${m.unNumber}</td><td>${m.properShippingName}</td>
+            <td style="text-align:center">${m.hazardClass}</td><td style="text-align:center">${m.packingGroup}</td>
+            <td>${m.quantity}</td><td>${m.type}</td></tr>`).join('');
+        return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+            <style>
+                body{font-family:Arial,sans-serif;padding:20px;font-size:11px}
+                h1{font-family:Georgia,serif;font-size:18px;text-align:center;font-weight:bold}
+                .sub{text-align:center;font-size:11px;margin:4px 0 14px}
+                .parties{display:grid;grid-template-columns:1fr 1fr;gap:16px;border:1px solid black;padding:10px;margin-bottom:12px}
+                .party-label{font-weight:bold;text-decoration:underline;margin-bottom:4px}
+                .logistics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;border:1px solid black;padding:8px;margin-bottom:12px}
+                table{width:100%;border-collapse:collapse;margin-bottom:12px}
+                th,td{border:1px solid black;padding:4px 6px;text-align:left}
+                th{background:#f0f0f0;font-size:10px;text-transform:uppercase}
+                .sigs{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:24px;padding-top:12px;border-top:1px solid black}
+                .sig-line{border-bottom:1px solid black;margin-bottom:4px;height:32px}
+                .sig-label{font-size:10px}
+                @media print{body{padding:10px}}
+            </style></head><body>
+            <h1>HAZARDOUS MATERIALS BILL OF LADING</h1>
+            <div class="sub">49 CFR Compliant</div>
+            <div class="parties">
+                <div><div class="party-label">SHIPPER</div>
+                    <p>${bol.shipperName||''}</p>${bol.shipperAttn?`<p>ATTN: ${bol.shipperAttn}</p>`:''}
+                    <p>${bol.shipperAddress||''}</p>${bol.shipperAddress2?`<p>${bol.shipperAddress2}</p>`:''}
+                    <p>${bol.shipperCity||''}${bol.shipperCity?', ':''}${bol.shipperState||''} ${bol.shipperZip||''}</p>
+                    <p>TEL: ${bol.shipperPhone||''}</p></div>
+                <div><div class="party-label">CONSIGNEE</div>
+                    <p>${bol.consigneeName||''}</p>${bol.consigneeAttn?`<p>ATTN: ${bol.consigneeAttn}</p>`:''}
+                    <p>${bol.consigneeAddress||''}</p>${bol.consigneeAddress2?`<p>${bol.consigneeAddress2}</p>`:''}
+                    <p>${bol.consigneeCity||''}${bol.consigneeCity?', ':''}${bol.consigneeState||''} ${bol.consigneeZip||''}</p>
+                    ${bol.consigneePhone?`<p>TEL: ${bol.consigneePhone}</p>`:''}</div>
+            </div>
+            <div class="logistics">
+                <div><strong>Carrier:</strong> ${bol.carrierName||'—'}</div>
+                <div><strong>Ship Date:</strong> ${bol.shipDate||'—'}</div>
+                <div><strong>Emergency:</strong> ${bol.emergencyContact||'—'} ${bol.emergencyPhone||''}</div>
+            </div>
+            ${matRows ? `<table><thead><tr><th>UN#</th><th>Proper Shipping Name</th><th>Hazard Class</th><th>PG</th><th>Quantity</th><th>Type</th></tr></thead><tbody>${matRows}</tbody></table>` : ''}
+            <div class="sigs">
+                <div><p>Shipper Signature:</p><div class="sig-line"></div><div class="sig-label">Authorized Signature / Date</div></div>
+                <div><p>Carrier Signature:</p><div class="sig-line"></div><div class="sig-label">Authorized Signature / Date</div></div>
+            </div>
+            </body></html>`;
     }
 
     /* ══════════════════════════════════════════════════════════════════════
@@ -1645,8 +1803,8 @@
                                                 <div style={{fontSize:'11px', color:'var(--muted)', marginTop:'3px'}}>Saved: {new Date(rec.createdAt).toLocaleString()}</div>
                                             </div>
                                             <div className="history-item-actions">
-                                                <button className="btn btn-outline btn-sm" onClick={() => setSelectedRecord(selectedRecord?.id === rec.id ? null : rec)}>
-                                                    {selectedRecord?.id === rec.id ? 'Close' : 'View'}
+                                                <button className="btn btn-outline btn-sm" onClick={() => setSelectedRecord(rec)}>
+                                                    View
                                                 </button>
                                                 <button className="btn btn-red btn-sm" onClick={() => { if(confirm('Delete this record?')) deleteRecord(rec.id); }}>Del</button>
                                             </div>
@@ -1655,28 +1813,34 @@
                                 }
                             </div>
 
-                            {/* Expanded record viewer */}
+                            {/* Record viewer modal */}
                             {selectedRecord && (
-                                <div className="card no-print">
-                                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px'}}>
-                                        <h2 style={{marginBottom:0}}>
-                                            {selectedRecord._type === 'hazmat' ? `Hazmat BOL — ${selectedRecord.consigneeName}` : `Packing Slip — PO# ${selectedRecord.poNumber}`}
-                                        </h2>
-                                        <button className="btn btn-gold btn-sm" onClick={() => window.print()}>🖨 Print</button>
+                                <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setSelectedRecord(null); }}>
+                                    <div className="modal">
+                                        <div className="modal-header">
+                                            <h2>
+                                                {selectedRecord._type === 'hazmat'
+                                                    ? `Hazmat BOL — ${selectedRecord.consigneeName || '—'}`
+                                                    : `Packing Slip — PO# ${selectedRecord.poNumber || '—'}`}
+                                            </h2>
+                                            <div className="modal-header-actions">
+                                                <button className="btn btn-gold btn-sm" onClick={() => selectedRecord._type === 'hazmat' ? printDocument(buildHazmatBOLHTML(selectedRecord)) : printDocument(buildPackingSlipHTML(selectedRecord))}>🖨 Print</button>
+                                                <button className="modal-close" onClick={() => setSelectedRecord(null)}>✕</button>
+                                            </div>
+                                        </div>
+                                        <div className="modal-body">
+                                            {selectedRecord._type === 'packing'
+                                                ? <PackingSlipPreview slip={selectedRecord} />
+                                                : <HazmatBOLPreview bol={selectedRecord} />
+                                            }
+                                        </div>
                                     </div>
-                                    {selectedRecord._type === 'packing'
-                                        ? <PackingSlipPreview slip={selectedRecord} />
-                                        : <HazmatBOLPreview bol={selectedRecord} />
-                                    }
                                 </div>
                             )}
                         </div>
                     )}
                 </div>
 
-                {/* Print outputs */}
-                <PackingSlipPrintArea slip={selectedRecord?._type === 'packing' ? selectedRecord : null} context="history" />
-                <HazmatBOLPrintArea bol={selectedRecord?._type === 'hazmat' ? selectedRecord : null} context="history" />
             </div>
         );
     }
@@ -1712,7 +1876,7 @@
 
         const handlePrint = () => {
             const result = processItems();
-            if (result?.items.length) { onSave(result); setTimeout(() => window.print(), 100); }
+            if (result?.items.length) { onSave(result); setTimeout(() => printDocument(buildPackingSlipHTML(result)), 100); }
         };
 
         const handleClear = () => {
@@ -1766,8 +1930,6 @@
                     </div>
                 )}
 
-                {/* Print area */}
-                <PackingSlipPrintArea slip={processed ? slip : null} context="form" />
             </div>
         );
     }
@@ -1830,41 +1992,7 @@
         );
     }
 
-    function PackingSlipPrintArea({ slip, context }) {
-        if (!slip || !slip.items?.length) return null;
-        return (
-            <div className="print-only">
-                <div style={{padding:'20px'}}>
-                    <div style={{textAlign:'center', marginBottom:'16px', borderBottom:'2px solid black', paddingBottom:'8px'}}>
-                        <h1 style={{fontSize:'20px', margin:0, fontFamily:'Georgia, serif'}}>Dietrich School Scientific Stockroom — Packing Slip</h1>
-                    </div>
-                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px', marginBottom:'20px', fontSize:'12px'}}>
-                        <div><p><strong>Supplier:</strong> {slip.supplier}</p><p><strong>PO #:</strong> {slip.poNumber}</p></div>
-                        <div><p><strong>Date Received:</strong> {slip.dateReceived}</p><p><strong>Received By:</strong> {slip.receivedBy}</p></div>
-                    </div>
-                    <table>
-                        <thead>
-                            <tr><th style={{width:'24px'}}>☐</th><th>Location</th><th>Qty</th><th>Item Name</th><th>Internal SKU</th><th>Vendor SKUs</th><th>Exp.</th></tr>
-                        </thead>
-                        <tbody>
-                            {slip.items.map((it, i) => (
-                                <tr key={i}><td>☐</td><td style={{fontFamily:'monospace', fontWeight:'bold'}}>{it.location}</td><td>{it.quantity}</td><td>{it.itemName}</td><td style={{fontFamily:'monospace', fontSize:'10px'}}>{it.internalSKU}</td><td style={{fontFamily:'monospace', fontSize:'10px'}}>{it.vendorSKUs}</td><td style={{fontSize:'10px'}}>{it.expiration || '—'}</td></tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    {slip.notes?.trim() && <div style={{marginTop:'16px', padding:'12px', border:'1px solid black', fontSize:'12px'}}><strong>Notes:</strong> {slip.notes}</div>}
-                    {slip.notFoundSKUs?.length > 0 && (
-                        <div style={{marginTop:'16px', padding:'12px', border:'2px solid #FF5B45', background:'#FFF0ED', fontSize:'12px'}}>
-                            <strong style={{color:'#770538'}}>Not Found:</strong>
-                            <ul style={{margin:'6px 0 0 20px', color:'#770538'}}>{slip.notFoundSKUs.map((x,i) => <li key={i} style={{fontFamily:'monospace'}}>{typeof x === 'string' ? x : `${x.sku} (Qty: ${x.quantity})`}</li>)}</ul>
-                        </div>
-                    )}
-                </div>
-            </div>
-        );
-    }
-
-    /* ── Hazmat BOL Form ─────────────────────────────────────────────── */
+        /* ── Hazmat BOL Form ─────────────────────────────────────────────── */
     function HazmatBOLForm({ onSave }) {
         const [bol, setBol] = useState({
             _type:'hazmat',
@@ -1888,7 +2016,7 @@
             const result = processMaterials();
             setBol(result);
             onSave(result);
-            setTimeout(() => window.print(), 100);
+            setTimeout(() => printDocument(buildHazmatBOLHTML(result)), 100);
         };
 
         const handleClear = () => {
@@ -1969,7 +2097,6 @@
                     </div>
                 </div>
 
-                <HazmatBOLPrintArea bol={bol} context="form" />
             </div>
         );
     }
@@ -2014,57 +2141,7 @@
         );
     }
 
-    function HazmatBOLPrintArea({ bol, context }) {
-        if (!bol || !bol._type === 'hazmat') return null;
-        if (context === 'form' && !bol.consigneeName && !bol.materials?.length) return null;
-        return (
-            <div className="print-only">
-                <div style={{padding:'20px', fontSize:'11px', fontFamily:'Arial, sans-serif'}}>
-                    <div style={{textAlign:'center', marginBottom:'12px', borderBottom:'3px solid black', paddingBottom:'8px'}}>
-                        <h1 style={{fontSize:'18px', margin:0, fontWeight:'bold', fontFamily:'Georgia, serif'}}>HAZARDOUS MATERIALS BILL OF LADING</h1>
-                        <p style={{fontSize:'11px', margin:'4px 0 0 0'}}>49 CFR Compliant</p>
-                    </div>
-                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px', marginBottom:'12px', border:'1px solid black', padding:'10px'}}>
-                        <div>
-                            <p style={{fontWeight:'bold', marginBottom:'4px', textDecoration:'underline'}}>SHIPPER</p>
-                            <p>{bol.shipperName}</p>
-                            {bol.shipperAttn && <p>ATTN: {bol.shipperAttn}</p>}
-                            <p>{bol.shipperAddress}</p>
-                            {bol.shipperAddress2 && <p>{bol.shipperAddress2}</p>}
-                            <p>{bol.shipperCity}, {bol.shipperState} {bol.shipperZip}</p>
-                            <p>TEL: {bol.shipperPhone}</p>
-                        </div>
-                        <div>
-                            <p style={{fontWeight:'bold', marginBottom:'4px', textDecoration:'underline'}}>CONSIGNEE</p>
-                            <p>{bol.consigneeName}</p>
-                            {bol.consigneeAttn && <p>ATTN: {bol.consigneeAttn}</p>}
-                            <p>{bol.consigneeAddress}</p>
-                            {bol.consigneeAddress2 && <p>{bol.consigneeAddress2}</p>}
-                            <p>{bol.consigneeCity}{bol.consigneeCity ? ', ' : ''}{bol.consigneeState} {bol.consigneeZip}</p>
-                            {bol.consigneePhone && <p>TEL: {bol.consigneePhone}</p>}
-                        </div>
-                    </div>
-                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'8px', marginBottom:'12px', border:'1px solid black', padding:'8px'}}>
-                        <div><strong>Carrier:</strong> {bol.carrierName}</div>
-                        <div><strong>Ship Date:</strong> {bol.shipDate}</div>
-                        <div><strong>Emergency:</strong> {bol.emergencyContact} {bol.emergencyPhone}</div>
-                    </div>
-                    {bol.materials?.length > 0 && (
-                        <table style={{width:'100%', borderCollapse:'collapse', marginBottom:'12px'}}>
-                            <thead><tr style={{background:'#f0f0f0'}}><th style={{border:'1px solid black', padding:'4px 6px'}}>UN#</th><th style={{border:'1px solid black', padding:'4px 6px'}}>PROPER SHIPPING NAME</th><th style={{border:'1px solid black', padding:'4px 6px'}}>HAZARD CLASS</th><th style={{border:'1px solid black', padding:'4px 6px'}}>PG</th><th style={{border:'1px solid black', padding:'4px 6px'}}>QUANTITY</th><th style={{border:'1px solid black', padding:'4px 6px'}}>TYPE</th></tr></thead>
-                            <tbody>{bol.materials.map((m, i) => <tr key={i}><td style={{border:'1px solid black', padding:'4px 6px', fontFamily:'monospace'}}>{m.unNumber}</td><td style={{border:'1px solid black', padding:'4px 6px'}}>{m.properShippingName}</td><td style={{border:'1px solid black', padding:'4px 6px', textAlign:'center'}}>{m.hazardClass}</td><td style={{border:'1px solid black', padding:'4px 6px', textAlign:'center'}}>{m.packingGroup}</td><td style={{border:'1px solid black', padding:'4px 6px'}}>{m.quantity}</td><td style={{border:'1px solid black', padding:'4px 6px'}}>{m.type}</td></tr>)}</tbody>
-                        </table>
-                    )}
-                    <div style={{marginTop:'24px', display:'grid', gridTemplateColumns:'1fr 1fr', gap:'40px', paddingTop:'12px', borderTop:'1px solid black'}}>
-                        <div><p style={{marginBottom:'32px'}}>Shipper Signature:</p><div style={{borderBottom:'1px solid black', marginBottom:'4px'}}></div><p style={{fontSize:'10px'}}>Authorized Signature / Date</p></div>
-                        <div><p style={{marginBottom:'32px'}}>Carrier Signature:</p><div style={{borderBottom:'1px solid black', marginBottom:'4px'}}></div><p style={{fontSize:'10px'}}>Authorized Signature / Date</p></div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    /* ══════════════════════════════════════════════════════════════════════
+        /* ══════════════════════════════════════════════════════════════════════
        CYCLE COUNT PAGE
     ══════════════════════════════════════════════════════════════════════ */
     function CycleCountPage({ inventory }) {
@@ -2216,7 +2293,7 @@
                                     <p>Counted: {countedItems.length} items</p>
                                 </div>
                                 <div style={{display:'flex', gap:'10px'}}>
-                                    <button onClick={() => window.print()} disabled={!countedItems.length} className="btn btn-outline btn-sm" style={{color:'#fff', borderColor:'rgba(255,255,255,0.4)'}}>🖨 Print</button>
+                                    <button onClick={() => printDocument(buildCycleCountHTML(countedItems, session, getAllMissingItems()))} disabled={!countedItems.length} className="btn btn-outline btn-sm" style={{color:'#fff', borderColor:'rgba(255,255,255,0.4)'}}>🖨 Print</button>
                                     <button onClick={exportCSV} disabled={!countedItems.length} className="btn btn-gold btn-sm">⬇ CSV</button>
                                     <button onClick={endSession} className="btn btn-red btn-sm">End Session</button>
                                 </div>
@@ -2307,35 +2384,6 @@
                         </div>
                     )}
                 </div>
-
-                {/* Print area */}
-                {session && countedItems.length > 0 && (
-                    <div className="print-only">
-                        <div style={{padding:'20px'}}>
-                            <div style={{textAlign:'center', marginBottom:'16px', borderBottom:'2px solid black', paddingBottom:'10px'}}>
-                                <h1 style={{fontSize:'20px', margin:0, fontFamily:'Georgia, serif'}}>Cycle Count Report</h1>
-                                <p style={{fontSize:'12px', margin:'4px 0 0'}}>Section {session.section} — Rack {session.rack} · {new Date().toLocaleDateString()}</p>
-                            </div>
-                            <h2 style={{fontSize:'14px', marginBottom:'8px'}}>Counted Items</h2>
-                            <table>
-                                <thead><tr><th>Found At</th><th>Expected</th><th>SKU</th><th>Item</th><th>UoM</th><th>System</th><th>Counted</th><th>Variance</th></tr></thead>
-                                <tbody>{countedItems.map((it, i) => <tr key={i} style={{background: it.variance !== 0 ? '#FFF0ED' : 'white'}}><td style={{fontFamily:'monospace', fontSize:'10px'}}>{it.countedAt}</td><td style={{fontFamily:'monospace', fontSize:'10px'}}>{it.expectedLocation}</td><td style={{fontFamily:'monospace', fontSize:'10px'}}>{it.sku}</td><td style={{fontSize:'10px'}}>{it.itemName}</td><td style={{fontSize:'10px'}}>{it.uom}</td><td style={{fontSize:'10px'}}>{it.onHand}</td><td style={{fontSize:'10px', fontWeight:'bold'}}>{it.counted}</td><td style={{fontSize:'10px', fontWeight:'bold', color: it.variance === 0 ? '#00AD6E' : '#FF5B45'}}>{it.variance > 0 ? '+':''}{it.variance}</td></tr>)}</tbody>
-                            </table>
-                            {getAllMissingItems().length > 0 && (
-                                <div style={{marginTop:'20px'}}>
-                                    <h2 style={{fontSize:'14px', marginBottom:'8px', color:'#FF5B45'}}>Missing Items</h2>
-                                    <table>
-                                        <thead><tr><th>Expected Location</th><th>SKU</th><th>Item</th><th>UoM</th><th>System On-Hand</th></tr></thead>
-                                        <tbody>{getAllMissingItems().map((item, i) => <tr key={i} style={{background:'#FFF0ED'}}><td style={{fontFamily:'monospace', fontSize:'10px'}}>{item.location}</td><td style={{fontFamily:'monospace', fontSize:'10px'}}>{item.internalSKU}</td><td style={{fontSize:'10px'}}>{item.itemName}</td><td style={{fontSize:'10px'}}>{item.uom}</td><td style={{fontSize:'10px'}}>{item.onHand||0}</td></tr>)}</tbody>
-                                    </table>
-                                </div>
-                            )}
-                            <div style={{marginTop:'20px', padding:'12px', border:'2px solid black', fontSize:'11px'}}>
-                                <strong>Summary:</strong> &nbsp; Counted: {countedItems.length} &nbsp;|&nbsp; Variances: {countedItems.filter(i => i.variance !== 0).length} &nbsp;|&nbsp; Misplaced: {countedItems.filter(i => i.misplaced).length} &nbsp;|&nbsp; Missing: {getAllMissingItems().length}
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         );
     }
