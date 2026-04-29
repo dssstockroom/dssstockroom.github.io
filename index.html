@@ -1417,35 +1417,137 @@
     }
 
     /* ── Print HTML builders ──────────────────────────────────────────── */
+    /* ── Shared print head: Pitt fonts + base CSS injected into every iframe doc ── */
+    const PRINT_HEAD = `<meta charset='UTF-8'><link rel="stylesheet" href="https://use.typekit.net/myu6uxh.css"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* Pitt brand typography */
+        :root {
+            --royal:  #003594;
+            --navy:   #00205B;
+            --gold:   #FFB81C;
+            --sky:    #DBEEFF;
+            --green:  #00AD6E;
+            --red:    #FF5B45;
+            --dark-red: #770538;
+            --gothic: 'alternate-gothic-no-3-d', 'Arial Narrow', sans-serif;
+            --serif:  'Instrument Serif', Georgia, serif;
+            --sans:   'Roboto', Arial, sans-serif;
+            --mono:   'Roboto Mono', 'Courier New', monospace;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: var(--sans);
+            font-size: 11px;
+            font-weight: 400;
+            color: #111;
+            padding: 24px;
+            background: white;
+        }
+        h1 {
+            font-family: var(--serif);
+            font-weight: 400;
+            font-size: 22px;
+            color: var(--royal);
+            text-align: center;
+            border-bottom: 3px solid var(--gold);
+            padding-bottom: 10px;
+            margin-bottom: 18px;
+        }
+        h2 {
+            font-family: var(--serif);
+            font-weight: 400;
+            font-size: 15px;
+            color: var(--navy);
+            margin: 18px 0 8px;
+        }
+        .label {
+            font-family: var(--gothic);
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--navy);
+        }
+        .section-badge {
+            font-family: var(--gothic);
+            font-size: 8.5px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--gold);
+            background: var(--royal);
+            padding: 3px 8px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        p { margin: 3px 0; font-size: 11px; line-height: 1.5; }
+        strong { font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+        th {
+            font-family: var(--gothic);
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            background: var(--sky);
+            color: var(--navy);
+            padding: 6px 7px;
+            border: 1px solid #c5d8ee;
+            text-align: left;
+        }
+        td { padding: 5px 7px; border: 1px solid #ddd; font-size: 11px; vertical-align: top; }
+        tbody tr:nth-child(even) { background: #fafbfd; }
+        .mono { font-family: var(--mono); }
+        .bold { font-weight: 600; }
+        .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; padding: 12px 14px; background: var(--sky); border-left: 4px solid var(--royal); border-radius: 0 6px 6px 0; }
+        .not-found { margin-top: 14px; padding: 10px 12px; border-left: 4px solid var(--red); background: #fff0ed; border-radius: 0 6px 6px 0; }
+        .not-found .label { color: var(--dark-red); }
+        .not-found ul { margin: 6px 0 0 18px; color: var(--dark-red); }
+        .not-found li { font-family: var(--mono); font-size: 11px; }
+        .notes-box { margin-top: 14px; padding: 10px 12px; border-left: 4px solid var(--gold); background: #fffbe6; border-radius: 0 6px 6px 0; }
+        .variance-row { background: #fff0ed !important; }
+        .missing-row  { background: #fff0ed !important; }
+        .summary-box { margin-top: 18px; padding: 10px 14px; border: 1.5px solid var(--navy); border-radius: 6px; font-family: var(--gothic); font-size: 10px; letter-spacing: 0.06em; color: var(--navy); }
+        .parties-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 14px; }
+        .party-box { padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; }
+        .logistics-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 14px; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; }
+        .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 28px; padding-top: 14px; border-top: 1px solid #ccc; }
+        .sig-line { border-bottom: 1px solid #333; margin: 28px 0 4px; }
+        .sig-caption { font-family: var(--gothic); font-size: 8.5px; letter-spacing: 0.08em; text-transform: uppercase; color: #666; }
+        @media print {
+            body { padding: 14px; }
+            @page { margin: 1.2cm; }
+        }
+    </style>`;
+
     function buildPackingSlipHTML(slip) {
         const rows = (slip.items || []).map(it => `
-            <tr><td>☐</td><td style="font-family:monospace;font-weight:bold">${it.location}</td>
-            <td>${it.quantity}</td><td>${it.itemName}</td>
-            <td style="font-family:monospace;font-size:10px">${it.internalSKU}</td>
-            <td style="font-family:monospace;font-size:10px">${it.vendorSKUs}</td>
-            <td style="font-size:10px">${it.expiration || '—'}</td></tr>`).join('');
+            <tr>
+                <td style='font-size:13px'>☐</td>
+                <td class='mono bold' style='color:#003594'>${it.location}</td>
+                <td>${it.quantity}</td>
+                <td>${it.itemName}</td>
+                <td class='mono' style='font-size:10px;color:#003594'>${it.internalSKU}</td>
+                <td class='mono' style='font-size:10px;color:#5a6072'>${it.vendorSKUs}</td>
+                <td style='font-size:10px'>${it.expiration || '—'}</td>
+            </tr>`).join('');
         const notFound = (slip.notFoundSKUs || []).length > 0 ? `
-            <div style="margin-top:16px;padding:12px;border:2px solid #FF5B45;background:#FFF0ED;font-size:12px">
-                <strong style="color:#770538">Not Found:</strong>
-                <ul style="margin:6px 0 0 20px;color:#770538">${(slip.notFoundSKUs||[]).map(x=>`<li style="font-family:monospace">${typeof x==='string'?x:`${x.sku} (Qty: ${x.quantity})`}</li>`).join('')}</ul>
+            <div class='not-found'>
+                <div class='label'>Not Found in Database</div>
+                <ul>${(slip.notFoundSKUs||[]).map(x=>`<li>${typeof x==='string'?x:x.sku+' (Qty: '+x.quantity+')'}</li>`).join('')}</ul>
             </div>` : '';
-        const notes = slip.notes?.trim() ? `<div style="margin-top:16px;padding:12px;border:1px solid black;font-size:12px"><strong>Notes:</strong> ${slip.notes}</div>` : '';
-        return `<!DOCTYPE html><html><head><meta charset="UTF-8">
-            <style>
-                body{font-family:Arial,sans-serif;padding:20px;font-size:12px}
-                h1{font-family:Georgia,serif;font-size:20px;text-align:center;border-bottom:2px solid black;padding-bottom:8px;margin-bottom:16px}
-                .meta{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
-                table{width:100%;border-collapse:collapse}
-                th,td{border:1px solid #ccc;padding:6px 8px;text-align:left}
-                th{background:#f0f0f0;font-size:11px;text-transform:uppercase}
-                @media print{body{padding:10px}}
-            </style></head><body>
+        const notes = slip.notes?.trim() ? `<div class='notes-box'><span class='label'>Notes: </span>${slip.notes}</div>` : '';
+        return `<!DOCTYPE html><html><head>${PRINT_HEAD}</head><body>
             <h1>Dietrich School Scientific Stockroom — Packing Slip</h1>
-            <div class="meta">
-                <div><p><strong>Supplier:</strong> ${slip.supplier||'—'}</p><p><strong>PO #:</strong> ${slip.poNumber||'—'}</p></div>
-                <div><p><strong>Date Received:</strong> ${slip.dateReceived||'—'}</p><p><strong>Received By:</strong> ${slip.receivedBy||'—'}</p></div>
+            <div class='meta-grid'>
+                <div><p><span class='label'>Supplier: </span>${slip.supplier||'—'}</p><p><span class='label'>PO #: </span>${slip.poNumber||'—'}</p></div>
+                <div><p><span class='label'>Date Received: </span>${slip.dateReceived||'—'}</p><p><span class='label'>Received By: </span>${slip.receivedBy||'—'}</p></div>
             </div>
-            <table><thead><tr><th style="width:24px">☐</th><th>Location</th><th>Qty</th><th>Item Name</th><th>Internal SKU</th><th>Vendor SKUs</th><th>Exp.</th></tr></thead>
+            <table><thead><tr>
+                <th style='width:20px'>☐</th><th>Location</th><th>Qty</th>
+                <th>Item Name</th><th>Internal SKU</th><th>Vendor SKUs</th><th>Exp.</th>
+            </tr></thead>
             <tbody>${rows}</tbody></table>
             ${notes}${notFound}
             </body></html>`;
@@ -1453,48 +1555,88 @@
 
     function buildHazmatBOLHTML(bol) {
         const matRows = (bol.materials || []).map(m => `
-            <tr><td style="font-family:monospace">${m.unNumber}</td><td>${m.properShippingName}</td>
-            <td style="text-align:center">${m.hazardClass}</td><td style="text-align:center">${m.packingGroup}</td>
-            <td>${m.quantity}</td><td>${m.type}</td></tr>`).join('');
-        return `<!DOCTYPE html><html><head><meta charset="UTF-8">
-            <style>
-                body{font-family:Arial,sans-serif;padding:20px;font-size:11px}
-                h1{font-family:Georgia,serif;font-size:18px;text-align:center;font-weight:bold}
-                .sub{text-align:center;font-size:11px;margin:4px 0 14px}
-                .parties{display:grid;grid-template-columns:1fr 1fr;gap:16px;border:1px solid black;padding:10px;margin-bottom:12px}
-                .party-label{font-weight:bold;text-decoration:underline;margin-bottom:4px}
-                .logistics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;border:1px solid black;padding:8px;margin-bottom:12px}
-                table{width:100%;border-collapse:collapse;margin-bottom:12px}
-                th,td{border:1px solid black;padding:4px 6px;text-align:left}
-                th{background:#f0f0f0;font-size:10px;text-transform:uppercase}
-                .sigs{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:24px;padding-top:12px;border-top:1px solid black}
-                .sig-line{border-bottom:1px solid black;margin-bottom:4px;height:32px}
-                .sig-label{font-size:10px}
-                @media print{body{padding:10px}}
-            </style></head><body>
-            <h1>HAZARDOUS MATERIALS BILL OF LADING</h1>
-            <div class="sub">49 CFR Compliant</div>
-            <div class="parties">
-                <div><div class="party-label">SHIPPER</div>
-                    <p>${bol.shipperName||''}</p>${bol.shipperAttn?`<p>ATTN: ${bol.shipperAttn}</p>`:''}
-                    <p>${bol.shipperAddress||''}</p>${bol.shipperAddress2?`<p>${bol.shipperAddress2}</p>`:''}
+            <tr>
+                <td class='mono' style='color:#003594'>${m.unNumber}</td>
+                <td>${m.properShippingName}</td>
+                <td style='text-align:center;font-weight:600'>${m.hazardClass}</td>
+                <td style='text-align:center'>${m.packingGroup}</td>
+                <td>${m.quantity}</td>
+                <td>${m.type}</td>
+            </tr>`).join('');
+        return `<!DOCTYPE html><html><head>${PRINT_HEAD}</head><body>
+            <h1>Hazardous Materials Bill of Lading</h1>
+            <p style='text-align:center;font-family:var(--gothic);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#5a6072;margin-bottom:16px'>49 CFR Compliant</p>
+            <div class='parties-grid'>
+                <div class='party-box'>
+                    <div class='section-badge'>Shipper</div>
+                    <p class='bold'>${bol.shipperName||''}</p>
+                    ${bol.shipperAttn?`<p><span class='label'>Attn: </span>${bol.shipperAttn}</p>`:''}
+                    <p>${bol.shipperAddress||''}</p>
+                    ${bol.shipperAddress2?`<p>${bol.shipperAddress2}</p>`:''}
                     <p>${bol.shipperCity||''}${bol.shipperCity?', ':''}${bol.shipperState||''} ${bol.shipperZip||''}</p>
-                    <p>TEL: ${bol.shipperPhone||''}</p></div>
-                <div><div class="party-label">CONSIGNEE</div>
-                    <p>${bol.consigneeName||''}</p>${bol.consigneeAttn?`<p>ATTN: ${bol.consigneeAttn}</p>`:''}
-                    <p>${bol.consigneeAddress||''}</p>${bol.consigneeAddress2?`<p>${bol.consigneeAddress2}</p>`:''}
+                    <p><span class='label'>Tel: </span>${bol.shipperPhone||''}</p>
+                </div>
+                <div class='party-box'>
+                    <div class='section-badge'>Consignee</div>
+                    <p class='bold'>${bol.consigneeName||''}</p>
+                    ${bol.consigneeAttn?`<p><span class='label'>Attn: </span>${bol.consigneeAttn}</p>`:''}
+                    <p>${bol.consigneeAddress||''}</p>
+                    ${bol.consigneeAddress2?`<p>${bol.consigneeAddress2}</p>`:''}
                     <p>${bol.consigneeCity||''}${bol.consigneeCity?', ':''}${bol.consigneeState||''} ${bol.consigneeZip||''}</p>
-                    ${bol.consigneePhone?`<p>TEL: ${bol.consigneePhone}</p>`:''}</div>
+                    ${bol.consigneePhone?`<p><span class='label'>Tel: </span>${bol.consigneePhone}</p>`:''}
+                </div>
             </div>
-            <div class="logistics">
-                <div><strong>Carrier:</strong> ${bol.carrierName||'—'}</div>
-                <div><strong>Ship Date:</strong> ${bol.shipDate||'—'}</div>
-                <div><strong>Emergency:</strong> ${bol.emergencyContact||'—'} ${bol.emergencyPhone||''}</div>
+            <div class='logistics-grid'>
+                <div><span class='label'>Carrier: </span>${bol.carrierName||'—'}</div>
+                <div><span class='label'>Ship Date: </span>${bol.shipDate||'—'}</div>
+                <div><span class='label'>Emergency: </span>${bol.emergencyContact||'—'} ${bol.emergencyPhone||''}</div>
             </div>
-            ${matRows ? `<table><thead><tr><th>UN#</th><th>Proper Shipping Name</th><th>Hazard Class</th><th>PG</th><th>Quantity</th><th>Type</th></tr></thead><tbody>${matRows}</tbody></table>` : ''}
-            <div class="sigs">
-                <div><p>Shipper Signature:</p><div class="sig-line"></div><div class="sig-label">Authorized Signature / Date</div></div>
-                <div><p>Carrier Signature:</p><div class="sig-line"></div><div class="sig-label">Authorized Signature / Date</div></div>
+            ${matRows ? `<h2>Hazardous Materials</h2><table><thead><tr><th>UN #</th><th>Proper Shipping Name</th><th>Hazard Class</th><th>PG</th><th>Quantity</th><th>Type</th></tr></thead><tbody>${matRows}</tbody></table>` : ''}
+            <div class='sig-grid'>
+                <div><p>Shipper Signature</p><div class='sig-line'></div><div class='sig-caption'>Authorized Signature / Date</div></div>
+                <div><p>Carrier Signature</p><div class='sig-line'></div><div class='sig-caption'>Authorized Signature / Date</div></div>
+            </div>
+            </body></html>`;
+    }
+
+    function buildCycleCountHTML(countedItems, session, missingItems) {
+        const rows = countedItems.map(it => `
+            <tr class='${it.variance!==0||it.misplaced?'variance-row':''}'>
+                <td class='mono' style='font-size:10px;font-weight:600;color:#003594'>${it.countedAt}</td>
+                <td class='mono' style='font-size:10px;color:${it.misplaced?'#FF5B45':'#5a6072'}'>${it.expectedLocation}</td>
+                <td class='mono' style='font-size:10px;color:#003594'>${it.sku}</td>
+                <td style='font-size:11px'>${it.itemName}</td>
+                <td style='font-size:10px'>${it.uom}</td>
+                <td style='text-align:center;font-size:11px'>${it.onHand}</td>
+                <td style='text-align:center;font-size:11px;font-weight:600'>${it.counted}</td>
+                <td style='text-align:center;font-size:12px;font-weight:700;color:${it.variance===0?'#00AD6E':'#FF5B45'}'>${it.variance>0?'+':''}${it.variance}</td>
+            </tr>`).join('');
+        const missingRows = missingItems.map(i => `
+            <tr class='missing-row'>
+                <td class='mono' style='font-size:10px'>${i.location}</td>
+                <td class='mono' style='font-size:10px;color:#003594'>${i.internalSKU}</td>
+                <td style='font-size:11px'>${i.itemName}</td>
+                <td style='font-size:10px'>${i.uom}</td>
+                <td style='text-align:center;font-size:11px'>${i.onHand||0}</td>
+            </tr>`).join('');
+        const missingSection = missingItems.length > 0 ? `
+            <h2>Missing Items</h2>
+            <table><thead><tr><th>Expected Location</th><th>SKU</th><th>Item Name</th><th>UoM</th><th>System On-Hand</th></tr></thead>
+            <tbody>${missingRows}</tbody></table>` : '';
+        const variances = countedItems.filter(i=>i.variance!==0).length;
+        const misplaced = countedItems.filter(i=>i.misplaced).length;
+        return `<!DOCTYPE html><html><head>${PRINT_HEAD}</head><body>
+            <h1>Cycle Count Report</h1>
+            <p style='text-align:center;font-family:var(--gothic);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#5a6072;margin-bottom:16px'>Section ${session.section} — Rack ${session.rack} &nbsp;·&nbsp; ${new Date().toLocaleDateString()}</p>
+            <h2>Counted Items</h2>
+            <table><thead><tr><th>Found At</th><th>Expected</th><th>SKU</th><th>Item Name</th><th>UoM</th><th>System</th><th>Counted</th><th>Variance</th></tr></thead>
+            <tbody>${rows}</tbody></table>
+            ${missingSection}
+            <div class='summary-box'>
+                Counted: ${countedItems.length} &nbsp;·&nbsp;
+                Variances: ${variances} &nbsp;·&nbsp;
+                Misplaced: ${misplaced} &nbsp;·&nbsp;
+                Missing: ${missingItems.length}
             </div>
             </body></html>`;
     }
