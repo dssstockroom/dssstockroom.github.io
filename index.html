@@ -1910,11 +1910,24 @@
         const filteredHistory = history.filter(h => {
             if (!historySearch) return true;
             const q = historySearch.toLowerCase();
-            return (h.poNumber||'').toLowerCase().includes(q)
-                || (h.supplier||'').toLowerCase().includes(q)
-                || (h.consigneeName||'').toLowerCase().includes(q)
-                || (h._type||'').toLowerCase().includes(q)
-                || (h.items||[]).some(i => i.itemName?.toLowerCase().includes(q));
+            if ((h.poNumber||'').toLowerCase().includes(q)) return true;
+            if ((h.supplier||'').toLowerCase().includes(q)) return true;
+            if ((h.consigneeName||'').toLowerCase().includes(q)) return true;
+            if ((h._type||'').toLowerCase().includes(q)) return true;
+            if ((h.receivedBy||'').toLowerCase().includes(q)) return true;
+            if ((h.notes||'').toLowerCase().includes(q)) return true;
+            if ((h.items||[]).some(i =>
+                (i.itemName||'').toLowerCase().includes(q) ||
+                (i.internalSKU||'').toLowerCase().includes(q) ||
+                (i.vendorSKUs||'').toLowerCase().includes(q) ||
+                (i.expiration||'').toLowerCase().includes(q)
+            )) return true;
+            if ((h.notFoundSKUs||[]).some(x =>
+                typeof x === 'string'
+                    ? x.toLowerCase().includes(q)
+                    : (x.sku||'').toLowerCase().includes(q)
+            )) return true;
+            return false;
         });
 
         return (
@@ -1942,7 +1955,7 @@
                             <div className="card">
                                 <h2>Form History</h2>
                                 <div style={{display:'flex', gap:'12px', marginBottom:'16px', flexWrap:'wrap'}}>
-                                    <input type="text" className="form-input" style={{flex:1, minWidth:'200px'}} placeholder="Search by PO, supplier, consignee…" value={historySearch} onChange={e => setHistorySearch(e.target.value)} />
+                                    <input type="text" className="form-input" style={{flex:1, minWidth:'200px'}} placeholder="Search by PO, supplier, item name, SKU…" value={historySearch} onChange={e => setHistorySearch(e.target.value)} />
                                     <button onClick={exportHistory} disabled={!history.length} className="btn btn-primary btn-sm">⬇ Export</button>
                                     <label className="btn btn-outline btn-sm" style={{margin:0, cursor:'pointer'}}>
                                         <input type="file" accept=".json" onChange={importHistory} style={{display:'none'}} />
