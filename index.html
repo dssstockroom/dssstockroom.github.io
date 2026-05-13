@@ -3080,15 +3080,30 @@
                 }}>
                     <div style={{flex:1, minWidth:0}}>
                         <div style={{display:'flex', alignItems:'center', gap:'8px', flexWrap:'wrap', marginBottom:'3px'}}>
-                            <span style={{fontFamily:'var(--serif)', fontSize:'16px', fontWeight:400, color:'var(--navy)'}}>
-                                {displayName}
-                            </span>
-                            {contact.pronouns && <span style={{fontSize:'11px', color:'var(--muted)', fontStyle:'italic'}}>{contact.pronouns}</span>}
-                            {Array.from(contact.sources).map(s => <SourceTag key={s} source={s} />)}
-                        </div>
-                        <div style={{fontSize:'12.5px', color:'var(--muted)', marginBottom:'4px'}}>
-                            {[contact.title, contact.classif && contact.classif !== contact.title ? contact.classif : '', contact.company || contact.department].filter(Boolean).join(' · ')}
-                        </div>
+                                <span style={{fontFamily:'var(--serif)', fontSize:'16px', fontWeight:400, color:'var(--navy)'}}>
+                                    {displayName}
+                                </span>
+                                {contact.pronouns && <span style={{fontSize:'11px', color:'var(--muted)', fontStyle:'italic'}}>{contact.pronouns}</span>}
+                                {Array.from(contact.sources).map(s => <SourceTag key={s} source={s} />)}
+                            </div>
+                            {contact.group && contact.type === 'person' && !['Vendor','External','Shipping'].includes(contact.classif) && (
+                                <div style={{marginBottom:'5px'}}>
+                                    <span style={{
+                                        display:'inline-flex', alignItems:'center', gap:'5px',
+                                        fontSize:'11px', fontFamily:'var(--gothic)', fontWeight:700,
+                                        letterSpacing:'0.07em', textTransform:'uppercase',
+                                        padding:'3px 9px', borderRadius:'4px',
+                                        background:'var(--sky)', border:'1.5px solid var(--royal)',
+                                        color:'var(--royal)',
+                                    }}>
+                                        <span style={{opacity:0.6, fontSize:'10px'}}>GROUP</span>
+                                        {contact.group}
+                                    </span>
+                                </div>
+                            )}
+                            <div style={{fontSize:'12.5px', color:'var(--muted)', marginBottom:'4px'}}>
+                                {[contact.title, contact.classif && contact.classif !== contact.title ? contact.classif : '', contact.company || contact.department].filter(Boolean).join(' · ')}
+                            </div>
                         <div style={{display:'flex', flexWrap:'wrap', gap:'14px', fontSize:'12.5px', color:'var(--text)'}}>
                             {contact.building && (
                                 <span>📍 {contact.building}{contact.room ? ` ${contact.room}` : ''}</span>
