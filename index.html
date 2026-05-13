@@ -1535,7 +1535,7 @@
         // Multi-line field: shows value + one line when filled, three lines when blank
         const multiline = (label, value, hint) => {
             const lines = blank
-                ? '<div class="field-line"></div><div class="field-line" style="margin-top:18px"></div><div class="field-line" style="margin-top:18px"></div>'
+                ? '<div class="field-line"></div><div class="field-line" style="margin-top:18px"></div><div class="field-line" style="margin-top:18px"></div><div class="field-line" style="margin-top:18px"></div><div class="field-line" style="margin-top:18px"></div>'
                 : `<div class="field-value-text">${v(value)}</div><div class="field-line"></div>`;
             return `
             <div class="field-row">
