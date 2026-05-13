@@ -1535,7 +1535,7 @@
         // Multi-line field: shows value + one line when filled, three lines when blank
         const multiline = (label, value, hint) => {
             const lines = blank
-                ? '<div class="field-line"></div><div class="field-line" style="margin-top:18px"></div><div class="field-line" style="margin-top:18px"></div><div class="field-line" style="margin-top:18px"></div><div class="field-line" style="margin-top:18px"></div>'
+                ? '<div class="field-line"></div><div class="field-line" style="margin-top:16px"></div><div class="field-line" style="margin-top:16px"></div><div class="field-line" style="margin-top:16px"></div><div class="field-line" style="margin-top:16px"></div>'
                 : `<div class="field-value-text">${v(value)}</div><div class="field-line"></div>`;
             return `
             <div class="field-row">
@@ -1558,23 +1558,24 @@
             </div>`;
         return `<!DOCTYPE html><html><head>${PRINT_HEAD}
             <style>
+                /* Override BASE_CSS h1 — strip its own border/margin so form-header controls the framing */
+                .form-header h1 { border-bottom:none !important; padding-bottom:0 !important; margin-bottom:4px !important; font-size:21px; color:var(--royal); }
                 .form-wrap { max-width: 720px; margin: 0 auto; }
-                .form-header { text-align:center; border-bottom:3px solid var(--gold); padding-bottom:12px; margin-bottom:20px; }
-                .form-header h1 { font-size:22px; color:var(--royal); margin:0 0 3px 0; }
+                .form-header { text-align:center; border-top:3px solid var(--gold); border-bottom:3px solid var(--gold); padding:9px 0; margin-bottom:14px; }
                 .form-header p  { font-family:var(--gothic); font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin:0; }
-                .section-title { font-family:var(--gothic); font-size:9.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); background:var(--royal); padding:4px 10px; border-radius:3px; display:inline-block; margin:16px 0 10px; }
-                .two-col { display:grid; grid-template-columns:1fr 1fr; gap:0 24px; }
-                .field-row { margin-bottom:16px; }
-                .field-label { font-family:var(--gothic); font-size:9.5px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--navy); margin-bottom:5px; }
-                .hint { font-family:var(--sans); font-weight:400; text-transform:none; letter-spacing:0; font-size:9px; color:var(--muted); }
-                .field-value { font-family:var(--sans); font-size:12px; color:var(--text); min-height:20px; }
-                .field-value-text { font-family:var(--sans); font-size:12px; color:var(--text); margin-bottom:2px; }
-                .field-line { border-bottom:1px solid #bbb; margin-top:4px; }
-                .yesno { display:flex; align-items:center; gap:18px; margin-bottom:2px; }
-                .yn-opt { display:flex; align-items:center; gap:5px; font-family:var(--sans); font-size:12px; }
-                .yn-box { display:inline-block; width:14px; height:14px; border:1.5px solid var(--navy); border-radius:2px; text-align:center; font-size:11px; line-height:13px; }
-                .footer-note { margin-top:24px; padding:10px 12px; border:1px solid #ccc; border-radius:6px; font-size:10px; color:#555; font-family:var(--sans); line-height:1.7; }
-                @media print { body { padding:12px; } @page { margin:1.2cm; } }
+                .section-title { font-family:var(--gothic); font-size:9px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); background:var(--royal); padding:3px 8px; border-radius:3px; display:inline-block; margin:10px 0 7px; }
+                .two-col { display:grid; grid-template-columns:1fr 1fr; gap:0 22px; }
+                .field-row { margin-bottom:9px; }
+                .field-label { font-family:var(--gothic); font-size:9px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--navy); margin-bottom:3px; }
+                .hint { font-family:var(--sans); font-weight:400; text-transform:none; letter-spacing:0; font-size:8.5px; color:var(--muted); }
+                .field-value { font-family:var(--sans); font-size:11px; color:var(--text); min-height:16px; }
+                .field-value-text { font-family:var(--sans); font-size:11px; color:var(--text); margin-bottom:2px; }
+                .field-line { border-bottom:1px solid #bbb; margin-top:3px; }
+                .yesno { display:flex; align-items:center; gap:16px; margin-bottom:2px; }
+                .yn-opt { display:flex; align-items:center; gap:5px; font-family:var(--sans); font-size:11px; }
+                .yn-box { display:inline-block; width:13px; height:13px; border:1.5px solid var(--navy); border-radius:2px; text-align:center; font-size:10px; line-height:12px; }
+                .footer-note { margin-top:12px; padding:7px 10px; border:1px solid #ccc; border-radius:5px; font-size:9.5px; color:#555; font-family:var(--sans); line-height:1.6; }
+                @media print { body { padding:8px; } @page { margin:0.85cm; } }
             </style>
         </head><body><div class="form-wrap">
             <div class="form-header">
