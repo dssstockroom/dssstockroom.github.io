@@ -3082,60 +3082,89 @@
             const displayName = contact.type === 'office' || contact.type === 'company'
                 ? contact.lastName
                 : `${contact.firstName} ${contact.lastName}`.trim();
+            const showGroup = contact.group && contact.type === 'person'
+                && !['Vendor','External','Shipping'].includes(contact.classif);
+            const subtitle = [
+                contact.title,
+                contact.classif && contact.classif !== contact.title ? contact.classif : '',
+                contact.company || contact.department,
+            ].filter(Boolean).join(' · ');
 
             return (
                 <div style={{
-                    display:'flex', gap:'14px', padding: isGroupMember ? '10px 14px 10px 24px' : '14px 16px',
+                    display:'grid',
+                    gridTemplateColumns: '1fr 1fr 1fr',
+                    gap:'0',
+                    padding: isGroupMember ? '10px 14px 10px 28px' : '12px 16px',
                     background: isGroupMember ? '#fafbfd' : '#fff',
                     borderLeft: `3px solid ${col.border}`,
-                    borderBottom:'1px solid var(--border)',
-                    alignItems:'flex-start',
+                    borderBottom: '1px solid var(--border)',
+                    alignItems: 'center',
                 }}>
-                    <div style={{flex:1, minWidth:0}}>
-                        <div style={{display:'flex', alignItems:'center', gap:'8px', flexWrap:'wrap', marginBottom:'3px'}}>
-                                <span style={{fontFamily:'var(--serif)', fontSize:'16px', fontWeight:400, color:'var(--navy)'}}>
-                                    {displayName}
-                                </span>
-                                {contact.pronouns && <span style={{fontSize:'11px', color:'var(--muted)', fontStyle:'italic'}}>{contact.pronouns}</span>}
-                                {Array.from(contact.sources).map(s => <SourceTag key={s} source={s} />)}
-                            </div>
-                            {contact.group && contact.type === 'person' && !['Vendor','External','Shipping'].includes(contact.classif) && (
-                                <div style={{marginBottom:'5px'}}>
-                                    <span style={{
-                                        display:'inline-flex', alignItems:'center', gap:'5px',
-                                        fontSize:'11px', fontFamily:'var(--gothic)', fontWeight:700,
-                                        letterSpacing:'0.07em', textTransform:'uppercase',
-                                        padding:'3px 9px', borderRadius:'4px',
-                                        background:'var(--sky)', border:'1.5px solid var(--royal)',
-                                        color:'var(--royal)',
-                                    }}>
-                                        <span style={{opacity:0.6, fontSize:'10px'}}>GROUP</span>
-                                        {contact.group}
-                                    </span>
-                                </div>
-                            )}
-                            <div style={{fontSize:'12.5px', color:'var(--muted)', marginBottom:'4px'}}>
-                                {[contact.title, contact.classif && contact.classif !== contact.title ? contact.classif : '', contact.company || contact.department].filter(Boolean).join(' · ')}
-                            </div>
-                        <div style={{display:'flex', flexWrap:'wrap', gap:'14px', fontSize:'12.5px', color:'var(--text)'}}>
-                            {contact.building && (
-                                <span>📍 {contact.building}{contact.room ? ` ${contact.room}` : ''}</span>
-                            )}
-                            {contact.phone && contact.phone !== '-' && (
-                                <span>📞 <a href={`tel:${contact.phone}`} style={{color:'var(--royal)', textDecoration:'none'}}>{contact.phone}</a></span>
-                            )}
-                            {contact.phone2 && contact.phone2 !== '-' && (
-                                <span>📞 <a href={`tel:${contact.phone2}`} style={{color:'var(--royal)', textDecoration:'none'}}>{contact.phone2}</a></span>
-                            )}
-                            {contact.cell && contact.cell !== '-' && (
-                                <span>📱 <a href={`tel:${contact.cell}`} style={{color:'var(--royal)', textDecoration:'none'}}>{contact.cell}</a></span>
-                            )}
-                            {contact.email && contact.email !== '-' && (
-                                contact.email.startsWith('http')
-                                    ? <span>🔗 <a href={contact.email} target="_blank" rel="noreferrer" style={{color:'var(--royal)', textDecoration:'none', fontFamily:'var(--mono)', fontSize:'11px'}}>{contact.email}</a></span>
-                                    : <span>✉️ <a href={`mailto:${contact.email}`} style={{color:'var(--royal)', textDecoration:'none', fontFamily:'var(--mono)', fontSize:'11px'}}>{contact.email}</a></span>
+
+                    {/* Col 1 — Name, pronouns, source tags, group badge */}
+                    <div style={{paddingRight:'16px', minWidth:0}}>
+                        <div style={{display:'flex', alignItems:'center', gap:'7px', flexWrap:'wrap', marginBottom:'2px'}}>
+                            <span style={{fontFamily:'var(--serif)', fontSize:'15px', fontWeight:400, color:'var(--navy)'}}>
+                                {displayName}
+                            </span>
+                            {contact.pronouns && (
+                                <span style={{fontSize:'11px', color:'var(--muted)', fontStyle:'italic'}}>{contact.pronouns}</span>
                             )}
                         </div>
+                        <div style={{display:'flex', flexWrap:'wrap', gap:'4px', marginBottom:'4px'}}>
+                            {Array.from(contact.sources).map(s => <SourceTag key={s} source={s} />)}
+                        </div>
+                        {showGroup && (
+                            <span style={{
+                                display:'inline-flex', alignItems:'center', gap:'4px',
+                                fontSize:'10px', fontFamily:'var(--gothic)', fontWeight:700,
+                                letterSpacing:'0.07em', textTransform:'uppercase',
+                                padding:'2px 8px', borderRadius:'4px',
+                                background:'var(--sky)', border:'1.5px solid var(--royal)',
+                                color:'var(--royal)',
+                            }}>
+                                <span style={{opacity:0.55}}>GRP</span>{contact.group}
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Col 2 — Title / role / department */}
+                    <div style={{paddingRight:'16px', minWidth:0, borderLeft:'1px solid var(--border)', paddingLeft:'16px'}}>
+                        {subtitle && (
+                            <span style={{fontSize:'12.5px', color:'var(--muted)', lineHeight:'1.5', display:'block'}}>
+                                {subtitle}
+                            </span>
+                        )}
+                        {contact.building && (
+                            <span style={{fontSize:'12.5px', color:'var(--text)', display:'block', marginTop:'3px'}}>
+                                📍 {contact.building}{contact.room ? ` · ${contact.room}` : ''}
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Col 3 — Phone(s), email */}
+                    <div style={{minWidth:0, borderLeft:'1px solid var(--border)', paddingLeft:'16px', display:'flex', flexDirection:'column', gap:'3px'}}>
+                        {contact.phone && contact.phone !== '-' && (
+                            <span style={{fontSize:'12.5px'}}>
+                                📞 <a href={`tel:${contact.phone}`} style={{color:'var(--royal)', textDecoration:'none'}}>{contact.phone}</a>
+                            </span>
+                        )}
+                        {contact.phone2 && contact.phone2 !== '-' && (
+                            <span style={{fontSize:'12.5px'}}>
+                                📞 <a href={`tel:${contact.phone2}`} style={{color:'var(--royal)', textDecoration:'none'}}>{contact.phone2}</a>
+                            </span>
+                        )}
+                        {contact.cell && contact.cell !== '-' && (
+                            <span style={{fontSize:'12.5px'}}>
+                                📱 <a href={`tel:${contact.cell}`} style={{color:'var(--royal)', textDecoration:'none'}}>{contact.cell}</a>
+                            </span>
+                        )}
+                        {contact.email && contact.email !== '-' && (
+                            contact.email.startsWith('http')
+                                ? <span style={{fontSize:'11.5px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>🔗 <a href={contact.email} target="_blank" rel="noreferrer" style={{color:'var(--royal)', textDecoration:'none', fontFamily:'var(--mono)'}}>{contact.email}</a></span>
+                                : <span style={{fontSize:'11.5px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>✉️ <a href={`mailto:${contact.email}`} style={{color:'var(--royal)', textDecoration:'none', fontFamily:'var(--mono)'}}>{contact.email}</a></span>
+                        )}
                     </div>
                 </div>
             );
