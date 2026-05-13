@@ -1525,39 +1525,55 @@
     </style>`;
 
     function buildNewProductRequestHTML(req, blank) {
-        // If blank=true, render empty lines for hand-writing
-        const v  = (val) => blank ? '' : (val || '');
+        const v = (val) => blank ? '' : (val || '');
+        // Single-line field with one underline
         const line = (label, value, hint) => `
             <div class="field-row">
                 <div class="field-label">${label}${hint ? `<span class="hint"> — ${hint}</span>` : ''}</div>
                 <div class="field-value">${v(value)}<div class="field-line"></div></div>
             </div>`;
-        const yesno = (label, value, hint) => `
+        // Multi-line field: shows value + one line when filled, three lines when blank
+        const multiline = (label, value, hint) => {
+            const lines = blank
+                ? '<div class="field-line"></div><div class="field-line" style="margin-top:18px"></div><div class="field-line" style="margin-top:18px"></div>'
+                : `<div class="field-value-text">${v(value)}</div><div class="field-line"></div>`;
+            return `
+            <div class="field-row">
+                <div class="field-label">${label}${hint ? `<span class="hint"> — ${hint}</span>` : ''}</div>
+                <div class="field-value">${lines}</div>
+            </div>`;
+        };
+        const yesno = (label, value, ifYesValue, hint) => `
             <div class="field-row">
                 <div class="field-label">${label}${hint ? `<span class="hint"> — ${hint}</span>` : ''}</div>
                 <div class="field-value yesno">
                     <label class="yn-opt"><span class="yn-box">${(!blank && value === 'Yes') ? '✓' : ''}</span> Yes</label>
                     <label class="yn-opt"><span class="yn-box">${(!blank && value === 'No') ? '✓' : ''}</span> No</label>
-                    ${(!blank && value && value !== 'Yes' && value !== 'No') ? `<span style="font-size:11px;margin-left:10px">${value}</span>` : ''}
+                </div>
+                <div style="margin-top:8px">
+                    <div class="field-label" style="display:inline">If yes, what size? &nbsp;</div>
+                    <span class="field-value" style="display:inline">${(!blank && value === 'Yes') ? (ifYesValue || '') : ''}</span>
+                    <div class="field-line"></div>
                 </div>
             </div>`;
         return `<!DOCTYPE html><html><head>${PRINT_HEAD}
             <style>
                 .form-wrap { max-width: 720px; margin: 0 auto; }
-                .form-header { text-align:center; border-bottom:3px solid var(--gold); padding-bottom:14px; margin-bottom:20px; }
-                .form-header h1 { font-size:22px; color:var(--royal); margin-bottom:4px; }
-                .form-header p  { font-family:var(--gothic); font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
+                .form-header { text-align:center; border-bottom:3px solid var(--gold); padding-bottom:12px; margin-bottom:20px; }
+                .form-header h1 { font-size:22px; color:var(--royal); margin:0 0 3px 0; }
+                .form-header p  { font-family:var(--gothic); font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin:0; }
                 .section-title { font-family:var(--gothic); font-size:9.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); background:var(--royal); padding:4px 10px; border-radius:3px; display:inline-block; margin:16px 0 10px; }
                 .two-col { display:grid; grid-template-columns:1fr 1fr; gap:0 24px; }
-                .field-row { margin-bottom:14px; }
-                .field-label { font-family:var(--gothic); font-size:9.5px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--navy); margin-bottom:4px; }
+                .field-row { margin-bottom:16px; }
+                .field-label { font-family:var(--gothic); font-size:9.5px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--navy); margin-bottom:5px; }
                 .hint { font-family:var(--sans); font-weight:400; text-transform:none; letter-spacing:0; font-size:9px; color:var(--muted); }
-                .field-value { font-family:var(--sans); font-size:12px; color:var(--text); min-height:22px; }
+                .field-value { font-family:var(--sans); font-size:12px; color:var(--text); min-height:20px; }
+                .field-value-text { font-family:var(--sans); font-size:12px; color:var(--text); margin-bottom:2px; }
                 .field-line { border-bottom:1px solid #bbb; margin-top:4px; }
-                .yesno { display:flex; align-items:center; gap:18px; }
+                .yesno { display:flex; align-items:center; gap:18px; margin-bottom:2px; }
                 .yn-opt { display:flex; align-items:center; gap:5px; font-family:var(--sans); font-size:12px; }
                 .yn-box { display:inline-block; width:14px; height:14px; border:1.5px solid var(--navy); border-radius:2px; text-align:center; font-size:11px; line-height:13px; }
-                .footer-note { margin-top:24px; padding:10px 12px; border:1px solid var(--border); border-radius:6px; font-size:10px; color:var(--muted); font-family:var(--sans); line-height:1.6; }
+                .footer-note { margin-top:24px; padding:10px 12px; border:1px solid #ccc; border-radius:6px; font-size:10px; color:#555; font-family:var(--sans); line-height:1.7; }
                 @media print { body { padding:12px; } @page { margin:1.2cm; } }
             </style>
         </head><body><div class="form-wrap">
@@ -1577,21 +1593,24 @@
             </div>
 
             <div class="section-title">Product Information</div>
-            ${line('Manufacturer / Supplier', req.manufacturer)}
-            ${line('Item Number', req.itemNumber)}
-            ${line('Item Description / Name', req.itemDescription)}
-            ${line('Intended Use', req.intendedUse, 'e.g., office supply, general use, instrumentation cleaning')}
-            ${line('Storage Requirements', req.storageReqs, 'e.g., refrigerated, flammable cabinet, ambient')}
+            <div class="two-col">
+                ${line('Manufacturer / Supplier', req.manufacturer)}
+                ${line('Item Number', req.itemNumber)}
+            </div>
+            ${multiline('Item Description / Name', req.itemDescription)}
+            ${multiline('Intended Use', req.intendedUse, 'e.g., office supply, general use, instrumentation cleaning')}
+            ${multiline('Storage Requirements', req.storageReqs, 'e.g., refrigerated, flammable cabinet, ambient')}
             <div class="two-col">
                 ${line('Unit Size', req.unitSize, 'e.g., 500 mL, 10 g')}
                 ${line('Package Size', req.packageSize, 'e.g., case of 100, pack of 6, each')}
             </div>
-            ${yesno('Dispensed in units smaller than package size?', req.dispensedSmaller, 'i.e., sold individually by each, bag, or bottle')}
+            ${yesno('Dispensed in units smaller than package size?', req.dispensedSmaller, req.dispensedSmallerSize, 'i.e., sold individually by each, bag, or bottle')}
             ${line('Estimated Monthly Usage', req.monthlyUsage, 'e.g., 2 cases, 10 units')}
 
             <div class="footer-note">
-                Submit completed form to the Dietrich School Scientific Stockroom (219 Parkman Ave, Room 326) or email to the stockroom manager.
-                Requests are reviewed and fulfilled based on demand and storage availability.
+                Submit completed form to the DSS Stockroom (326 Chevron Science Center) or email to
+                <strong>stockroom@pitt.edu</strong>.
+                Requests are reviewed and approved based on demand and storage availability.
             </div>
         </div></body></html>`;
     }
@@ -2269,7 +2288,7 @@
             _type:'newproduct',
             reqName:'', reqDate:'', reqPhone:'', reqEmail:'', reqBuilding:'', reqRoom:'',
             manufacturer:'', itemNumber:'', itemDescription:'', intendedUse:'',
-            storageReqs:'', unitSize:'', packageSize:'', dispensedSmaller:'', monthlyUsage:''
+            storageReqs:'', unitSize:'', packageSize:'', dispensedSmaller:'', dispensedSmallerSize:'', monthlyUsage:''
         };
         const [req, setReq] = useState(empty);
         const set = (k, v) => setReq(r => ({...r, [k]: v}));
@@ -2326,7 +2345,7 @@
                             Dispensed in units smaller than package size?
                             <span style={{fontWeight:400, textTransform:'none', letterSpacing:0, fontSize:'11px', color:'var(--muted)', fontFamily:'var(--sans)', marginLeft:'6px'}}>— i.e., sold individually by each, bag, or bottle</span>
                         </label>
-                        <div style={{display:'flex', gap:'16px', marginTop:'4px'}}>
+                        <div style={{display:'flex', gap:'16px', marginTop:'4px', marginBottom:'10px'}}>
                             {['Yes','No'].map(opt => (
                                 <label key={opt} style={{display:'flex', alignItems:'center', gap:'8px', cursor:'pointer', fontSize:'14px', fontFamily:'var(--sans)'}}>
                                     <input
@@ -2341,6 +2360,12 @@
                                 </label>
                             ))}
                         </div>
+                        {req.dispensedSmaller === 'Yes' && (
+                            <div>
+                                <label className="form-label">If yes, what size?</label>
+                                <input type="text" className="form-input" value={req.dispensedSmallerSize} onChange={e => set('dispensedSmallerSize', e.target.value)} placeholder="e.g., 500 mL bottle, individual bag" />
+                            </div>
+                        )}
                     </div>
 
                     <Field label="Estimated Monthly Usage" field="monthlyUsage" hint="e.g., 2 cases, 10 units" />
@@ -2531,6 +2556,7 @@
                 <Row label="Unit Size"                value={req.unitSize} />
                 <Row label="Package Size"             value={req.packageSize} />
                 <Row label="Dispensed in smaller units?" value={req.dispensedSmaller} />
+                {req.dispensedSmaller === 'Yes' && <Row label="If yes, what size?" value={req.dispensedSmallerSize} />}
                 <Row label="Est. Monthly Usage"       value={req.monthlyUsage} />
             </div>
         );
