@@ -3092,22 +3092,14 @@
 
             const handleGroupClick = (e) => {
                 e.stopPropagation();
-                setSearchQuery(contact.group);
-                // Run search for the group
-                const q = contact.group.toLowerCase();
-                const words = q.split(/\s+/);
-                const scored = phonebookData
-                    .map(c => {
-                        const haystack = [c.lastName,c.firstName,c.title,c.email,c.phone,c.group,c.company,c.department,c.classif].join(' ').toLowerCase();
-                        if (!words.every(w => haystack.includes(w))) return null;
-                        let score = 0;
-                        if (c.group.toLowerCase() === q) score += 10;
-                        if (c.lastName.toLowerCase() === q) score += 8;
-                        return { ...c, score };
-                    })
-                    .filter(Boolean)
-                    .sort((a,b) => b.score - a.score || a.lastName.localeCompare(b.lastName));
-                setSearchResults(scored);
+                const groupName = contact.group;
+                setSearchQuery(groupName);
+                // Filter strictly to contacts whose group field exactly matches — no text search
+                const members = phonebookData
+                    .filter(c => c.group === groupName)
+                    .map(c => ({ ...c, score: c.title.includes('Primary Investigator') ? 10 : 0 }))
+                    .sort((a, b) => b.score - a.score || a.lastName.localeCompare(b.lastName));
+                setSearchResults(members);
                 setActiveFilter('All');
                 setExpandedGroups({});
                 window.scrollTo({ top: 0, behavior: 'smooth' });
