@@ -641,8 +641,9 @@
             flex-shrink: 0;
             font-family: var(--gothic);
         }
-        .badge-packing { background: var(--sky); color: var(--navy); }
-        .badge-hazmat  { background: #fff0ed; color: var(--dark-red); border: 1px solid #ffb3a5; }
+        .badge-packing  { background: var(--sky); color: var(--navy); }
+        .badge-hazmat   { background: #fff0ed; color: var(--dark-red); border: 1px solid #ffb3a5; }
+        .badge-newproduct { background: #e6f9f0; color: #005c3b; border: 1px solid #6fcca4; }
         .history-item-body { flex: 1; min-width: 0; }
         .history-item-title { font-weight: 600; color: var(--navy); font-size: 15px; margin-bottom: 3px; }
         .history-item-meta  { font-size: 12.5px; color: var(--muted); }
@@ -1523,6 +1524,78 @@
         }
     </style>`;
 
+    function buildNewProductRequestHTML(req, blank) {
+        // If blank=true, render empty lines for hand-writing
+        const v  = (val) => blank ? '' : (val || '');
+        const line = (label, value, hint) => `
+            <div class="field-row">
+                <div class="field-label">${label}${hint ? `<span class="hint"> — ${hint}</span>` : ''}</div>
+                <div class="field-value">${v(value)}<div class="field-line"></div></div>
+            </div>`;
+        const yesno = (label, value, hint) => `
+            <div class="field-row">
+                <div class="field-label">${label}${hint ? `<span class="hint"> — ${hint}</span>` : ''}</div>
+                <div class="field-value yesno">
+                    <label class="yn-opt"><span class="yn-box">${(!blank && value === 'Yes') ? '✓' : ''}</span> Yes</label>
+                    <label class="yn-opt"><span class="yn-box">${(!blank && value === 'No') ? '✓' : ''}</span> No</label>
+                    ${(!blank && value && value !== 'Yes' && value !== 'No') ? `<span style="font-size:11px;margin-left:10px">${value}</span>` : ''}
+                </div>
+            </div>`;
+        return `<!DOCTYPE html><html><head>${PRINT_HEAD}
+            <style>
+                .form-wrap { max-width: 720px; margin: 0 auto; }
+                .form-header { text-align:center; border-bottom:3px solid var(--gold); padding-bottom:14px; margin-bottom:20px; }
+                .form-header h1 { font-size:22px; color:var(--royal); margin-bottom:4px; }
+                .form-header p  { font-family:var(--gothic); font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
+                .section-title { font-family:var(--gothic); font-size:9.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); background:var(--royal); padding:4px 10px; border-radius:3px; display:inline-block; margin:16px 0 10px; }
+                .two-col { display:grid; grid-template-columns:1fr 1fr; gap:0 24px; }
+                .field-row { margin-bottom:14px; }
+                .field-label { font-family:var(--gothic); font-size:9.5px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--navy); margin-bottom:4px; }
+                .hint { font-family:var(--sans); font-weight:400; text-transform:none; letter-spacing:0; font-size:9px; color:var(--muted); }
+                .field-value { font-family:var(--sans); font-size:12px; color:var(--text); min-height:22px; }
+                .field-line { border-bottom:1px solid #bbb; margin-top:4px; }
+                .yesno { display:flex; align-items:center; gap:18px; }
+                .yn-opt { display:flex; align-items:center; gap:5px; font-family:var(--sans); font-size:12px; }
+                .yn-box { display:inline-block; width:14px; height:14px; border:1.5px solid var(--navy); border-radius:2px; text-align:center; font-size:11px; line-height:13px; }
+                .footer-note { margin-top:24px; padding:10px 12px; border:1px solid var(--border); border-radius:6px; font-size:10px; color:var(--muted); font-family:var(--sans); line-height:1.6; }
+                @media print { body { padding:12px; } @page { margin:1.2cm; } }
+            </style>
+        </head><body><div class="form-wrap">
+            <div class="form-header">
+                <h1>New Product Request</h1>
+                <p>Dietrich School Scientific Stockroom &nbsp;·&nbsp; University of Pittsburgh</p>
+            </div>
+
+            <div class="section-title">Requestor Information</div>
+            <div class="two-col">
+                ${line('Name', req.reqName)}
+                ${line('Date', req.reqDate)}
+                ${line('Phone Number', req.reqPhone)}
+                ${line('Email Address', req.reqEmail)}
+                ${line('Building', req.reqBuilding)}
+                ${line('Room Number', req.reqRoom)}
+            </div>
+
+            <div class="section-title">Product Information</div>
+            ${line('Manufacturer / Supplier', req.manufacturer)}
+            ${line('Item Number', req.itemNumber)}
+            ${line('Item Description / Name', req.itemDescription)}
+            ${line('Intended Use', req.intendedUse, 'e.g., office supply, general use, instrumentation cleaning')}
+            ${line('Storage Requirements', req.storageReqs, 'e.g., refrigerated, flammable cabinet, ambient')}
+            <div class="two-col">
+                ${line('Unit Size', req.unitSize, 'e.g., 500 mL, 10 g')}
+                ${line('Package Size', req.packageSize, 'e.g., case of 100, pack of 6, each')}
+            </div>
+            ${yesno('Dispensed in units smaller than package size?', req.dispensedSmaller, 'i.e., sold individually by each, bag, or bottle')}
+            ${line('Estimated Monthly Usage', req.monthlyUsage, 'e.g., 2 cases, 10 units')}
+
+            <div class="footer-note">
+                Submit completed form to the Dietrich School Scientific Stockroom (219 Parkman Ave, Room 326) or email to the stockroom manager.
+                Requests are reviewed and fulfilled based on demand and storage availability.
+            </div>
+        </div></body></html>`;
+    }
+
     function buildPackingSlipHTML(slip) {
         const rows = (slip.items || []).map(it => `
             <tr>
@@ -1945,11 +2018,13 @@
                     <div className="sub-tabs">
                         <button className={`sub-tab ${subTab === 'packing' ? 'active' : ''}`} onClick={() => setSubTab('packing')}>📦 Packing Slip</button>
                         <button className={`sub-tab ${subTab === 'hazmat' ? 'active' : ''}`} onClick={() => setSubTab('hazmat')}>☢️ Hazmat BOL</button>
+                        <button className={`sub-tab ${subTab === 'newproduct' ? 'active' : ''}`} onClick={() => setSubTab('newproduct')}>🆕 New Product Request</button>
                         <button className={`sub-tab ${subTab === 'history' ? 'active' : ''}`} onClick={() => setSubTab('history')}>🕐 History ({history.length})</button>
                     </div>
 
                     {subTab === 'packing' && <PackingSlipForm inventory={inventory} onSave={saveToHistory} />}
-                    {subTab === 'hazmat'  && <HazmatBOLForm  onSave={saveToHistory} />}
+                    {subTab === 'hazmat'     && <HazmatBOLForm          onSave={saveToHistory} />}
+                    {subTab === 'newproduct' && <NewProductRequestForm   onSave={saveToHistory} />}
                     {subTab === 'history' && (
                         <div>
                             <div className="card">
@@ -1967,20 +2042,24 @@
                                     : filteredHistory.map(rec => (
                                         <div key={rec.id} className="history-item">
                                             <div>
-                                                <span className={`history-item-type-badge ${rec._type === 'hazmat' ? 'badge-hazmat' : 'badge-packing'}`}>
-                                                    {rec._type === 'hazmat' ? '☢️ Hazmat BOL' : '📦 Packing Slip'}
+                                                <span className={`history-item-type-badge ${rec._type === 'hazmat' ? 'badge-hazmat' : rec._type === 'newproduct' ? 'badge-newproduct' : 'badge-packing'}`}>
+                                                    {rec._type === 'hazmat' ? '☢️ Hazmat BOL' : rec._type === 'newproduct' ? '🆕 Product Request' : '📦 Packing Slip'}
                                                 </span>
                                             </div>
                                             <div className="history-item-body">
                                                 <div className="history-item-title">
                                                     {rec._type === 'hazmat'
                                                         ? `${rec.consigneeName || '—'}`
-                                                        : `PO# ${rec.poNumber || '—'}`}
+                                                        : rec._type === 'newproduct'
+                                                            ? `${rec.itemDescription || rec.itemNumber || '—'}`
+                                                            : `PO# ${rec.poNumber || '—'}`}
                                                 </div>
                                                 <div className="history-item-meta">
                                                     {rec._type === 'hazmat'
                                                         ? `Ship Date: ${rec.shipDate||'—'} · Carrier: ${rec.carrierName||'—'} · Materials: ${(rec.materials||[]).length}`
-                                                        : `Supplier: ${rec.supplier||'—'} · Date: ${rec.dateReceived||'—'} · By: ${rec.receivedBy||'—'} · Items: ${(rec.items||[]).length}`}
+                                                        : rec._type === 'newproduct'
+                                                            ? `Requested by: ${rec.reqName||'—'} · ${rec.reqDate||'—'} · ${rec.manufacturer||'—'}`
+                                                            : `Supplier: ${rec.supplier||'—'} · Date: ${rec.dateReceived||'—'} · By: ${rec.receivedBy||'—'} · Items: ${(rec.items||[]).length}`}
                                                 </div>
                                                 <div style={{fontSize:'11px', color:'var(--muted)', marginTop:'3px'}}>Saved: {new Date(rec.createdAt).toLocaleString()}</div>
                                             </div>
@@ -2003,17 +2082,27 @@
                                             <h2>
                                                 {selectedRecord._type === 'hazmat'
                                                     ? `Hazmat BOL — ${selectedRecord.consigneeName || '—'}`
-                                                    : `Packing Slip — PO# ${selectedRecord.poNumber || '—'}`}
+                                                    : selectedRecord._type === 'newproduct'
+                                                        ? `Product Request — ${selectedRecord.itemDescription || selectedRecord.itemNumber || '—'}`
+                                                        : `Packing Slip — PO# ${selectedRecord.poNumber || '—'}`}
                                             </h2>
                                             <div className="modal-header-actions">
-                                                <button className="btn btn-gold btn-sm" onClick={() => selectedRecord._type === 'hazmat' ? printDocument(buildHazmatBOLHTML(selectedRecord)) : printDocument(buildPackingSlipHTML(selectedRecord))}>🖨 Print</button>
+                                                <button className="btn btn-gold btn-sm" onClick={() =>
+                                                    selectedRecord._type === 'hazmat'
+                                                        ? printDocument(buildHazmatBOLHTML(selectedRecord))
+                                                        : selectedRecord._type === 'newproduct'
+                                                            ? printDocument(buildNewProductRequestHTML(selectedRecord, false))
+                                                            : printDocument(buildPackingSlipHTML(selectedRecord))
+                                                }>🖨 Print</button>
                                                 <button className="modal-close" onClick={() => setSelectedRecord(null)}>✕</button>
                                             </div>
                                         </div>
                                         <div className="modal-body">
                                             {selectedRecord._type === 'packing'
                                                 ? <PackingSlipPreview slip={selectedRecord} />
-                                                : <HazmatBOLPreview bol={selectedRecord} />
+                                                : selectedRecord._type === 'newproduct'
+                                                    ? <NewProductRequestPreview req={selectedRecord} />
+                                                    : <HazmatBOLPreview bol={selectedRecord} />
                                             }
                                         </div>
                                     </div>
@@ -2174,7 +2263,99 @@
         );
     }
 
-        /* ── Hazmat BOL Form ─────────────────────────────────────────────── */
+        /* ── New Product Request Form ───────────────────────────────────── */
+    function NewProductRequestForm({ onSave }) {
+        const empty = {
+            _type:'newproduct',
+            reqName:'', reqDate:'', reqPhone:'', reqEmail:'', reqBuilding:'', reqRoom:'',
+            manufacturer:'', itemNumber:'', itemDescription:'', intendedUse:'',
+            storageReqs:'', unitSize:'', packageSize:'', dispensedSmaller:'', monthlyUsage:''
+        };
+        const [req, setReq] = useState(empty);
+        const set = (k, v) => setReq(r => ({...r, [k]: v}));
+
+        const handlePrintFilled = () => {
+            onSave({ ...req, id: Date.now(), createdAt: new Date().toISOString() });
+            printDocument(buildNewProductRequestHTML(req, false));
+        };
+        const handlePrintBlank = () => {
+            printDocument(buildNewProductRequestHTML({}, true));
+        };
+        const handleClear = () => setReq(empty);
+
+        const Field = ({ label, field, hint, type='text', placeholder='' }) => (
+            <div className="form-group">
+                <label className="form-label">{label}{hint && <span style={{fontWeight:400, textTransform:'none', letterSpacing:0, fontSize:'11px', color:'var(--muted)', fontFamily:'var(--sans)', marginLeft:'6px'}}>— {hint}</span>}</label>
+                {type === 'textarea'
+                    ? <textarea className="form-textarea" rows={2} value={req[field]} onChange={e => set(field, e.target.value)} placeholder={placeholder} />
+                    : <input type={type} className="form-input" value={req[field]} onChange={e => set(field, e.target.value)} placeholder={placeholder} />
+                }
+            </div>
+        );
+
+        return (
+            <div>
+                <div className="card">
+                    <h2>New Product Request</h2>
+
+                    <h3 style={{marginBottom:'16px'}}>Requestor Information</h3>
+                    <div className="grid-2">
+                        <Field label="Name"         field="reqName" />
+                        <Field label="Date"         field="reqDate" type="date" />
+                        <Field label="Phone Number" field="reqPhone" placeholder="412-XXX-XXXX" />
+                        <Field label="Email Address" field="reqEmail" type="email" placeholder="user@pitt.edu" />
+                        <Field label="Building"     field="reqBuilding" />
+                        <Field label="Room Number"  field="reqRoom" />
+                    </div>
+
+                    <h3 style={{margin:'8px 0 16px'}}>Product Information</h3>
+                    <div className="grid-2">
+                        <Field label="Manufacturer / Supplier" field="manufacturer" />
+                        <Field label="Item Number"             field="itemNumber" />
+                    </div>
+                    <Field label="Item Description / Name" field="itemDescription" />
+                    <Field label="Intended Use" field="intendedUse" hint="e.g., office supply, general use, instrumentation cleaning" type="textarea" />
+                    <Field label="Storage Requirements" field="storageReqs" hint="e.g., refrigerated, flammable cabinet, ambient" />
+                    <div className="grid-2">
+                        <Field label="Unit Size"    field="unitSize"    hint="e.g., 500 mL, 10 g" />
+                        <Field label="Package Size" field="packageSize" hint="e.g., case of 100, pack of 6, each" />
+                    </div>
+
+                    <div className="form-group">
+                        <label className="form-label">
+                            Dispensed in units smaller than package size?
+                            <span style={{fontWeight:400, textTransform:'none', letterSpacing:0, fontSize:'11px', color:'var(--muted)', fontFamily:'var(--sans)', marginLeft:'6px'}}>— i.e., sold individually by each, bag, or bottle</span>
+                        </label>
+                        <div style={{display:'flex', gap:'16px', marginTop:'4px'}}>
+                            {['Yes','No'].map(opt => (
+                                <label key={opt} style={{display:'flex', alignItems:'center', gap:'8px', cursor:'pointer', fontSize:'14px', fontFamily:'var(--sans)'}}>
+                                    <input
+                                        type="radio"
+                                        name="dispensedSmaller"
+                                        value={opt}
+                                        checked={req.dispensedSmaller === opt}
+                                        onChange={() => set('dispensedSmaller', opt)}
+                                        style={{accentColor:'var(--royal)', width:'16px', height:'16px'}}
+                                    />
+                                    {opt}
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    <Field label="Estimated Monthly Usage" field="monthlyUsage" hint="e.g., 2 cases, 10 units" />
+
+                    <div className="btn-group" style={{marginTop:'8px'}}>
+                        <button onClick={handlePrintFilled} className="btn btn-gold">🖨 Print Filled Form</button>
+                        <button onClick={handlePrintBlank}  className="btn btn-outline">🖨 Print Blank Form</button>
+                        <button onClick={handleClear}       className="btn btn-ghost">Clear</button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    /* ── Hazmat BOL Form ─────────────────────────────────────────────── */
     function HazmatBOLForm({ onSave }) {
         const [bol, setBol] = useState({
             _type:'hazmat',
@@ -2319,6 +2500,38 @@
                         </table>
                     </div>
                 )}
+            </div>
+        );
+    }
+
+    function NewProductRequestPreview({ req }) {
+        const Row = ({ label, value }) => value ? (
+            <div style={{display:'flex', gap:'8px', padding:'6px 0', borderBottom:'1px solid var(--border)', fontSize:'13px'}}>
+                <span style={{fontFamily:'var(--gothic)', fontSize:'10px', fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--navy)', minWidth:'180px', paddingTop:'2px'}}>{label}</span>
+                <span style={{color:'var(--text)'}}>{value}</span>
+            </div>
+        ) : null;
+        return (
+            <div>
+                <div style={{marginBottom:'16px', padding:'10px 14px', background:'var(--sky)', borderRadius:'6px', borderLeft:'4px solid var(--royal)', fontSize:'13px'}}>
+                    <div className="grid-2" style={{gap:'8px'}}>
+                        <div><strong>Requested by:</strong> {req.reqName || '—'}</div>
+                        <div><strong>Date:</strong> {req.reqDate || '—'}</div>
+                        <div><strong>Phone:</strong> {req.reqPhone || '—'}</div>
+                        <div><strong>Email:</strong> {req.reqEmail || '—'}</div>
+                        <div><strong>Building:</strong> {req.reqBuilding || '—'}</div>
+                        <div><strong>Room:</strong> {req.reqRoom || '—'}</div>
+                    </div>
+                </div>
+                <Row label="Manufacturer / Supplier"  value={req.manufacturer} />
+                <Row label="Item Number"              value={req.itemNumber} />
+                <Row label="Item Description / Name"  value={req.itemDescription} />
+                <Row label="Intended Use"             value={req.intendedUse} />
+                <Row label="Storage Requirements"     value={req.storageReqs} />
+                <Row label="Unit Size"                value={req.unitSize} />
+                <Row label="Package Size"             value={req.packageSize} />
+                <Row label="Dispensed in smaller units?" value={req.dispensedSmaller} />
+                <Row label="Est. Monthly Usage"       value={req.monthlyUsage} />
             </div>
         );
     }
