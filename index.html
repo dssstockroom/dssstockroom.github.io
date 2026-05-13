@@ -3076,19 +3076,48 @@
             );
         };
 
-        const ContactCard = ({ contact, isGroupMember = false }) => {
+        const ContactCard = ({ contact, isGroupMember = false, inGroup = false }) => {
             const primarySource = Array.from(contact.sources)[0];
             const col = SHEET_COLORS[primarySource] || SHEET_COLORS['Pitt'];
             const displayName = contact.type === 'office' || contact.type === 'company'
                 ? contact.lastName
                 : `${contact.firstName} ${contact.lastName}`.trim();
-            const showGroup = contact.group && contact.type === 'person'
+            const showGroup = !inGroup && contact.group && contact.type === 'person'
                 && !['Vendor','External','Shipping'].includes(contact.classif);
             const subtitle = [
                 contact.title,
                 contact.classif && contact.classif !== contact.title ? contact.classif : '',
                 contact.company || contact.department,
             ].filter(Boolean).join(' · ');
+
+            const handleGroupClick = (e) => {
+                e.stopPropagation();
+                setSearchQuery(contact.group);
+                // Run search for the group
+                const q = contact.group.toLowerCase();
+                const words = q.split(/\s+/);
+                const scored = phonebookData
+                    .map(c => {
+                        const haystack = [c.lastName,c.firstName,c.title,c.email,c.phone,c.group,c.company,c.department,c.classif].join(' ').toLowerCase();
+                        if (!words.every(w => haystack.includes(w))) return null;
+                        let score = 0;
+                        if (c.group.toLowerCase() === q) score += 10;
+                        if (c.lastName.toLowerCase() === q) score += 8;
+                        return { ...c, score };
+                    })
+                    .filter(Boolean)
+                    .sort((a,b) => b.score - a.score || a.lastName.localeCompare(b.lastName));
+                setSearchResults(scored);
+                setActiveFilter('All');
+                setExpandedGroups({});
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            const handleSourceClick = (e, source) => {
+                e.stopPropagation();
+                setActiveFilter(source);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
 
             return (
                 <div style={{
@@ -3102,9 +3131,9 @@
                     alignItems: 'center',
                 }}>
 
-                    {/* Col 1 — Name, pronouns, source tags, group badge */}
+                    {/* Col 1 — Name, pronouns, then badges on one row */}
                     <div style={{paddingRight:'16px', minWidth:0}}>
-                        <div style={{display:'flex', alignItems:'center', gap:'7px', flexWrap:'wrap', marginBottom:'2px'}}>
+                        <div style={{display:'flex', alignItems:'center', gap:'7px', flexWrap:'wrap', marginBottom:'5px'}}>
                             <span style={{fontFamily:'var(--serif)', fontSize:'15px', fontWeight:400, color:'var(--navy)'}}>
                                 {displayName}
                             </span>
@@ -3112,21 +3141,41 @@
                                 <span style={{fontSize:'11px', color:'var(--muted)', fontStyle:'italic'}}>{contact.pronouns}</span>
                             )}
                         </div>
-                        <div style={{display:'flex', flexWrap:'wrap', gap:'4px', marginBottom:'4px'}}>
-                            {Array.from(contact.sources).map(s => <SourceTag key={s} source={s} />)}
+                        {/* Source tags + group badge on the same row */}
+                        <div style={{display:'flex', flexWrap:'wrap', gap:'4px', alignItems:'center'}}>
+                            {Array.from(contact.sources).map(s => {
+                                const sc = SHEET_COLORS[s] || SHEET_COLORS['Pitt'];
+                                return (
+                                    <button key={s} onClick={e => handleSourceClick(e, s)} title={`Filter by ${s}`} style={{
+                                        fontSize:'9.5px', fontFamily:'var(--gothic)', fontWeight:700,
+                                        letterSpacing:'0.08em', textTransform:'uppercase',
+                                        padding:'2px 7px', borderRadius:'3px',
+                                        background: sc.bg, border:`1px solid ${sc.border}`, color: sc.text,
+                                        cursor:'pointer', whiteSpace:'nowrap',
+                                        transition:'filter 0.15s',
+                                    }}
+                                    onMouseEnter={e => e.currentTarget.style.filter='brightness(0.9)'}
+                                    onMouseLeave={e => e.currentTarget.style.filter='none'}
+                                    >{s}</button>
+                                );
+                            })}
+                            {showGroup && (
+                                <button onClick={handleGroupClick} title={`Search ${contact.group} group`} style={{
+                                    display:'inline-flex', alignItems:'center', gap:'4px',
+                                    fontSize:'10px', fontFamily:'var(--gothic)', fontWeight:700,
+                                    letterSpacing:'0.07em', textTransform:'uppercase',
+                                    padding:'2px 8px', borderRadius:'4px',
+                                    background:'var(--sky)', border:'1.5px solid var(--royal)',
+                                    color:'var(--royal)', cursor:'pointer',
+                                    transition:'filter 0.15s',
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.filter='brightness(0.9)'}
+                                onMouseLeave={e => e.currentTarget.style.filter='none'}
+                                >
+                                    <span style={{opacity:0.55}}>GRP</span>{contact.group}
+                                </button>
+                            )}
                         </div>
-                        {showGroup && (
-                            <span style={{
-                                display:'inline-flex', alignItems:'center', gap:'4px',
-                                fontSize:'10px', fontFamily:'var(--gothic)', fontWeight:700,
-                                letterSpacing:'0.07em', textTransform:'uppercase',
-                                padding:'2px 8px', borderRadius:'4px',
-                                background:'var(--sky)', border:'1.5px solid var(--royal)',
-                                color:'var(--royal)',
-                            }}>
-                                <span style={{opacity:0.55}}>GRP</span>{contact.group}
-                            </span>
-                        )}
                     </div>
 
                     {/* Col 2 — Title / role / department */}
@@ -3199,8 +3248,8 @@
                     </button>
                     {isOpen && (
                         <div>
-                            {pi && <ContactCard contact={pi} isGroupMember={false} />}
-                            {others.map((m, i) => <ContactCard key={i} contact={m} isGroupMember={true} />)}
+                            {pi && <ContactCard contact={pi} isGroupMember={false} inGroup={true} />}
+                            {others.map((m, i) => <ContactCard key={i} contact={m} isGroupMember={true} inGroup={true} />)}
                         </div>
                     )}
                 </div>
