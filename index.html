@@ -1338,7 +1338,7 @@
                         <img src="https://upload.wikimedia.org/wikipedia/en/thumb/f/fb/University_of_Pittsburgh_seal.svg/960px-University_of_Pittsburgh_seal.svg.png" alt="University of Pittsburgh" />
                         <div className="nav-brand-text">
                             <span className="nav-title">Scientific Stockroom</span>
-                            <span className="nav-sub">Dietrich School of Arts & Sciences</span>
+                            <span className="nav-sub">Shared Research Support Services</span>
                         </div>
                     </div>
                     <div className="nav-links">
@@ -4087,10 +4087,13 @@
 
         const PITT_SEAL = 'https://upload.wikimedia.org/wikipedia/en/thumb/f/fb/University_of_Pittsburgh_seal.svg/960px-University_of_Pittsburgh_seal.svg.png';
 
-        const SIG_PLAIN = `DSS Stockroom
-Dietrich School of Arts & Sciences — University of Pittsburgh
+        const SIG_PLAIN = `Dietrich School Scientific Stockroom
+Shared Research Support Services — University of Pittsburgh
 326 Chevron Science Center · Pittsburgh, PA 15260
-Phone: 412-624-8551 · Email: stockroom@pitt.edu`;
+Hours: Mon–Fri 8:00 AM – 5:00 PM
+Phone: 412-624-8551 · Email: stockroom@pitt.edu
+Web: https://www.researchservices.pitt.edu/facilities/dietrich-school-scientific-stockroom
+Instagram / Facebook / Twitter(X): @dssstockroom`;
 
         const buildHtmlEmail = (subject, bodyParas) => {
             const parasHtml = bodyParas.map(p => `<p style="margin:0 0 14px 0;font-size:15px;line-height:1.7;color:#1a1d23;">${p}</p>`).join('');
@@ -4114,8 +4117,8 @@ Phone: 412-624-8551 · Email: stockroom@pitt.edu`;
                         <img src="${PITT_SEAL}" width="44" height="44" style="display:block;border-radius:50%;background:#fff;padding:3px;" alt="Pitt seal" />
                       </td>
                       <td style="vertical-align:middle;">
-                        <div style="font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#ffffff;letter-spacing:0.08em;text-transform:uppercase;">DSS Scientific Stockroom</div>
-                        <div style="font-family:Arial,sans-serif;font-size:10px;color:rgba(219,238,255,0.75);letter-spacing:0.06em;text-transform:uppercase;margin-top:2px;">Dietrich School of Arts &amp; Sciences · University of Pittsburgh</div>
+                        <div style="font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#ffffff;letter-spacing:0.08em;text-transform:uppercase;">Dietrich School Scientific Stockroom</div>
+                        <div style="font-family:Arial,sans-serif;font-size:10px;color:rgba(219,238,255,0.75);letter-spacing:0.06em;text-transform:uppercase;margin-top:2px;">Shared Research Support Services · University of Pittsburgh</div>
                       </td>
                     </tr>
                   </table>
@@ -4146,16 +4149,35 @@ Phone: 412-624-8551 · Email: stockroom@pitt.edu`;
         <!-- Signature -->
         <tr>
           <td style="padding:0 28px 28px;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="border-top:2px solid #FFB81C;padding-top:16px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
-                <td style="padding-top:16px;">
-                  <div style="font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#003594;letter-spacing:0.04em;">DSS Stockroom</div>
-                  <div style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;margin-top:3px;">Dietrich School of Arts &amp; Sciences &nbsp;·&nbsp; University of Pittsburgh</div>
+                <td style="border-top:2px solid #FFB81C;padding-top:16px;">
+                  <div style="font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#003594;letter-spacing:0.04em;">Dietrich School Scientific Stockroom</div>
+                  <div style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;margin-top:3px;">Shared Research Support Services &nbsp;·&nbsp; University of Pittsburgh</div>
+                  <table cellpadding="0" cellspacing="0" style="margin-top:10px;">
+                    <tr>
+                      <td style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;padding-right:16px;padding-bottom:5px;">📍 326 Chevron Science Center</td>
+                      <td style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;padding-bottom:5px;">🕐 Mon–Fri &nbsp;8:00 AM – 5:00 PM</td>
+                    </tr>
+                    <tr>
+                      <td style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;padding-right:16px;padding-bottom:5px;">📞 <a href="tel:4126248551" style="color:#003594;text-decoration:none;">412-624-8551</a></td>
+                      <td style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;padding-bottom:5px;">✉️ <a href="mailto:stockroom@pitt.edu" style="color:#003594;text-decoration:none;">stockroom@pitt.edu</a></td>
+                    </tr>
+                    <tr>
+                      <td colspan="2" style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;padding-bottom:5px;">🌐 <a href="https://www.researchservices.pitt.edu/facilities/dietrich-school-scientific-stockroom" style="color:#003594;text-decoration:none;">researchservices.pitt.edu/facilities/dietrich-school-scientific-stockroom</a></td>
+                    </tr>
+                  </table>
                   <table cellpadding="0" cellspacing="0" style="margin-top:8px;">
                     <tr>
-                      <td style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;padding-right:16px;">📍 326 Chevron Science Center</td>
-                      <td style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;padding-right:16px;">📞 <a href="tel:4126248551" style="color:#003594;text-decoration:none;">412-624-8551</a></td>
-                      <td style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;">✉️ <a href="mailto:stockroom@pitt.edu" style="color:#003594;text-decoration:none;">stockroom@pitt.edu</a></td>
+                      <td style="padding-right:14px;">
+                        <a href="https://www.instagram.com/dssstockroom" style="font-family:Arial,sans-serif;font-size:11.5px;color:#003594;text-decoration:none;">📸 Instagram</a>
+                      </td>
+                      <td style="padding-right:14px;">
+                        <a href="https://www.facebook.com/dssstockroom" style="font-family:Arial,sans-serif;font-size:11.5px;color:#003594;text-decoration:none;">📘 Facebook</a>
+                      </td>
+                      <td>
+                        <a href="https://www.twitter.com/dssstockroom" style="font-family:Arial,sans-serif;font-size:11.5px;color:#003594;text-decoration:none;">𝕏 Twitter/X</a>
+                      </td>
                     </tr>
                   </table>
                 </td>
@@ -4331,7 +4353,7 @@ Phone: 412-624-8551 · Email: stockroom@pitt.edu`;
                                     {tpl.bodyParas.map((p, i) => (
                                         <p key={i} style={{margin:'0 0 8px 0', fontSize:'13px', color:'var(--text)', lineHeight:'1.6'}}>{p}</p>
                                     ))}
-                                    <p style={{margin:'8px 0 0 0', fontSize:'13px', color:'var(--muted)'}}>Thank you, <em>DSS Stockroom</em></p>
+                                    <p style={{margin:'8px 0 0 0', fontSize:'13px', color:'var(--muted)'}}>Thank you, <em>Dietrich School Scientific Stockroom</em></p>
                                 </div>
 
                                 {/* Action buttons */}
@@ -4371,8 +4393,8 @@ Phone: 412-624-8551 · Email: stockroom@pitt.edu`;
                                     <div style={{padding:'20px 28px', display:'flex', alignItems:'center', gap:'14px'}}>
                                         <img src="https://upload.wikimedia.org/wikipedia/en/thumb/f/fb/University_of_Pittsburgh_seal.svg/960px-University_of_Pittsburgh_seal.svg.png" style={{width:'44px', height:'44px', borderRadius:'50%', background:'#fff', padding:'3px', display:'block'}} alt="Pitt" />
                                         <div>
-                                            <div style={{fontFamily:'var(--gothic)', fontSize:'13px', fontWeight:700, color:'#fff', letterSpacing:'0.08em', textTransform:'uppercase'}}>DSS Scientific Stockroom</div>
-                                            <div style={{fontSize:'10px', color:'rgba(219,238,255,0.75)', letterSpacing:'0.06em', textTransform:'uppercase', marginTop:'2px', fontFamily:'var(--gothic)'}}>Dietrich School of Arts &amp; Sciences · University of Pittsburgh</div>
+                                            <div style={{fontFamily:'var(--gothic)', fontSize:'13px', fontWeight:700, color:'#fff', letterSpacing:'0.08em', textTransform:'uppercase'}}>Dietrich School Scientific Stockroom</div>
+                                            <div style={{fontSize:'10px', color:'rgba(219,238,255,0.75)', letterSpacing:'0.06em', textTransform:'uppercase', marginTop:'2px', fontFamily:'var(--gothic)'}}>Shared Research Support Services · University of Pittsburgh</div>
                                         </div>
                                     </div>
                                     <div style={{background:'var(--gold)', height:'3px'}}></div>
@@ -4391,12 +4413,21 @@ Phone: 412-624-8551 · Email: stockroom@pitt.edu`;
                                 {/* Signature */}
                                 <div style={{padding:'0 28px 24px'}}>
                                     <div style={{borderTop:'2px solid var(--gold)', paddingTop:'16px'}}>
-                                        <div style={{fontFamily:'var(--gothic)', fontSize:'13px', fontWeight:700, color:'var(--royal)', letterSpacing:'0.04em'}}>DSS Stockroom</div>
-                                        <div style={{fontSize:'12px', color:'var(--muted)', marginTop:'3px'}}>Dietrich School of Arts &amp; Sciences · University of Pittsburgh</div>
-                                        <div style={{display:'flex', gap:'20px', marginTop:'8px', flexWrap:'wrap'}}>
+                                        <div style={{fontFamily:'var(--gothic)', fontSize:'13px', fontWeight:700, color:'var(--royal)', letterSpacing:'0.04em'}}>Dietrich School Scientific Stockroom</div>
+                                        <div style={{fontSize:'12px', color:'var(--muted)', marginTop:'3px'}}>Shared Research Support Services · University of Pittsburgh</div>
+                                        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'5px 20px', marginTop:'8px'}}>
                                             <span style={{fontSize:'12px', color:'var(--muted)'}}>📍 326 Chevron Science Center</span>
+                                            <span style={{fontSize:'12px', color:'var(--muted)'}}>🕐 Mon–Fri 8:00 AM – 5:00 PM</span>
                                             <span style={{fontSize:'12px', color:'var(--muted)'}}>📞 <a href="tel:4126248551" style={{color:'var(--royal)', textDecoration:'none'}}>412-624-8551</a></span>
                                             <span style={{fontSize:'12px', color:'var(--muted)'}}>✉️ <a href="mailto:stockroom@pitt.edu" style={{color:'var(--royal)', textDecoration:'none'}}>stockroom@pitt.edu</a></span>
+                                        </div>
+                                        <div style={{marginTop:'6px'}}>
+                                            <a href="https://www.researchservices.pitt.edu/facilities/dietrich-school-scientific-stockroom" style={{fontSize:'11.5px', color:'var(--royal)', textDecoration:'none', display:'block', marginBottom:'6px'}}>🌐 researchservices.pitt.edu/facilities/dietrich-school-scientific-stockroom</a>
+                                        </div>
+                                        <div style={{display:'flex', gap:'16px', marginTop:'2px'}}>
+                                            <a href="https://www.instagram.com/dssstockroom" style={{fontSize:'11.5px', color:'var(--royal)', textDecoration:'none'}}>📸 Instagram</a>
+                                            <a href="https://www.facebook.com/dssstockroom" style={{fontSize:'11.5px', color:'var(--royal)', textDecoration:'none'}}>📘 Facebook</a>
+                                            <a href="https://www.twitter.com/dssstockroom" style={{fontSize:'11.5px', color:'var(--royal)', textDecoration:'none'}}>𝕏 Twitter/X</a>
                                         </div>
                                     </div>
                                 </div>
