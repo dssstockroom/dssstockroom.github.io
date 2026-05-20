@@ -4382,7 +4382,103 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                         ))}
                     </div>
 
-                    {/* HTML preview accordion */}
+                    {/* Custom Email Composer */}
+                    {(() => {
+                        const [customSubject, setCustomSubject] = React.useState('');
+                        const [customBody, setCustomBody] = React.useState('');
+                        const [customCopied, setCustomCopied] = React.useState(null);
+                        const customId = 'custom';
+
+                        const customParas = customBody.split(/\n\n+/).map(s => s.replace(/\n/g, ' ').trim()).filter(Boolean);
+                        const hasContent = customSubject.trim() || customBody.trim();
+
+                        const handleCustomMailto = () => {
+                            const subject = encodeURIComponent(customSubject.trim() || '(No Subject)');
+                            const body = encodeURIComponent(buildPlainBody(customParas.length ? customParas : ['']));
+                            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                        };
+
+                        const handleCustomCopyHtml = async () => {
+                            const html = buildHtmlEmail(customSubject.trim() || '(No Subject)', customParas.length ? customParas : ['']);
+                            try {
+                                const blob = new Blob([html], { type: 'text/html' });
+                                const item = new ClipboardItem({ 'text/html': blob });
+                                await navigator.clipboard.write([item]);
+                                setCustomCopied('html');
+                                setTimeout(() => setCustomCopied(null), 2500);
+                            } catch(e) {
+                                try {
+                                    await navigator.clipboard.writeText(buildPlainBody(customParas.length ? customParas : ['']));
+                                    setCustomCopied('plain');
+                                    setTimeout(() => setCustomCopied(null), 2500);
+                                } catch(e2) {
+                                    alert('Copy failed. Please use the Open in Mail button instead.');
+                                }
+                            }
+                        };
+
+                        return (
+                            <div className="card" style={{marginTop:'32px'}}>
+                                <h2>Custom Email</h2>
+                                <p style={{fontSize:'13px', color:'var(--muted)', marginBottom:'20px'}}>Compose a one-off message. The same branded signature will be added automatically.</p>
+                                <div className="form-group">
+                                    <label className="form-label">Subject</label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="e.g., DSSS Special Order Update"
+                                        value={customSubject}
+                                        onChange={e => setCustomSubject(e.target.value)}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Body</label>
+                                    <textarea
+                                        className="form-textarea"
+                                        rows={7}
+                                        placeholder={"Type your message here. Separate paragraphs with a blank line.\n\nThe greeting (Hello,) and sign-off (Thank you,) are added automatically."}
+                                        value={customBody}
+                                        onChange={e => setCustomBody(e.target.value)}
+                                        style={{fontFamily:'var(--sans)', fontSize:'14px', lineHeight:'1.6', resize:'vertical'}}
+                                    />
+                                    <div style={{fontSize:'11px', color:'var(--muted)', marginTop:'5px'}}>
+                                        Blank lines between paragraphs will be preserved in the HTML layout.
+                                    </div>
+                                </div>
+                                <div style={{display:'flex', gap:'12px', flexWrap:'wrap'}}>
+                                    <button
+                                        onClick={handleCustomMailto}
+                                        disabled={!hasContent}
+                                        className="btn btn-primary"
+                                        style={{flex:1, minWidth:'160px', fontSize:'12px'}}
+                                    >
+                                        <span>📧</span> Open in Mail
+                                    </button>
+                                    <button
+                                        onClick={handleCustomCopyHtml}
+                                        disabled={!hasContent}
+                                        className={`btn ${customCopied === 'html' ? 'btn-gold' : 'btn-outline'}`}
+                                        style={{flex:1, minWidth:'160px', fontSize:'12px'}}
+                                    >
+                                        {customCopied === 'html'
+                                            ? <><span>✓</span> HTML Copied!</>
+                                            : customCopied === 'plain'
+                                                ? <><span>✓</span> Text Copied</>
+                                                : <><span>📋</span> Copy HTML</>
+                                        }
+                                    </button>
+                                    <button
+                                        onClick={() => { setCustomSubject(''); setCustomBody(''); setCustomCopied(null); }}
+                                        disabled={!hasContent}
+                                        className="btn btn-ghost"
+                                        style={{fontSize:'12px'}}
+                                    >
+                                        Clear
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })()}
                     <div className="card" style={{marginTop:'32px'}}>
                         <h2>Email Preview</h2>
                         <p style={{fontSize:'13px', color:'var(--muted)', marginBottom:'20px'}}>This is what the styled HTML email looks like when pasted into Outlook.</p>
