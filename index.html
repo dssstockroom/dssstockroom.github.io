@@ -1318,6 +1318,7 @@
             { id:'cyclecount', label:'Cycle Count',   icon:'📦' },
             { id:'labels',     label:'Label Maker',   icon:'🏷️' },
             { id:'phonebook',  label:'Phonebook',     icon:'📞' },
+            { id:'emails',     label:'Emails',        icon:'✉️' },
         ];
 
         const handleNavSearch = (e) => {
@@ -1400,6 +1401,7 @@
                 {activePage === 'cyclecount' && <CycleCountPage inventory={inventory} />}
                 {activePage === 'labels'     && <LabelsPage     inventory={inventory} />}
                 {activePage === 'phonebook'  && <PhonebookPage />}
+                {activePage === 'emails'     && <EmailsPage />}
 
                 {/* Footer */}
                 <footer>
@@ -1826,6 +1828,7 @@
             { id:'cyclecount', icon:'📦', name:'Cycle Count',  desc:'Scan-based physical inventory verification by section and rack. Exports variance reports as CSV.' },
             { id:'labels',     icon:'🏷️', name:'Label Maker',  desc:'Generate Avery 5162 or 5160 barcode shelf labels from the inventory database or manual entry.' },
             { id:'phonebook',  icon:'📞', name:'Phonebook',    desc:'Search the department phonebook across Chemistry, SRSS, Biology, Pitt contacts, vendors, and more.' },
+            { id:'emails',     icon:'✉️', name:'Emails',       desc:'Send order status notifications to customers. One-click mailto launch or copy a styled HTML email for Outlook.' },
         ];
 
         return (
@@ -4071,6 +4074,336 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        );
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       EMAILS PAGE — Order Status Notifications
+    ══════════════════════════════════════════════════════════════════════ */
+    function EmailsPage() {
+        const [copiedId, setCopiedId] = useState(null);
+
+        const PITT_SEAL = 'https://upload.wikimedia.org/wikipedia/en/thumb/f/fb/University_of_Pittsburgh_seal.svg/960px-University_of_Pittsburgh_seal.svg.png';
+
+        const SIG_PLAIN = `DSS Stockroom
+Dietrich School of Arts & Sciences — University of Pittsburgh
+326 Chevron Science Center · Pittsburgh, PA 15260
+Phone: 412-624-8551 · Email: stockroom@pitt.edu`;
+
+        const buildHtmlEmail = (subject, bodyParas) => {
+            const parasHtml = bodyParas.map(p => `<p style="margin:0 0 14px 0;font-size:15px;line-height:1.7;color:#1a1d23;">${p}</p>`).join('');
+            return `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f4f5f7;font-family:'Roboto',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+        <!-- Header bar -->
+        <tr>
+          <td style="background:#003594;padding:0;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding:20px 28px;">
+                  <table cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="padding-right:14px;vertical-align:middle;">
+                        <img src="${PITT_SEAL}" width="44" height="44" style="display:block;border-radius:50%;background:#fff;padding:3px;" alt="Pitt seal" />
+                      </td>
+                      <td style="vertical-align:middle;">
+                        <div style="font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#ffffff;letter-spacing:0.08em;text-transform:uppercase;">DSS Scientific Stockroom</div>
+                        <div style="font-family:Arial,sans-serif;font-size:10px;color:rgba(219,238,255,0.75);letter-spacing:0.06em;text-transform:uppercase;margin-top:2px;">Dietrich School of Arts &amp; Sciences · University of Pittsburgh</div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <!-- Gold accent strip -->
+              <tr><td style="background:#FFB81C;height:3px;font-size:0;line-height:0;">&nbsp;</td></tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Subject banner -->
+        <tr>
+          <td style="background:#00205B;padding:14px 28px;">
+            <div style="font-family:Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#FFB81C;">${subject}</div>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:32px 28px 24px;">
+            <p style="margin:0 0 14px 0;font-size:15px;line-height:1.7;color:#1a1d23;">Hello,</p>
+            ${parasHtml}
+            <p style="margin:24px 0 0 0;font-size:15px;line-height:1.7;color:#1a1d23;">Thank you,</p>
+          </td>
+        </tr>
+
+        <!-- Signature -->
+        <tr>
+          <td style="padding:0 28px 28px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="border-top:2px solid #FFB81C;padding-top:16px;">
+              <tr>
+                <td style="padding-top:16px;">
+                  <div style="font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#003594;letter-spacing:0.04em;">DSS Stockroom</div>
+                  <div style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;margin-top:3px;">Dietrich School of Arts &amp; Sciences &nbsp;·&nbsp; University of Pittsburgh</div>
+                  <table cellpadding="0" cellspacing="0" style="margin-top:8px;">
+                    <tr>
+                      <td style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;padding-right:16px;">📍 326 Chevron Science Center</td>
+                      <td style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;padding-right:16px;">📞 <a href="tel:4126248551" style="color:#003594;text-decoration:none;">412-624-8551</a></td>
+                      <td style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;">✉️ <a href="mailto:stockroom@pitt.edu" style="color:#003594;text-decoration:none;">stockroom@pitt.edu</a></td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+        };
+
+        const TEMPLATES = [
+            {
+                id: 'order-ready',
+                icon: '✅',
+                title: 'Order Ready for Pick-Up',
+                subject: 'DSSS Order Ready for Pick-Up',
+                bodyParas: [
+                    'This message is to inform you that your order is available for pick-up at the DSS Stockroom at your earliest convenience.',
+                    'If you are unable to retrieve your order personally, another member of your group may pick it up on your behalf.',
+                ],
+                accent: '#00AD6E',
+            },
+            {
+                id: 'backorder-ready',
+                icon: '📦',
+                title: 'Backorder Ready for Pick-Up',
+                subject: 'DSSS Backorder Ready for Pick-Up',
+                bodyParas: [
+                    'This message is to inform you that a previously backordered item associated with your account is now available for pick-up at the DSS Stockroom at your earliest convenience.',
+                    'If you are unable to retrieve your order personally, another member of your group may pick it up on your behalf.',
+                ],
+                accent: '#66B2E3',
+            },
+            {
+                id: '20liter-ready',
+                icon: '🧴',
+                title: '20-Liter Can Ready for Pick-Up',
+                subject: 'DSSS 20-Liter Can Ready for Pick-Up',
+                bodyParas: [
+                    'This message is to inform you that a 20-liter can is available for pick-up at the DSS Stockroom at your earliest convenience.',
+                    'If you are unable to retrieve the item personally, another member of your group may pick it up on your behalf.',
+                ],
+                accent: '#FFB81C',
+            },
+            {
+                id: 'order-reminder',
+                icon: '🔔',
+                title: 'Order Pick-Up Reminder',
+                subject: 'DSSS Order Pick-Up Reminder',
+                bodyParas: [
+                    'This is a courtesy reminder that there is an outstanding order available for pick-up at the DSS Stockroom.',
+                    'Please arrange for retrieval at your earliest convenience. If you are unable to do so personally, another member of your group may pick it up on your behalf.',
+                ],
+                accent: '#FF5B45',
+            },
+            {
+                id: 'acetone-ready',
+                icon: '⚗️',
+                title: 'Bulk Acetone Refill Ready',
+                subject: 'DSSS Bulk Acetone Refill Ready for Pick-Up',
+                bodyParas: [
+                    'This message is to inform you that your bulk acetone refill is available for pick-up at the DSS Stockroom at your earliest convenience.',
+                    'If you are unable to retrieve your order personally, another member of your group may pick it up on your behalf.',
+                ],
+                accent: '#FFB81C',
+            },
+            {
+                id: 'cart-key-return',
+                icon: '🔑',
+                title: 'Cart and/or Key Return Request',
+                subject: 'DSSS Cart and/or Key Return Request',
+                bodyParas: [
+                    'Our records indicate that a stockroom cart and/or key is currently checked out to your account. As a reminder, these items are intended for short-term use only and should be returned within 30 minutes of checkout.',
+                    'Please arrange for the return of the cart and/or key to the DSS Stockroom no later than 5:00 PM today. If you have any questions or require assistance, do not hesitate to contact us.',
+                ],
+                accent: '#770538',
+            },
+            {
+                id: 'package-reminder',
+                icon: '📬',
+                title: 'Package Pick-Up Reminder',
+                subject: 'DSSS Package Ready for Pick-Up — Reminder',
+                bodyParas: [
+                    'This is a courtesy reminder that there is a package available for pick-up at the DSS Stockroom.',
+                    'Please arrange for retrieval at your earliest convenience. If you are unable to do so personally, another member of your group may pick it up on your behalf.',
+                ],
+                accent: '#FF5B45',
+            },
+        ];
+
+        const buildPlainBody = (bodyParas) =>
+            `Hello,\n\n${bodyParas.join('\n\n')}\n\nThank you,\n\n${SIG_PLAIN}`;
+
+        const handleMailto = (tpl) => {
+            const subject = encodeURIComponent(tpl.subject);
+            const body = encodeURIComponent(buildPlainBody(tpl.bodyParas));
+            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        };
+
+        const handleCopyHtml = async (tpl) => {
+            const html = buildHtmlEmail(tpl.subject, tpl.bodyParas);
+            try {
+                // Try modern clipboard API with HTML support first
+                const blob = new Blob([html], { type: 'text/html' });
+                const item = new ClipboardItem({ 'text/html': blob });
+                await navigator.clipboard.write([item]);
+                setCopiedId(tpl.id);
+                setTimeout(() => setCopiedId(null), 2500);
+            } catch(e) {
+                // Fallback: copy plain text version
+                try {
+                    await navigator.clipboard.writeText(buildPlainBody(tpl.bodyParas));
+                    setCopiedId(tpl.id + '_plain');
+                    setTimeout(() => setCopiedId(null), 2500);
+                } catch(e2) {
+                    alert('Copy failed. Please use the mailto button instead.');
+                }
+            }
+        };
+
+        return (
+            <div>
+                <div className="page-banner">
+                    <div className="container">
+                        <div>
+                            <h1>Order Status Emails</h1>
+                            <p>One-click email composition for common customer notifications</p>
+                        </div>
+                        <div className="page-banner-icon">✉️</div>
+                    </div>
+                </div>
+                <div className="container page-content">
+
+                    <div className="alert alert-info" style={{marginBottom:'28px'}}>
+                        <strong>How to use:</strong> Click <strong>Open in Mail</strong> to launch your email client with subject and body pre-filled — just add recipients and send. Click <strong>Copy HTML</strong> to copy a styled version; open a new Outlook email and paste (<kbd style={{background:'#dbeeff',padding:'1px 5px',borderRadius:'3px',fontFamily:'var(--mono)',fontSize:'12px'}}>Ctrl+V</kbd>) for the branded layout with signature.
+                    </div>
+
+                    <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(480px, 1fr))', gap:'18px'}}>
+                        {TEMPLATES.map(tpl => (
+                            <div key={tpl.id} style={{
+                                background:'#fff',
+                                border:'1px solid var(--border)',
+                                borderRadius:'10px',
+                                overflow:'hidden',
+                                boxShadow:'0 1px 4px rgba(0,0,0,0.06)',
+                                display:'flex',
+                                flexDirection:'column',
+                            }}>
+                                {/* Card header strip */}
+                                <div style={{
+                                    background:'var(--royal)',
+                                    borderBottom:`3px solid ${tpl.accent}`,
+                                    padding:'14px 20px',
+                                    display:'flex',
+                                    alignItems:'center',
+                                    gap:'12px',
+                                }}>
+                                    <span style={{fontSize:'22px', lineHeight:1}}>{tpl.icon}</span>
+                                    <div>
+                                        <div style={{fontFamily:'var(--gothic)', fontSize:'13px', fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'#fff'}}>{tpl.title}</div>
+                                        <div style={{fontSize:'11px', color:'rgba(219,238,255,0.7)', marginTop:'2px', fontFamily:'var(--mono)'}}>{tpl.subject}</div>
+                                    </div>
+                                </div>
+
+                                {/* Body preview */}
+                                <div style={{padding:'16px 20px', flex:1, borderBottom:'1px solid var(--border)'}}>
+                                    <p style={{margin:'0 0 8px 0', fontSize:'13px', color:'var(--muted)'}}>Hello,</p>
+                                    {tpl.bodyParas.map((p, i) => (
+                                        <p key={i} style={{margin:'0 0 8px 0', fontSize:'13px', color:'var(--text)', lineHeight:'1.6'}}>{p}</p>
+                                    ))}
+                                    <p style={{margin:'8px 0 0 0', fontSize:'13px', color:'var(--muted)'}}>Thank you, <em>DSS Stockroom</em></p>
+                                </div>
+
+                                {/* Action buttons */}
+                                <div style={{padding:'14px 20px', display:'flex', gap:'10px', background:'var(--bg)'}}>
+                                    <button
+                                        onClick={() => handleMailto(tpl)}
+                                        className="btn btn-primary"
+                                        style={{flex:1, fontSize:'12px', gap:'6px'}}
+                                    >
+                                        <span>📧</span> Open in Mail
+                                    </button>
+                                    <button
+                                        onClick={() => handleCopyHtml(tpl)}
+                                        className={`btn ${copiedId === tpl.id ? 'btn-gold' : copiedId === tpl.id + '_plain' ? 'btn-outline' : 'btn-outline'}`}
+                                        style={{flex:1, fontSize:'12px', gap:'6px'}}
+                                    >
+                                        {copiedId === tpl.id
+                                            ? <><span>✓</span> HTML Copied!</>
+                                            : copiedId === tpl.id + '_plain'
+                                                ? <><span>✓</span> Text Copied</>
+                                                : <><span>📋</span> Copy HTML</>
+                                        }
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* HTML preview accordion */}
+                    <div className="card" style={{marginTop:'32px'}}>
+                        <h2>Email Preview</h2>
+                        <p style={{fontSize:'13px', color:'var(--muted)', marginBottom:'20px'}}>This is what the styled HTML email looks like when pasted into Outlook.</p>
+                        <div style={{border:'1px solid var(--border)', borderRadius:'8px', overflow:'hidden', background:'#f4f5f7', padding:'24px', display:'flex', justifyContent:'center'}}>
+                            <div style={{width:'100%', maxWidth:'600px', background:'#fff', borderRadius:'10px', overflow:'hidden', boxShadow:'0 2px 12px rgba(0,0,0,0.08)'}}>
+                                {/* Header */}
+                                <div style={{background:'var(--royal)', padding:'0'}}>
+                                    <div style={{padding:'20px 28px', display:'flex', alignItems:'center', gap:'14px'}}>
+                                        <img src="https://upload.wikimedia.org/wikipedia/en/thumb/f/fb/University_of_Pittsburgh_seal.svg/960px-University_of_Pittsburgh_seal.svg.png" style={{width:'44px', height:'44px', borderRadius:'50%', background:'#fff', padding:'3px', display:'block'}} alt="Pitt" />
+                                        <div>
+                                            <div style={{fontFamily:'var(--gothic)', fontSize:'13px', fontWeight:700, color:'#fff', letterSpacing:'0.08em', textTransform:'uppercase'}}>DSS Scientific Stockroom</div>
+                                            <div style={{fontSize:'10px', color:'rgba(219,238,255,0.75)', letterSpacing:'0.06em', textTransform:'uppercase', marginTop:'2px', fontFamily:'var(--gothic)'}}>Dietrich School of Arts &amp; Sciences · University of Pittsburgh</div>
+                                        </div>
+                                    </div>
+                                    <div style={{background:'var(--gold)', height:'3px'}}></div>
+                                </div>
+                                {/* Subject strip */}
+                                <div style={{background:'var(--navy)', padding:'14px 28px'}}>
+                                    <div style={{fontFamily:'var(--gothic)', fontSize:'11px', fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--gold)'}}>DSSS Order Ready for Pick-Up</div>
+                                </div>
+                                {/* Body */}
+                                <div style={{padding:'28px 28px 20px'}}>
+                                    <p style={{margin:'0 0 12px 0', fontSize:'14px', color:'var(--text)', lineHeight:'1.7'}}>Hello,</p>
+                                    <p style={{margin:'0 0 12px 0', fontSize:'14px', color:'var(--text)', lineHeight:'1.7'}}>This message is to inform you that your order is available for pick-up at the DSS Stockroom at your earliest convenience.</p>
+                                    <p style={{margin:'0 0 12px 0', fontSize:'14px', color:'var(--text)', lineHeight:'1.7'}}>If you are unable to retrieve your order personally, another member of your group may pick it up on your behalf.</p>
+                                    <p style={{margin:'20px 0 0 0', fontSize:'14px', color:'var(--text)'}}>Thank you,</p>
+                                </div>
+                                {/* Signature */}
+                                <div style={{padding:'0 28px 24px'}}>
+                                    <div style={{borderTop:'2px solid var(--gold)', paddingTop:'16px'}}>
+                                        <div style={{fontFamily:'var(--gothic)', fontSize:'13px', fontWeight:700, color:'var(--royal)', letterSpacing:'0.04em'}}>DSS Stockroom</div>
+                                        <div style={{fontSize:'12px', color:'var(--muted)', marginTop:'3px'}}>Dietrich School of Arts &amp; Sciences · University of Pittsburgh</div>
+                                        <div style={{display:'flex', gap:'20px', marginTop:'8px', flexWrap:'wrap'}}>
+                                            <span style={{fontSize:'12px', color:'var(--muted)'}}>📍 326 Chevron Science Center</span>
+                                            <span style={{fontSize:'12px', color:'var(--muted)'}}>📞 <a href="tel:4126248551" style={{color:'var(--royal)', textDecoration:'none'}}>412-624-8551</a></span>
+                                            <span style={{fontSize:'12px', color:'var(--muted)'}}>✉️ <a href="mailto:stockroom@pitt.edu" style={{color:'var(--royal)', textDecoration:'none'}}>stockroom@pitt.edu</a></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         );
