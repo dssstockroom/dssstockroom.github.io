@@ -4095,103 +4095,6 @@ Phone: 412-624-8551 · Email: stockroom@pitt.edu
 Web: https://www.researchservices.pitt.edu/facilities/dietrich-school-scientific-stockroom
 Instagram / Facebook / Twitter(X): @dssstockroom`;
 
-        const buildHtmlEmail = (subject, bodyParas) => {
-            const parasHtml = bodyParas.map(p => `<p style="margin:0 0 14px 0;font-size:15px;line-height:1.7;color:#1a1d23;">${p}</p>`).join('');
-            return `<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#f4f5f7;font-family:'Roboto',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:32px 16px;">
-    <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
-
-        <!-- Header bar -->
-        <tr>
-          <td style="background:#003594;padding:0;">
-            <table width="100%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="padding:20px 28px;">
-                  <table cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td style="padding-right:14px;vertical-align:middle;">
-                        <img src="${PITT_SEAL}" width="44" height="44" style="display:block;border-radius:50%;background:#fff;padding:3px;" alt="Pitt seal" />
-                      </td>
-                      <td style="vertical-align:middle;">
-                        <div style="font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#ffffff;letter-spacing:0.08em;text-transform:uppercase;">Dietrich School Scientific Stockroom</div>
-                        <div style="font-family:Arial,sans-serif;font-size:10px;color:rgba(219,238,255,0.75);letter-spacing:0.06em;text-transform:uppercase;margin-top:2px;">Shared Research Support Services · University of Pittsburgh</div>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-              <!-- Gold accent strip -->
-              <tr><td style="background:#FFB81C;height:3px;font-size:0;line-height:0;">&nbsp;</td></tr>
-            </table>
-          </td>
-        </tr>
-
-        <!-- Subject banner -->
-        <tr>
-          <td style="background:#00205B;padding:14px 28px;">
-            <div style="font-family:Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#FFB81C;">${subject}</div>
-          </td>
-        </tr>
-
-        <!-- Body -->
-        <tr>
-          <td style="padding:32px 28px 24px;">
-            <p style="margin:0 0 14px 0;font-size:15px;line-height:1.7;color:#1a1d23;">Hello,</p>
-            ${parasHtml}
-            <p style="margin:24px 0 0 0;font-size:15px;line-height:1.7;color:#1a1d23;">Thank you,</p>
-          </td>
-        </tr>
-
-        <!-- Signature -->
-        <tr>
-          <td style="padding:0 28px 28px;">
-            <table width="100%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="border-top:2px solid #FFB81C;padding-top:16px;">
-                  <div style="font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#003594;letter-spacing:0.04em;">Dietrich School Scientific Stockroom</div>
-                  <div style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;margin-top:3px;">Shared Research Support Services &nbsp;·&nbsp; University of Pittsburgh</div>
-                  <table cellpadding="0" cellspacing="0" style="margin-top:10px;">
-                    <tr>
-                      <td style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;padding-right:16px;padding-bottom:5px;">📍 326 Chevron Science Center</td>
-                      <td style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;padding-bottom:5px;">🕐 Mon–Fri &nbsp;8:00 AM – 5:00 PM</td>
-                    </tr>
-                    <tr>
-                      <td style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;padding-right:16px;padding-bottom:5px;">📞 <a href="tel:4126248551" style="color:#003594;text-decoration:none;">412-624-8551</a></td>
-                      <td style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;padding-bottom:5px;">✉️ <a href="mailto:stockroom@pitt.edu" style="color:#003594;text-decoration:none;">stockroom@pitt.edu</a></td>
-                    </tr>
-                    <tr>
-                      <td colspan="2" style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;padding-bottom:5px;">🌐 <a href="https://www.researchservices.pitt.edu/facilities/dietrich-school-scientific-stockroom" style="color:#003594;text-decoration:none;">researchservices.pitt.edu/facilities/dietrich-school-scientific-stockroom</a></td>
-                    </tr>
-                  </table>
-                  <table cellpadding="0" cellspacing="0" style="margin-top:8px;">
-                    <tr>
-                      <td style="padding-right:14px;">
-                        <a href="https://www.instagram.com/dssstockroom" style="font-family:Arial,sans-serif;font-size:11.5px;color:#003594;text-decoration:none;">📸 Instagram</a>
-                      </td>
-                      <td style="padding-right:14px;">
-                        <a href="https://www.facebook.com/dssstockroom" style="font-family:Arial,sans-serif;font-size:11.5px;color:#003594;text-decoration:none;">📘 Facebook</a>
-                      </td>
-                      <td>
-                        <a href="https://www.twitter.com/dssstockroom" style="font-family:Arial,sans-serif;font-size:11.5px;color:#003594;text-decoration:none;">𝕏 Twitter/X</a>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
-        };
 
         const TEMPLATES = [
             {
@@ -4274,11 +4177,118 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
         ];
 
         const buildPlainBody = (bodyParas) =>
-            `Hello,\n\n${bodyParas.join('\n\n')}\n\nThank you,\n\n${SIG_PLAIN}`;
+            bodyParas.join('\n\n');
+
+        const buildMailtoBody = (bodyParas) =>
+            encodeURIComponent(bodyParas.join('\n\n'));
+
+        const buildHtmlEmail = (subject, bodyParas) => {
+            const parasHtml = bodyParas.map(p => `<p style="margin:0 0 14px 0;font-size:15px;line-height:1.7;color:#1a1d23;">${p}</p>`).join('');
+            return `<!DOCTYPE html>
+<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<!--[if mso]>
+<style type="text/css">
+  .header-cell { background-color: #003594 !important; }
+  .subject-cell { background-color: #00205B !important; }
+  .gold-bar { background-color: #FFB81C !important; }
+  .header-name { color: #ffffff !important; }
+  .header-sub  { color: #DBEEFF !important; }
+  .subject-text { color: #FFB81C !important; }
+</style>
+<![endif]-->
+</head>
+<body style="margin:0;padding:0;background:#f4f5f7;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;">
+
+        <!-- Header bar -->
+        <tr>
+          <td class="header-cell" bgcolor="#003594" style="background-color:#003594;padding:20px 28px 0 28px;">
+            <table cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding-right:14px;vertical-align:middle;">
+                  <img src="${PITT_SEAL}" width="44" height="44" style="display:block;border-radius:22px;background:#ffffff;padding:3px;" alt="Pitt" />
+                </td>
+                <td style="vertical-align:middle;">
+                  <div class="header-name" style="font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#ffffff;letter-spacing:0.08em;text-transform:uppercase;">Dietrich School Scientific Stockroom</div>
+                  <div class="header-sub" style="font-family:Arial,sans-serif;font-size:10px;color:#DBEEFF;letter-spacing:0.06em;text-transform:uppercase;margin-top:3px;">Shared Research Support Services &nbsp;&middot;&nbsp; University of Pittsburgh</div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <!-- Gold accent strip -->
+        <tr>
+          <td class="gold-bar" bgcolor="#FFB81C" style="background-color:#FFB81C;height:3px;font-size:1px;line-height:3px;">&nbsp;</td>
+        </tr>
+
+        <!-- Subject banner -->
+        <tr>
+          <td class="subject-cell" bgcolor="#00205B" style="background-color:#00205B;padding:12px 28px;">
+            <span class="subject-text" style="font-family:Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#FFB81C;">${subject}</span>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:28px 28px 20px;">
+            ${parasHtml}
+          </td>
+        </tr>
+
+        <!-- Signature divider -->
+        <tr>
+          <td style="padding:0 28px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr><td style="border-top:2px solid #FFB81C;font-size:0;line-height:0;">&nbsp;</td></tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Signature -->
+        <tr>
+          <td style="padding:14px 28px 28px;">
+            <div style="font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#003594;letter-spacing:0.04em;">Dietrich School Scientific Stockroom</div>
+            <div style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;margin-top:3px;">Shared Research Support Services &nbsp;&middot;&nbsp; University of Pittsburgh</div>
+            <table cellpadding="0" cellspacing="0" style="margin-top:10px;">
+              <tr>
+                <td style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;padding-right:20px;padding-bottom:5px;">&#128205; 326 Chevron Science Center</td>
+                <td style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;padding-bottom:5px;">&#128336; Mon&ndash;Fri &nbsp;8:00 AM &ndash; 5:00 PM</td>
+              </tr>
+              <tr>
+                <td style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;padding-right:20px;padding-bottom:5px;">&#128222; <a href="tel:4126248551" style="color:#003594;text-decoration:none;">412-624-8551</a></td>
+                <td style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;padding-bottom:5px;">&#9993; <a href="mailto:stockroom@pitt.edu" style="color:#003594;text-decoration:none;">stockroom@pitt.edu</a></td>
+              </tr>
+              <tr>
+                <td colspan="2" style="font-family:Arial,sans-serif;font-size:12px;color:#5a6072;padding-bottom:8px;">
+                  &#127760; <a href="https://www.researchservices.pitt.edu/facilities/dietrich-school-scientific-stockroom" style="color:#003594;text-decoration:none;">Website</a>
+                  &nbsp;&nbsp;&middot;&nbsp;&nbsp;
+                  <a href="https://www.instagram.com/dssstockroom" style="color:#003594;text-decoration:none;">Instagram</a>
+                  &nbsp;&nbsp;&middot;&nbsp;&nbsp;
+                  <a href="https://www.facebook.com/dssstockroom" style="color:#003594;text-decoration:none;">Facebook</a>
+                  &nbsp;&nbsp;&middot;&nbsp;&nbsp;
+                  <a href="https://www.twitter.com/dssstockroom" style="color:#003594;text-decoration:none;">Twitter / X</a>
+                  &nbsp;&nbsp;&middot;&nbsp;&nbsp; @dssstockroom
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+        };
 
         const handleMailto = (tpl) => {
             const subject = encodeURIComponent(tpl.subject);
-            const body = encodeURIComponent(buildPlainBody(tpl.bodyParas));
+            const body = buildMailtoBody(tpl.bodyParas);
             window.location.href = `mailto:?subject=${subject}&body=${body}`;
         };
 
@@ -4394,7 +4404,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
 
                         const handleCustomMailto = () => {
                             const subject = encodeURIComponent(customSubject.trim() || '(No Subject)');
-                            const body = encodeURIComponent(buildPlainBody(customParas.length ? customParas : ['']));
+                            const body = buildMailtoBody(customParas.length ? customParas : ['']);
                             window.location.href = `mailto:?subject=${subject}&body=${body}`;
                         };
 
@@ -4501,10 +4511,8 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                                 </div>
                                 {/* Body */}
                                 <div style={{padding:'28px 28px 20px'}}>
-                                    <p style={{margin:'0 0 12px 0', fontSize:'14px', color:'var(--text)', lineHeight:'1.7'}}>Hello,</p>
                                     <p style={{margin:'0 0 12px 0', fontSize:'14px', color:'var(--text)', lineHeight:'1.7'}}>This message is to inform you that your order is available for pick-up at the DSS Stockroom at your earliest convenience.</p>
                                     <p style={{margin:'0 0 12px 0', fontSize:'14px', color:'var(--text)', lineHeight:'1.7'}}>If you are unable to retrieve your order personally, another member of your group may pick it up on your behalf.</p>
-                                    <p style={{margin:'20px 0 0 0', fontSize:'14px', color:'var(--text)'}}>Thank you,</p>
                                 </div>
                                 {/* Signature */}
                                 <div style={{padding:'0 28px 24px'}}>
@@ -4517,13 +4525,15 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                                             <span style={{fontSize:'12px', color:'var(--muted)'}}>📞 <a href="tel:4126248551" style={{color:'var(--royal)', textDecoration:'none'}}>412-624-8551</a></span>
                                             <span style={{fontSize:'12px', color:'var(--muted)'}}>✉️ <a href="mailto:stockroom@pitt.edu" style={{color:'var(--royal)', textDecoration:'none'}}>stockroom@pitt.edu</a></span>
                                         </div>
-                                        <div style={{marginTop:'6px'}}>
-                                            <a href="https://www.researchservices.pitt.edu/facilities/dietrich-school-scientific-stockroom" style={{fontSize:'11.5px', color:'var(--royal)', textDecoration:'none', display:'block', marginBottom:'6px'}}>🌐 researchservices.pitt.edu/facilities/dietrich-school-scientific-stockroom</a>
-                                        </div>
-                                        <div style={{display:'flex', gap:'16px', marginTop:'2px'}}>
-                                            <a href="https://www.instagram.com/dssstockroom" style={{fontSize:'11.5px', color:'var(--royal)', textDecoration:'none'}}>📸 Instagram</a>
-                                            <a href="https://www.facebook.com/dssstockroom" style={{fontSize:'11.5px', color:'var(--royal)', textDecoration:'none'}}>📘 Facebook</a>
-                                            <a href="https://www.twitter.com/dssstockroom" style={{fontSize:'11.5px', color:'var(--royal)', textDecoration:'none'}}>𝕏 Twitter/X</a>
+                                        <div style={{marginTop:'8px', fontSize:'12px', color:'var(--muted)', display:'flex', gap:'12px', flexWrap:'wrap', alignItems:'center'}}>
+                                            <a href="https://www.researchservices.pitt.edu/facilities/dietrich-school-scientific-stockroom" style={{color:'var(--royal)', textDecoration:'none'}}>🌐 Website</a>
+                                            <span style={{color:'var(--border)'}}>·</span>
+                                            <a href="https://www.instagram.com/dssstockroom" style={{color:'var(--royal)', textDecoration:'none'}}>📸 Instagram</a>
+                                            <span style={{color:'var(--border)'}}>·</span>
+                                            <a href="https://www.facebook.com/dssstockroom" style={{color:'var(--royal)', textDecoration:'none'}}>📘 Facebook</a>
+                                            <span style={{color:'var(--border)'}}>·</span>
+                                            <a href="https://www.twitter.com/dssstockroom" style={{color:'var(--royal)', textDecoration:'none'}}>𝕏 Twitter/X</a>
+                                            <span style={{color:'var(--muted)'}}>@dssstockroom</span>
                                         </div>
                                     </div>
                                 </div>
