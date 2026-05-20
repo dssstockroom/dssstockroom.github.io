@@ -4194,7 +4194,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
             encodeURIComponent(`Hello,\n\n${bodyParas.join('\n\n')}\n\nThank you,`);
 
         const buildHtmlEmail = (subject, bodyParas) => {
-            const parasHtml = bodyParas.map(p => `<p style="margin:0;mso-margin-top-alt:0;mso-margin-bottom-alt:0;padding:0 0 14px 0;font-size:15px;line-height:1.7;color:#1a1d23;">${p}</p>`).join('');
+            const parasHtml = bodyParas.map(p => `<p style="margin:0;mso-margin-top-alt:0;mso-margin-bottom-alt:0;padding:0;font-size:15px;line-height:1.7;color:#1a1d23;">${p}</p><br>`).join('');
             return `<!DOCTYPE html>
 <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
