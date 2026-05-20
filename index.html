@@ -4114,7 +4114,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                 title: 'Backorder Ready for Pick-Up',
                 subject: 'DSSS Backorder Ready for Pick-Up',
                 bodyParas: [
-                    'This message is to inform you that a previously backordered item associated with your account is now available for pick-up at the DSS Stockroom at your earliest convenience.',
+                    'This message is to inform you that a previously backordered item is now available for pick-up at the DSS Stockroom at your earliest convenience.',
                     'If you are unable to retrieve your order personally, another member of your group may pick it up on your behalf.',
                 ],
                 accent: '#66B2E3',
@@ -4136,7 +4136,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                 title: 'Order Pick-Up Reminder',
                 subject: 'DSSS Order Pick-Up Reminder',
                 bodyParas: [
-                    'This is a courtesy reminder that there is an outstanding order available for pick-up at the DSS Stockroom.',
+                    'This is a courtesy reminder that you have an outstanding order available for pick-up at the DSS Stockroom.',
                     'Please arrange for retrieval at your earliest convenience. If you are unable to do so personally, another member of your group may pick it up on your behalf.',
                 ],
                 accent: '#FF5B45',
@@ -4158,7 +4158,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                 title: 'Cart Return Request',
                 subject: 'DSSS Cart Return Request',
                 bodyParas: [
-                    'Our records indicate that a stockroom cart is currently checked out to your account. As a reminder, carts are intended for short-term use only and should be returned within 30 minutes of checkout.',
+                    'Our records indicate that you currently have a Stockroom cart checked out. As a reminder, carts are intended for short-term use only and should be returned within 30 minutes of checkout.',
                     'Please arrange for the return of the cart to the DSS Stockroom no later than 5:00 PM today. If you have any questions or require assistance, do not hesitate to contact us.',
                 ],
                 accent: '#770538',
@@ -4169,7 +4169,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                 title: 'Key Return Request',
                 subject: 'DSSS Key Return Request',
                 bodyParas: [
-                    'Our records indicate that a stockroom key is currently checked out to your account. As a reminder, keys are intended for short-term use only and should be returned within 30 minutes of checkout.',
+                    'Our records indicate that you currently have a Stockroom key checked out. As a reminder, keys are intended for short-term use only and should be returned within 30 minutes of checkout.',
                     'Please arrange for the return of the key to the DSS Stockroom no later than 5:00 PM today. If you have any questions or require assistance, do not hesitate to contact us.',
                 ],
                 accent: '#770538',
@@ -4180,7 +4180,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                 title: 'Package Pick-Up Reminder',
                 subject: 'DSSS Package Ready for Pick-Up — Reminder',
                 bodyParas: [
-                    'This is a courtesy reminder that there is a package available for pick-up at the DSS Stockroom.',
+                    'This is a courtesy reminder that you currently have a package available for pick-up at the DSS Stockroom.',
                     'Please arrange for retrieval at your earliest convenience. If you are unable to do so personally, another member of your group may pick it up on your behalf.',
                 ],
                 accent: '#FF5B45',
@@ -4424,7 +4424,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
 
                         const handleCustomMailto = () => {
                             const subject = encodeURIComponent(customSubject.trim() || '(No Subject)');
-                            const body = buildMailtoBody(customParas.length ? customParas : ['']);
+                            const body = encodeURIComponent((customParas.length ? customParas : ['']).join('\n\n'));
                             window.location.href = `mailto:?subject=${subject}&body=${body}`;
                         };
 
