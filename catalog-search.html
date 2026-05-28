@@ -298,14 +298,19 @@
 
     function CatalogSearch() {
         const [inventory, setInventory]   = useState([]);
-        const [status, setStatus]         = useState('loading'); // loading | ok | error
+        const [status, setStatus]         = useState('loading');
+        const [lastModified, setLastModified] = useState(null);
         const [query, setQuery]           = useState('');
         const [submitted, setSubmitted]   = useState('');
         const [sort, setSort]             = useState({ key: null, dir: 'asc' });
 
         useEffect(() => {
             fetch(EXCEL_URL)
-                .then(r => r.arrayBuffer())
+                .then(r => {
+                    const lm = r.headers.get('Last-Modified');
+                    if (lm) setLastModified(new Date(lm));
+                    return r.arrayBuffer();
+                })
                 .then(ab => {
                     const data = parseInventory(ab);
                     setInventory(data);
@@ -407,7 +412,7 @@
                 {/* Status bar */}
                 <div className="status-bar">
                     {status === 'loading' && <><span className="status-dot dot-loading"></span>Loading catalog…</>}
-                    {status === 'ok'      && <><span className="status-dot dot-ok"></span>{inventory.length.toLocaleString()} items loaded</>}
+                    {status === 'ok'      && <><span className="status-dot dot-ok"></span>{inventory.length.toLocaleString()} items loaded{lastModified && <span style={{marginLeft:'12px', paddingLeft:'12px', borderLeft:'1px solid var(--border)'}}>Last updated: {lastModified.toLocaleDateString()} {lastModified.toLocaleTimeString()}</span>}</>}
                     {status === 'error'   && <><span className="status-dot dot-error"></span>Could not load catalog. Please try again later.</>}
                 </div>
 
