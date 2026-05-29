@@ -1247,9 +1247,124 @@
                 : <span style={{marginLeft:'3px', fontSize:'11px'}}>↓</span>;
 
     /* ══════════════════════════════════════════════════════════════════════
+       LOGIN SCREEN
+    ══════════════════════════════════════════════════════════════════════ */
+    const AUTH_KEY = 'stockroom_auth';
+    const CORRECT  = 'enzyme';
+
+    function LoginScreen({ onAuth }) {
+        const [input, setInput]   = useState('');
+        const [error, setError]   = useState(false);
+        const [shake, setShake]   = useState(false);
+
+        const attempt = () => {
+            if (input.trim().toLowerCase() === CORRECT) {
+                localStorage.setItem(AUTH_KEY, '1');
+                onAuth();
+            } else {
+                setError(true);
+                setShake(true);
+                setInput('');
+                setTimeout(() => setShake(false), 500);
+            }
+        };
+
+        const handleKey = (e) => { if (e.key === 'Enter') attempt(); };
+
+        return (
+            <div style={{
+                minHeight: '100vh',
+                background: 'var(--bg)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '24px',
+                fontFamily: 'var(--sans)',
+            }}>
+                <div style={{
+                    background: '#fff',
+                    border: '1px solid var(--border)',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    width: '100%',
+                    maxWidth: '380px',
+                    boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+                }}>
+                    {/* Header */}
+                    <div style={{background:'var(--royal)', padding:'0'}}>
+                        <div style={{padding:'20px 28px', display:'flex', alignItems:'center', gap:'14px'}}>
+                            <img
+                                src="https://upload.wikimedia.org/wikipedia/en/thumb/f/fb/University_of_Pittsburgh_seal.svg/960px-University_of_Pittsburgh_seal.svg.png"
+                                alt="Pitt"
+                                style={{width:'42px', height:'42px', borderRadius:'50%', background:'#fff', padding:'3px', flexShrink:0}}
+                            />
+                            <div>
+                                <div style={{fontFamily:'var(--gothic)', fontSize:'13px', fontWeight:700, color:'#fff', letterSpacing:'0.08em', textTransform:'uppercase'}}>Scientific Stockroom</div>
+                                <div style={{fontSize:'10px', color:'rgba(219,238,255,0.75)', letterSpacing:'0.06em', textTransform:'uppercase', marginTop:'2px'}}>Shared Research Support Services</div>
+                            </div>
+                        </div>
+                        <div style={{background:'var(--gold)', height:'3px'}}></div>
+                    </div>
+
+                    {/* Form */}
+                    <div style={{padding:'28px'}}>
+                        <p style={{margin:'0 0 20px 0', fontSize:'14px', color:'var(--muted)', lineHeight:'1.6'}}>
+                            This tool is for internal use only. Enter the password to continue.
+                        </p>
+                        <div style={{
+                            animation: shake ? 'shake 0.4s ease' : 'none',
+                        }}>
+                            <label style={{display:'block', fontSize:'12px', fontWeight:600, color:'var(--text)', letterSpacing:'0.05em', textTransform:'uppercase', marginBottom:'7px'}}>
+                                Password
+                            </label>
+                            <input
+                                type="password"
+                                className="form-input"
+                                value={input}
+                                onChange={e => { setInput(e.target.value); setError(false); }}
+                                onKeyDown={handleKey}
+                                autoFocus
+                                style={{
+                                    width: '100%',
+                                    borderColor: error ? '#FF5B45' : undefined,
+                                    marginBottom: error ? '6px' : '20px',
+                                }}
+                            />
+                            {error && (
+                                <div style={{fontSize:'12px', color:'#FF5B45', marginBottom:'14px'}}>
+                                    Incorrect password. Please try again.
+                                </div>
+                            )}
+                        </div>
+                        <button
+                            className="btn btn-primary"
+                            onClick={attempt}
+                            style={{width:'100%', justifyContent:'center'}}
+                        >
+                            Sign In
+                        </button>
+                    </div>
+                </div>
+                <div style={{marginTop:'16px', fontSize:'11px', color:'var(--muted)'}}>
+                    DSS Stockroom · Dietrich School of Arts &amp; Sciences · University of Pittsburgh
+                </div>
+            </div>
+        );
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
        MAIN APP
     ══════════════════════════════════════════════════════════════════════ */
     function App() {
+        const [authed, setAuthed] = useState(() => localStorage.getItem(AUTH_KEY) === '1');
+
+        if (!authed) return <LoginScreen onAuth={() => setAuthed(true)} />;
+
+        return <AuthenticatedApp />;
+    }
+
+    function AuthenticatedApp() {
         const [inventory, setInventory] = useState([]);
         const [dbStatus, setDbStatus] = useState('loading'); // loading | ok | error
         const [fileLastModified, setFileLastModified] = useState(null);
@@ -1520,6 +1635,13 @@
         .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 28px; padding-top: 14px; border-top: 1px solid #ccc; }
         .sig-line { border-bottom: 1px solid #333; margin: 28px 0 4px; }
         .sig-caption { font-family: var(--gothic); font-size: 8.5px; letter-spacing: 0.08em; text-transform: uppercase; color: #666; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%       { transform: translateX(-8px); }
+            40%       { transform: translateX(8px); }
+            60%       { transform: translateX(-6px); }
+            80%       { transform: translateX(6px); }
+        }
         @media print {
             body { padding: 14px; }
             @page { margin: 1.2cm; }
