@@ -264,7 +264,7 @@
                     ourPrice:         String(r[27] || '').trim(),
                     onHand:           String(r[23] || '').trim(),
                 };
-                if (item.internalSKU) data.push(item);
+                if (item.internalSKU && !item.internalSKU.toUpperCase().startsWith('Y')) data.push(item);
             }
         }
         return data;
