@@ -3138,197 +3138,62 @@
 
         // ── Parser ────────────────────────────────────────────────────────
         function parsePhonebook(wb) {
-            const all = [];  // flat list before dedup
+            const sheetName = 'Master List';
+            if (!wb.SheetNames.includes(sheetName)) {
+                throw new Error(`Sheet "${sheetName}" not found. Sheets available: ${wb.SheetNames.join(', ')}`);
+            }
+            const ws  = wb.Sheets[sheetName];
+            const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
 
-            // Helper to row-obj
-            const rowsOf = (sheetName) => {
-                if (!wb.SheetNames.includes(sheetName)) return [];
-                const ws = wb.Sheets[sheetName];
-                return XLSX.utils.sheet_to_json(ws, { defval: '' });
-            };
-
-            // ── Chemistry ─────────────────────────────────────────────────
-            rowsOf('Chemistry - 2025').forEach(r => {
-                const last  = String(r['Last Name']  || '').trim();
-                const first = String(r['First Name (Preferd Name)'] || r['First Name'] || '').trim();
+            const all = [];
+            rows.forEach(r => {
+                const last  = String(r['Last Name']                     || '').trim();
+                const first = String(r['First Name (Preferd Name)']     || r['First Name'] || '').trim();
                 if (!last && !first) return;
+
+                const group   = String(r['Group']        || '').trim();
+                const classif = String(r['Classif.']     || '').trim();
+                const dept    = String(r['Department']   || '').trim();
+
+                // Derive source tag from Group prefix / Classif
+                let source = 'Other';
+                if (group.startsWith('* SRSS'))       source = 'SRSS';
+                else if (group.startsWith('* Vendor') || classif === 'AcctMgr' || classif === 'Sales Rep') source = 'Vendor';
+                else if (group.startsWith('* Department') || group.startsWith('* Maintenance') || group.startsWith('*Visiting') || group === 'Professor') source = 'Pitt';
+                else if (dept === 'Chemistry' || dept === 'SRSS') source = 'Chemistry';
+                else if (dept === 'Biology')           source = 'Biology';
+                else                                   source = 'Pitt';
+
+                // Derive type
+                let type = 'person';
+
                 all.push({
-                    key: makeKey(first, last, r['Email']),
-                    lastName: last, firstName: first,
-                    pronouns:  String(r['Pronouns']   || '').trim(),
-                    group:     String(r['Group']       || '').trim(),
-                    classif:   String(r['Classif.']    || '').trim(),
-                    title:     String(r['Job Title']   || '').trim(),
-                    building:  String(r['Building']    || '').trim(),
-                    room:      String(r['Floor / Room']|| r['Room'] || '').trim(),
-                    phone:     String(r['Phone']       || '').trim(),
-                    phone2:    String(r['Phone 2']     || '').trim(),
-                    cell:      String(r['Cell Phone']  || '').trim(),
-                    email:     String(r['Email']       || '').trim(),
-                    company:   '',
-                    department:'',
-                    sources:   new Set(['Chemistry']),
-                    type:      'person',
+                    key:       makeKey(first, last, r['Email']),
+                    lastName:  last,
+                    firstName: first,
+                    pronouns:  String(r['Pronouns']      || '').trim(),
+                    group,
+                    classif,
+                    title:     String(r['Job Title']     || '').trim(),
+                    building:  String(r['Building']      || '').trim(),
+                    room:      String(r['Floor / Room']  || '').trim(),
+                    phone:     String(r['Phone 1']       || '').trim(),
+                    phone2:    String(r['Phone 2']       || '').trim(),
+                    cell:      String(r['Phone 3']       || '').trim(),
+                    email:     String(r['Email']         || '').trim(),
+                    company:   (source === 'Vendor') ? group.replace(/^\*Vendor\s*/i,'').trim() : '',
+                    department: dept,
+                    sources:   new Set([source]),
+                    type,
                 });
             });
 
-            // ── SRSS ──────────────────────────────────────────────────────
-            rowsOf('SRSS Contacts').forEach(r => {
-                const last  = String(r['Last Name']  || '').trim();
-                const first = String(r['First Name'] || '').trim();
-                if (!last && !first) return;
-                all.push({
-                    key: makeKey(first, last, r['Email']),
-                    lastName: last, firstName: first,
-                    pronouns: '', group: String(r['Group'] || '').trim(),
-                    classif:  String(r['Classification'] || '').trim(),
-                    title:    String(r['Title / Position Type'] || '').trim(),
-                    building: String(r['Building'] || '').trim(),
-                    room:     String(r['Room #']   || '').trim(),
-                    phone:    String(r['Phone']    || '').trim(),
-                    phone2:   String(r['Phone 2']  || '').trim(),
-                    cell:     String(r['Cell Phone']|| '').trim(),
-                    email:    String(r['Email']    || '').trim(),
-                    company: '', department: '',
-                    sources: new Set(['SRSS']),
-                    type: 'person',
-                });
-            });
-
-            // ── Biology ───────────────────────────────────────────────────
-            rowsOf('Biology Contacts').forEach(r => {
-                const last  = String(r['Last Name']  || '').trim();
-                const first = String(r['First Name'] || '').trim();
-                if (!last && !first) return;
-                all.push({
-                    key: makeKey(first, last, r['Email']),
-                    lastName: last, firstName: first,
-                    pronouns: '', group: String(r['Group'] || '').trim(),
-                    classif:  String(r['Classification'] || '').trim(),
-                    title:    String(r['Title / Position Type'] || '').trim(),
-                    building: String(r['Building'] || '').trim(),
-                    room:     String(r['Room #']   || '').trim(),
-                    phone:    String(r['Phone']    || '').trim(),
-                    phone2:   String(r['Phone 2']  || '').trim(),
-                    cell:     '',
-                    email:    String(r['Email']    || '').trim(),
-                    company: '', department: '',
-                    sources: new Set(['Biology']),
-                    type: 'person',
-                });
-            });
-
-            // ── Pitt Contacts ─────────────────────────────────────────────
-            rowsOf('Pitt Contacts').forEach(r => {
-                const last  = String(r['Last Name']  || '').trim();
-                const first = String(r['First Name'] || '').trim();
-                if (!last && !first) return;
-                all.push({
-                    key: makeKey(first, last, r['Email']),
-                    lastName: last, firstName: first,
-                    pronouns: '', group: '',
-                    classif:  String(r['Classification'] || '').trim(),
-                    title:    String(r['Title / Position Type'] || '').trim(),
-                    building: String(r['Building'] || '').trim(),
-                    room:     String(r['Room #']   || '').trim(),
-                    phone:    String(r['Phone']    || '').trim(),
-                    phone2:   '',
-                    cell:     String(r['Cell Phone']|| '').trim(),
-                    email:    String(r['Email']    || '').trim(),
-                    company: '', department: String(r['Department'] || '').trim(),
-                    sources: new Set(['Pitt']),
-                    type: 'person',
-                });
-            });
-
-            // ── Pitt Offices ──────────────────────────────────────────────
-            rowsOf('Pitt Offices').forEach(r => {
-                const name = String(r['Office Name'] || '').trim();
-                if (!name) return;
-                all.push({
-                    key: 'office::' + name.toLowerCase().replace(/\s+/g,''),
-                    lastName: name, firstName: '',
-                    pronouns: '', group: '',
-                    classif: 'Office', title: String(r['Department'] || '').trim(),
-                    building: String(r['Building'] || '').trim(), room: '',
-                    phone:  String(r['Phone']    || '').trim(),
-                    phone2: '', cell: '',
-                    email: String(r['Websites'] || '').trim(),
-                    company: '', department: String(r['Department'] || '').trim(),
-                    sources: new Set(['Pitt Offices']),
-                    type: 'office',
-                });
-            });
-
-            // ── Vendor Contacts ───────────────────────────────────────────
-            rowsOf('Vendor Contacts').forEach(r => {
-                const last  = String(r['Last Name']  || '').trim();
-                const first = String(r['First Name'] || '').trim();
-                const company = String(r['Company Name'] || '').trim();
-                if (!last && !first && !company) return;
-                all.push({
-                    key: makeKey(first, last, r['Email']),
-                    lastName: last, firstName: first,
-                    pronouns: '', group: company,
-                    classif: 'Vendor',
-                    title: String(r['Title / Position Type'] || '').trim(),
-                    building: '', room: '',
-                    phone: String(r['Phone'] || '').trim(),
-                    phone2: '', cell: '',
-                    email: String(r['Email'] || '').trim(),
-                    company, department: '',
-                    sources: new Set(['Vendor']),
-                    type: 'person',
-                });
-            });
-
-            // ── Non-Pitt & Construction ───────────────────────────────────
-            rowsOf('Non-Pitt & Construction').forEach(r => {
-                const last  = String(r['Last Name']  || '').trim();
-                const first = String(r['First Name'] || '').trim();
-                if (!last && !first) return;
-                all.push({
-                    key: makeKey(first, last, r['Email']),
-                    lastName: last, firstName: first,
-                    pronouns: '', group: String(r['Company'] || '').trim(),
-                    classif: 'External',
-                    title: '', building: '', room: '',
-                    phone: String(r['Cell / Office Phone'] || '').trim(),
-                    phone2: '', cell: '',
-                    email: String(r['Email'] || '').trim(),
-                    company: String(r['Company'] || '').trim(), department: '',
-                    sources: new Set(['External']),
-                    type: 'person',
-                });
-            });
-
-            // ── Shipping Companies ────────────────────────────────────────
-            rowsOf('Shipping Company').forEach(r => {
-                const name = String(r['Company'] || '').trim();
-                if (!name) return;
-                all.push({
-                    key: 'ship::' + name.toLowerCase().replace(/\s+/g,''),
-                    lastName: name, firstName: '',
-                    pronouns: '', group: '',
-                    classif: 'Shipping', title: String(r['Service Type'] || '').trim(),
-                    building: '', room: '',
-                    phone: String(r['Phone Number'] || '').trim(),
-                    phone2: '', cell: '',
-                    email: String(r['Website'] || '').trim(),
-                    company: name, department: '',
-                    sources: new Set(['Shipping']),
-                    type: 'company',
-                });
-            });
-
-            // ── Deduplicate by key ────────────────────────────────────────
+            // Deduplicate by key
             const map = new Map();
             all.forEach(c => {
                 if (map.has(c.key)) {
-                    // Merge: add source tags; prefer non-empty fields from existing
                     const ex = map.get(c.key);
                     c.sources.forEach(s => ex.sources.add(s));
-                    // Fill in blanks from the new record
                     ['phone','phone2','cell','email','building','room','title','classif','group','pronouns'].forEach(f => {
                         if (!ex[f] && c[f]) ex[f] = c[f];
                     });
