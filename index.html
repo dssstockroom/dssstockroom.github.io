@@ -5019,6 +5019,8 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
             try { await handleDownloadPDF(); } catch(e) { alert('PDF error: ' + e.message); }
             setPdfBusy(false);
         };
+
+        const handleEmailExport = () => {
             const subject = encodeURIComponent(`Hazmat BOL - ${date}`);
             window.location.href = `mailto:stockroom@pitt.edu?subject=${subject}`;
         };
