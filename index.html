@@ -4594,70 +4594,70 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
 
     // ── Hazmat chemical database (from DOT Guide + shipping sheets) ────────
     const HAZMAT_DB = [
-        { un:'UN1090', name:'Acetone',                              hazClass:'3',       pg:'II',  ltdQty:'1 L',   density:0.791 },
-        { un:'UN1114', name:'Benzene',                              hazClass:'3',       pg:'II',  ltdQty:'1 L',   density:0.879 },
-        { un:'UN1155', name:'Diethyl Ether',                        hazClass:'3',       pg:'I',   ltdQty:null,    density:0.713 },
-        { un:'UN1161', name:'Dimethyl Carbonate',                   hazClass:'3',       pg:'II',  ltdQty:'5 L',   density:1.069 },
-        { un:'UN1165', name:'1,4-Dioxane',                          hazClass:'3',       pg:'II',  ltdQty:'1 L',   density:1.033 },
-        { un:'UN1170', name:'Ethanol Solution',                     hazClass:'3',       pg:'II',  ltdQty:'1 L',   density:0.789 },
-        { un:'UN1173', name:'Ethyl Acetate',                        hazClass:'3',       pg:'II',  ltdQty:'1 L',   density:0.902 },
-        { un:'UN1198', name:'Formaldehyde Solution, Flammable',     hazClass:'3 (8)',   pg:'III', ltdQty:'5 L',   density:1.090 },
-        { un:'UN1208', name:'Hexanes',                              hazClass:'3',       pg:'II',  ltdQty:'1 L',   density:0.659 },
-        { un:'UN1219', name:'Isopropanol',                          hazClass:'3',       pg:'II',  ltdQty:'1 L',   density:0.786 },
-        { un:'UN1223', name:'Kerosene',                             hazClass:'3',       pg:'III', ltdQty:'5 L',   density:0.800 },
-        { un:'UN1230', name:'Methanol',                             hazClass:'3 (6.1)', pg:'II',  ltdQty:'500 mL',density:0.791 },
-        { un:'UN1263', name:'Paint',                                hazClass:'3',       pg:'II',  ltdQty:'1 L',   density:1.000 },
-        { un:'UN1265', name:'Pentanes',                             hazClass:'3',       pg:'I',   ltdQty:'1 L',   density:0.626 },
-        { un:'UN1282', name:'Pyridine',                             hazClass:'3 (6.1)', pg:'II',  ltdQty:'1 L',   density:0.982 },
-        { un:'UN1294', name:'Toluene',                              hazClass:'3',       pg:'II',  ltdQty:'1 L',   density:0.867 },
-        { un:'UN1296', name:'Triethylamine',                        hazClass:'3 (8)',   pg:'II',  ltdQty:'1 L',   density:0.726 },
-        { un:'UN1298', name:'Trimethylchlorosilane',                hazClass:'3 (8)',   pg:'II',  ltdQty:null,    density:0.856 },
-        { un:'UN1307', name:'Xylenes',                              hazClass:'3',       pg:'II',  ltdQty:'1 L',   density:0.864 },
-        { un:'UN1404', name:'Calcium Hydride',                      hazClass:'4.3',     pg:'I',   ltdQty:null,    density:1.700 },
-        { un:'UN1410', name:'Lithium Aluminium Hydride',            hazClass:'4.3 (4.1)',pg:'I',  ltdQty:null,    density:0.917 },
-        { un:'UN1415', name:'Lithium',                              hazClass:'4.3 (4.1)',pg:'I',  ltdQty:null,    density:0.534 },
-        { un:'UN1426', name:'Sodium Borohydride',                   hazClass:'4.3 (4.1)',pg:'I',  ltdQty:null,    density:1.074 },
-        { un:'UN1564', name:'Barium Compound, N.O.S.',              hazClass:'6.1',     pg:'II',  ltdQty:'500 g', density:3.856 },
-        { un:'UN1593', name:'Dichloromethane',                      hazClass:'6.1',     pg:'III', ltdQty:'5 L',   density:1.325 },
-        { un:'UN1648', name:'Acetonitrile',                         hazClass:'3 (6.1)', pg:'II',  ltdQty:'500 mL',density:0.786 },
-        { un:'UN1717', name:'Acetyl Chloride',                      hazClass:'3 (8)',   pg:'II',  ltdQty:null,    density:1.104 },
-        { un:'UN1727', name:'Ammonium Hydrogendifluoride, Solid',   hazClass:'8',       pg:'II',  ltdQty:'500 g', density:1.500 },
-        { un:'UN1760', name:'Corrosive Liquid, N.O.S.',             hazClass:'8',       pg:'II',  ltdQty:'1 L',   density:1.000 },
-        { un:'UN1773', name:'Ferric Chloride, Anhydrous',           hazClass:'8',       pg:'III', ltdQty:'500 g', density:2.898 },
-        { un:'UN1789', name:'Hydrochloric Acid',                    hazClass:'8',       pg:'II',  ltdQty:'1 L',   density:1.190 },
-        { un:'UN1790', name:'Hydrofluoric Acid',                    hazClass:'8 (6.1)', pg:'I',   ltdQty:'500 mL',density:1.150 },
-        { un:'UN1805', name:'Phosphoric Acid Solution',             hazClass:'8',       pg:'III', ltdQty:'1 L',   density:1.685 },
-        { un:'UN1813', name:'Potassium Hydroxide, Solid',           hazClass:'8',       pg:'II',  ltdQty:'500 g', density:2.044 },
-        { un:'UN1823', name:'Sodium Hydroxide, Solid',              hazClass:'8',       pg:'II',  ltdQty:'500 g', density:2.130 },
-        { un:'UN1830', name:'Sulfuric Acid',                        hazClass:'8',       pg:'II',  ltdQty:'1 L',   density:1.840 },
-        { un:'UN1888', name:'Chloroform',                           hazClass:'6.1',     pg:'III', ltdQty:'5 L',   density:1.489 },
-        { un:'UN1992', name:'Flammable Liquid, Toxic, N.O.S.',      hazClass:'3 (6.1)', pg:'II',  ltdQty:'1 L',   density:1.000 },
-        { un:'UN1993', name:'Flammable Liquid, N.O.S.',             hazClass:'3',       pg:'II',  ltdQty:'1 L',   density:1.000 },
-        { un:'UN2014', name:'Hydrogen Peroxide, Aqueous Solution',  hazClass:'5.1 (8)', pg:'II',  ltdQty:'1 L',   density:1.110 },
-        { un:'UN2031', name:'Nitric Acid',                          hazClass:'5.1 (8)', pg:'I',   ltdQty:'1 L',   density:1.413 },
-        { un:'UN2056', name:'Tetrahydrofuran',                      hazClass:'3',       pg:'II',  ltdQty:'1 L',   density:0.889 },
-        { un:'UN2074', name:'Acrylamide Solution',                  hazClass:'6.1',     pg:'III', ltdQty:'500 mL',density:1.010 },
-        { un:'UN2252', name:'1,2-Dimethoxyethane',                  hazClass:'3',       pg:'II',  ltdQty:'1 L',   density:0.863 },
-        { un:'UN2584', name:'Alkylsulphonic Acids, Solid',          hazClass:'8',       pg:'II',  ltdQty:'500 g', density:1.240 },
-        { un:'UN2604', name:'Boron Trifluoride Diethyl Etherate',   hazClass:'8 (6.1)', pg:'I',   ltdQty:'500 mL',density:1.125 },
-        { un:'UN2672', name:'Ammonia Solution',                     hazClass:'8',       pg:'III', ltdQty:'1 L',   density:0.900 },
-        { un:'UN2693', name:'Bisulphites, Aqueous Solution, N.O.S.',hazClass:'8',       pg:'III', ltdQty:'1 L',   density:1.000 },
-        { un:'UN2699', name:'Trifluoroacetic Acid',                 hazClass:'8',       pg:'I',   ltdQty:'500 mL',density:1.489 },
-        { un:'UN2733', name:'Amines, Flammable, Corrosive, N.O.S.', hazClass:'3 (8)',   pg:'II',  ltdQty:'1 L',   density:0.776 },
-        { un:'UN2789', name:'Acetic Acid, Glacial',                 hazClass:'8 (3)',   pg:'II',  ltdQty:'1 L',   density:1.049 },
-        { un:'UN2790', name:'Acetic Acid Solution',                 hazClass:'8',       pg:'II',  ltdQty:'1 L',   density:1.040 },
-        { un:'UN2803', name:'Gallium',                              hazClass:'8',       pg:'III', ltdQty:'500 g', density:5.910 },
-        { un:'UN2809', name:'Mercury',                              hazClass:'8',       pg:'III', ltdQty:null,    density:13.534 },
-        { un:'UN2810', name:'Toxic Liquid, Organic, N.O.S.',        hazClass:'6.1',     pg:'II',  ltdQty:'1 L',   density:1.000 },
-        { un:'UN2924', name:'Flammable Liquid, Corrosive, N.O.S.',  hazClass:'3 (8)',   pg:'II',  ltdQty:'1 L',   density:1.000 },
-        { un:'UN3077', name:'Environmentally Hazardous Substance, Solid, N.O.S.', hazClass:'9', pg:'III', ltdQty:'500 g', density:1.000 },
-        { un:'UN3082', name:'Environmentally Hazardous Substance, Liquid, N.O.S.',hazClass:'9', pg:'III', ltdQty:'5 L',   density:1.000 },
+        { un:'UN1090', name:'Acetone',                              hazClass:'3',       pg:'II',  labels:'Flammable Liquid', ltdQty:'1 L',   density:0.791 },
+        { un:'UN1114', name:'Benzene',                              hazClass:'3',       pg:'II',  labels:'Flammable Liquid', ltdQty:'1 L',   density:0.879 },
+        { un:'UN1155', name:'Diethyl Ether',                        hazClass:'3',       pg:'I',   labels:'Flammable Liquid', ltdQty:null,    density:0.713 },
+        { un:'UN1161', name:'Dimethyl Carbonate',                   hazClass:'3',       pg:'II',  labels:'Flammable Liquid', ltdQty:'5 L',   density:1.069 },
+        { un:'UN1165', name:'1,4-Dioxane',                          hazClass:'3',       pg:'II',  labels:'Flammable Liquid', ltdQty:'1 L',   density:1.033 },
+        { un:'UN1170', name:'Ethanol Solution',                     hazClass:'3',       pg:'II',  labels:'Flammable Liquid', ltdQty:'1 L',   density:0.789 },
+        { un:'UN1173', name:'Ethyl Acetate',                        hazClass:'3',       pg:'II',  labels:'Flammable Liquid', ltdQty:'1 L',   density:0.902 },
+        { un:'UN1198', name:'Formaldehyde Solution, Flammable',     hazClass:'3 (8)',   pg:'III', labels:'Flammable Liquid; Corrosive', ltdQty:'5 L',   density:1.090 },
+        { un:'UN1208', name:'Hexanes',                              hazClass:'3',       pg:'II',  labels:'Flammable Liquid', ltdQty:'1 L',   density:0.659 },
+        { un:'UN1219', name:'Isopropanol',                          hazClass:'3',       pg:'II',  labels:'Flammable Liquid', ltdQty:'1 L',   density:0.786 },
+        { un:'UN1223', name:'Kerosene',                             hazClass:'3',       pg:'III', labels:'Flammable Liquid', ltdQty:'5 L',   density:0.800 },
+        { un:'UN1230', name:'Methanol',                             hazClass:'3 (6.1)', pg:'II',  labels:'Flammable Liquid; Toxic', ltdQty:'500 mL',density:0.791 },
+        { un:'UN1263', name:'Paint',                                hazClass:'3',       pg:'II',  labels:'Flammable Liquid', ltdQty:'1 L',   density:1.000 },
+        { un:'UN1265', name:'Pentanes',                             hazClass:'3',       pg:'I',   labels:'Flammable Liquid', ltdQty:'1 L',   density:0.626 },
+        { un:'UN1282', name:'Pyridine',                             hazClass:'3 (6.1)', pg:'II',  labels:'Flammable Liquid; Toxic', ltdQty:'1 L',   density:0.982 },
+        { un:'UN1294', name:'Toluene',                              hazClass:'3',       pg:'II',  labels:'Flammable Liquid', ltdQty:'1 L',   density:0.867 },
+        { un:'UN1296', name:'Triethylamine',                        hazClass:'3 (8)',   pg:'II',  labels:'Flammable Liquid; Corrosive', ltdQty:'1 L',   density:0.726 },
+        { un:'UN1298', name:'Trimethylchlorosilane',                hazClass:'3 (8)',   pg:'II',  labels:'Flammable Liquid; Corrosive', ltdQty:null,    density:0.856 },
+        { un:'UN1307', name:'Xylenes',                              hazClass:'3',       pg:'II',  labels:'Flammable Liquid', ltdQty:'1 L',   density:0.864 },
+        { un:'UN1404', name:'Calcium Hydride',                      hazClass:'4.3',     pg:'I',   labels:'Dangerous When Wet', ltdQty:null,    density:1.700 },
+        { un:'UN1410', name:'Lithium Aluminium Hydride',            hazClass:'4.3 (4.1)',pg:'I',  labels:'Flammable Solid; Dangerous When Wet', ltdQty:null,    density:0.917 },
+        { un:'UN1415', name:'Lithium',                              hazClass:'4.3 (4.1)',pg:'I',  labels:'Flammable Solid; Dangerous When Wet', ltdQty:null,    density:0.534 },
+        { un:'UN1426', name:'Sodium Borohydride',                   hazClass:'4.3 (4.1)',pg:'I',  labels:'Flammable Solid; Dangerous When Wet', ltdQty:null,    density:1.074 },
+        { un:'UN1564', name:'Barium Compound, N.O.S.',              hazClass:'6.1',     pg:'II',  labels:'Toxic', ltdQty:'500 g', density:3.856 },
+        { un:'UN1593', name:'Dichloromethane',                      hazClass:'6.1',     pg:'III', labels:'Toxic', ltdQty:'5 L',   density:1.325 },
+        { un:'UN1648', name:'Acetonitrile',                         hazClass:'3 (6.1)', pg:'II',  labels:'Flammable Liquid; Toxic', ltdQty:'500 mL',density:0.786 },
+        { un:'UN1717', name:'Acetyl Chloride',                      hazClass:'3 (8)',   pg:'II',  labels:'Flammable Liquid; Corrosive', ltdQty:null,    density:1.104 },
+        { un:'UN1727', name:'Ammonium Hydrogendifluoride, Solid',   hazClass:'8',       pg:'II',  labels:'Corrosive', ltdQty:'500 g', density:1.500 },
+        { un:'UN1760', name:'Corrosive Liquid, N.O.S.',             hazClass:'8',       pg:'II',  labels:'Corrosive', ltdQty:'1 L',   density:1.000 },
+        { un:'UN1773', name:'Ferric Chloride, Anhydrous',           hazClass:'8',       pg:'III', labels:'Corrosive', ltdQty:'500 g', density:2.898 },
+        { un:'UN1789', name:'Hydrochloric Acid',                    hazClass:'8',       pg:'II',  labels:'Corrosive', ltdQty:'1 L',   density:1.190 },
+        { un:'UN1790', name:'Hydrofluoric Acid',                    hazClass:'8 (6.1)', pg:'I',   labels:'Corrosive; Toxic', ltdQty:'500 mL',density:1.150 },
+        { un:'UN1805', name:'Phosphoric Acid Solution',             hazClass:'8',       pg:'III', labels:'Corrosive', ltdQty:'1 L',   density:1.685 },
+        { un:'UN1813', name:'Potassium Hydroxide, Solid',           hazClass:'8',       pg:'II',  labels:'Corrosive', ltdQty:'500 g', density:2.044 },
+        { un:'UN1823', name:'Sodium Hydroxide, Solid',              hazClass:'8',       pg:'II',  labels:'Corrosive', ltdQty:'500 g', density:2.130 },
+        { un:'UN1830', name:'Sulfuric Acid',                        hazClass:'8',       pg:'II',  labels:'Corrosive', ltdQty:'1 L',   density:1.840 },
+        { un:'UN1888', name:'Chloroform',                           hazClass:'6.1',     pg:'III', labels:'Toxic', ltdQty:'5 L',   density:1.489 },
+        { un:'UN1992', name:'Flammable Liquid, Toxic, N.O.S.',      hazClass:'3 (6.1)', pg:'II',  labels:'Flammable Liquid; Toxic', ltdQty:'1 L',   density:1.000 },
+        { un:'UN1993', name:'Flammable Liquid, N.O.S.',             hazClass:'3',       pg:'II',  labels:'Flammable Liquid', ltdQty:'1 L',   density:1.000 },
+        { un:'UN2014', name:'Hydrogen Peroxide, Aqueous Solution',  hazClass:'5.1 (8)', pg:'II',  labels:'Oxidizer; Corrosive', ltdQty:'1 L',   density:1.110 },
+        { un:'UN2031', name:'Nitric Acid',                          hazClass:'5.1 (8)', pg:'I',   labels:'Oxidizer; Corrosive', ltdQty:'1 L',   density:1.413 },
+        { un:'UN2056', name:'Tetrahydrofuran',                      hazClass:'3',       pg:'II',  labels:'Flammable Liquid', ltdQty:'1 L',   density:0.889 },
+        { un:'UN2074', name:'Acrylamide Solution',                  hazClass:'6.1',     pg:'III', labels:'Toxic', ltdQty:'500 mL',density:1.010 },
+        { un:'UN2252', name:'1,2-Dimethoxyethane',                  hazClass:'3',       pg:'II',  labels:'Flammable Liquid', ltdQty:'1 L',   density:0.863 },
+        { un:'UN2584', name:'Alkylsulphonic Acids, Solid',          hazClass:'8',       pg:'II',  labels:'Corrosive', ltdQty:'500 g', density:1.240 },
+        { un:'UN2604', name:'Boron Trifluoride Diethyl Etherate',   hazClass:'8 (6.1)', pg:'I',   labels:'Corrosive; Toxic', ltdQty:'500 mL',density:1.125 },
+        { un:'UN2672', name:'Ammonia Solution',                     hazClass:'8',       pg:'III', labels:'Corrosive', ltdQty:'1 L',   density:0.900 },
+        { un:'UN2693', name:'Bisulphites, Aqueous Solution, N.O.S.',hazClass:'8',       pg:'III', labels:'Corrosive', ltdQty:'1 L',   density:1.000 },
+        { un:'UN2699', name:'Trifluoroacetic Acid',                 hazClass:'8',       pg:'I',   labels:'Corrosive', ltdQty:'500 mL',density:1.489 },
+        { un:'UN2733', name:'Amines, Flammable, Corrosive, N.O.S.', hazClass:'3 (8)',   pg:'II',  labels:'Flammable Liquid; Corrosive', ltdQty:'1 L',   density:0.776 },
+        { un:'UN2789', name:'Acetic Acid, Glacial',                 hazClass:'8 (3)',   pg:'II',  labels:'Corrosive; Flammable Liquid', ltdQty:'1 L',   density:1.049 },
+        { un:'UN2790', name:'Acetic Acid Solution',                 hazClass:'8',       pg:'II',  labels:'Corrosive', ltdQty:'1 L',   density:1.040 },
+        { un:'UN2803', name:'Gallium',                              hazClass:'8',       pg:'III', labels:'Corrosive', ltdQty:'500 g', density:5.910 },
+        { un:'UN2809', name:'Mercury',                              hazClass:'8',       pg:'III', labels:'Toxic', ltdQty:null,    density:13.534 },
+        { un:'UN2810', name:'Toxic Liquid, Organic, N.O.S.',        hazClass:'6.1',     pg:'II',  labels:'Toxic', ltdQty:'1 L',   density:1.000 },
+        { un:'UN2924', name:'Flammable Liquid, Corrosive, N.O.S.',  hazClass:'3 (8)',   pg:'II',  labels:'Flammable Liquid; Corrosive', ltdQty:'1 L',   density:1.000 },
+        { un:'UN3077', name:'Environmentally Hazardous Substance, Solid, N.O.S.', hazClass:'9', pg:'III', labels:'Environmentally Hazardous', ltdQty:'500 g', density:1.000 },
+        { un:'UN3082', name:'Environmentally Hazardous Substance, Liquid, N.O.S.',hazClass:'9', pg:'III', labels:'Environmentally Hazardous', ltdQty:'5 L',   density:1.000 },
         { un:'UN3249', name:'Medicine, Solid, Toxic, N.O.S.',       hazClass:'6.1',     pg:null,  ltdQty:null,    density:1.000 },
-        { un:'UN3263', name:'Corrosive Solid, Basic, Organic, N.O.S.',hazClass:'8',     pg:'II',  ltdQty:'500 g', density:1.000 },
+        { un:'UN3263', name:'Corrosive Solid, Basic, Organic, N.O.S.',hazClass:'8',     pg:'II',  labels:'Corrosive', ltdQty:'500 g', density:1.000 },
         { un:'UN3373', name:'Biological Substance, Category B',     hazClass:'6.2',     pg:null,  ltdQty:null,    density:1.000 },
-        { un:'UN3393', name:'Organometallic Substance, Solid, Pyrophoric, Water-Reactive', hazClass:'4.2 (4.3)', pg:'I', ltdQty:null, density:1.000 },
-        { un:'UN3394', name:'Organometallic Substance, Liquid, Pyrophoric, Water-Reactive',hazClass:'4.2 (4.3)', pg:'I', ltdQty:null, density:1.000 },
-        { un:'UN3398', name:'Organometallic Substance, Liquid, Water-Reactive, Flammable', hazClass:'4.3 (3)',   pg:'I', ltdQty:null, density:1.000 },
+        { un:'UN3393', name:'Organometallic Substance, Solid, Pyrophoric, Water-Reactive', hazClass:'4.2 (4.3)', pg:'I', labels:'Spontaneously Combustible; Dangerous When Wet', ltdQty:null, density:1.000 },
+        { un:'UN3394', name:'Organometallic Substance, Liquid, Pyrophoric, Water-Reactive',hazClass:'4.2 (4.3)', pg:'I', labels:'Spontaneously Combustible; Dangerous When Wet', ltdQty:null, density:1.000 },
+        { un:'UN3398', name:'Organometallic Substance, Liquid, Water-Reactive, Flammable', hazClass:'4.3 (3)',   pg:'I', labels:'Flammable Liquid; Dangerous When Wet', ltdQty:null, density:1.000 },
     ];
 
     // ── Pitt address list (abbreviated — full list loaded from xlsx at runtime) ──
@@ -4751,7 +4751,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                             <strong>Date:</strong> ${bol.date}
                         </td>
                         <td style="border:1px solid #000;padding:5px 8px;width:50%;">
-                            <strong>Page ${pageIdx + 1} of ${pages.length}</strong>
+                            <strong>Page 1 of 1</strong>
                         </td>
                     </tr>
                     <tr>
@@ -4792,11 +4792,8 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
 
                 <table style="width:100%;border-collapse:collapse;">
                     <tr>
-                        <td style="width:60%;padding:4px 0;">
+                        <td style="width:100%;padding:4px 0;">
                             Signature: _______________________________________________
-                        </td>
-                        <td style="width:40%;padding:4px 0;">
-                            Date: _____________________
                         </td>
                     </tr>
                 </table>
@@ -4832,7 +4829,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
 
         // Load Pitt_Address.xlsx if present alongside the file
         useEffect(() => {
-            fetch('Pitt_Address.xlsx')
+            fetch('pitt-addresses.xlsx')
                 .then(r => r.arrayBuffer())
                 .then(ab => {
                     const wb = XLSX.read(ab, { type:'array', raw:false });
@@ -4926,7 +4923,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                 name:              selectedChem.name,
                 hazClass:          selectedChem.hazClass,
                 pg:                selectedChem.pg,
-                labels:            '',
+                labels:            selectedChem.labels || '',
                 ltdQtyThreshold:   selectedChem.ltdQty || '',
                 isLtdQty,
                 qtyGal:            parseFloat(qtyGal),
