@@ -17,6 +17,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
     <style>
         /* ── Pitt Color Palette ─────────────────────────────────────────── */
@@ -4952,6 +4953,49 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
             printDocument(buildInternalBOLHTML(bol));
         };
 
+        const handleDownloadPDF = async (bolOverride) => {
+            const bol = bolOverride || (items.length > 0 ? { date, items } : null);
+            if (!bol) return;
+            const html = buildInternalBOLHTML(bol);
+
+            // Render into a hidden iframe to get proper layout
+            const iframe = document.createElement('iframe');
+            iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:816px;height:1056px;border:none;visibility:hidden;';
+            document.body.appendChild(iframe);
+
+            await new Promise(resolve => {
+                iframe.onload = resolve;
+                iframe.srcdoc = html;
+            });
+
+            // Give images/fonts a moment to load
+            await new Promise(r => setTimeout(r, 600));
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ unit: 'pt', format: 'letter', orientation: 'portrait' });
+                const iDoc = iframe.contentDocument;
+                const pages = iDoc.querySelectorAll('div[style*="page-break"]');
+                const targets = pages.length > 0 ? Array.from(pages) : [iDoc.body];
+
+                for (let i = 0; i < targets.length; i++) {
+                    const canvas = await html2canvas(targets[i], {
+                        scale: 1.5,
+                        useCORS: true,
+                        backgroundColor: '#ffffff',
+                        width: 816,
+                        windowWidth: 816,
+                    });
+                    if (i > 0) doc.addPage();
+                    doc.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 612, 792);
+                }
+
+                doc.save(`HazmatBOL_${date}.pdf`);
+            } finally {
+                document.body.removeChild(iframe);
+            }
+        };
+
         const handleSave = () => {
             if (items.length === 0) return;
             const bol = {
@@ -4968,7 +5012,13 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
             setTimeout(() => setSavedMsg(''), 3000);
         };
 
-        const handleEmailExport = () => {
+        const [pdfBusy, setPdfBusy] = useState(false);
+
+        const handleDownloadPDFClick = async () => {
+            setPdfBusy(true);
+            try { await handleDownloadPDF(); } catch(e) { alert('PDF error: ' + e.message); }
+            setPdfBusy(false);
+        };
             const subject = encodeURIComponent(`Hazmat BOL - ${date}`);
             window.location.href = `mailto:stockroom@pitt.edu?subject=${subject}`;
         };
@@ -5170,6 +5220,9 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
 
                                     <div style={{display:'flex', gap:'10px', flexWrap:'wrap', marginTop:'8px'}}>
                                         <button className="btn btn-primary" onClick={handlePrint}>🖨️ Print BOL</button>
+                                        <button className="btn btn-outline" onClick={handleDownloadPDFClick} disabled={pdfBusy}>
+                                            {pdfBusy ? '⏳ Generating PDF…' : '⬇️ Download PDF'}
+                                        </button>
                                         <button className="btn btn-outline" onClick={handleSave}>💾 Save to History</button>
                                         <button className="btn btn-outline" onClick={handleEmailExport}>📧 Email BOL</button>
                                         <button className="btn btn-ghost" onClick={handleClear}>Clear All</button>
@@ -5207,6 +5260,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                                                     <td style={{padding:'8px 12px', fontSize:'12px', color:'var(--muted)'}}>{new Date(rec._savedAt).toLocaleDateString()}</td>
                                                     <td style={{padding:'8px 12px', display:'flex', gap:'8px'}}>
                                                         <button className="btn btn-outline" style={{fontSize:'11px', padding:'3px 10px'}} onClick={() => printDocument(buildInternalBOLHTML(rec))}>🖨️ Reprint</button>
+                                                        <button className="btn btn-outline" style={{fontSize:'11px', padding:'3px 10px'}} onClick={async () => { setPdfBusy(true); try { await handleDownloadPDF(rec); } catch(e){} setPdfBusy(false); }}>⬇️ PDF</button>
                                                         <button onClick={() => deleteHistory(rec._id)} style={{background:'none', border:'none', cursor:'pointer', color:'#FF5B45', fontSize:'16px', padding:'0 4px'}} title="Delete">×</button>
                                                     </td>
                                                 </tr>
