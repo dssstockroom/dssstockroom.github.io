@@ -4824,6 +4824,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
         const [items,       setItems]       = useState([]);
         const [history,     setHistory]     = useState(() => loadIBOLHistory());
         const [activeTab,   setActiveTab]   = useState('builder'); // builder | history
+        const [addresses,     setAddresses]     = useState(PITT_ADDRESSES_FALLBACK);
         const [locHighlight,  setLocHighlight]  = useState(-1);
         const [chemHighlight, setChemHighlight] = useState(-1);
         const [savedMsg,    setSavedMsg]    = useState('');
