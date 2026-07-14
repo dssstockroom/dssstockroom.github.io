@@ -4824,7 +4824,6 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
         const [selectedChem,setSelectedChem]= useState(null);
         const [qtyGal,      setQtyGal]      = useState('');
         const [pieces,      setPieces]      = useState('1');
-        const [isLtdQty,    setIsLtdQty]    = useState(false);
         const [items,       setItems]       = useState([]);
         const [history,     setHistory]     = useState(() => loadIBOLHistory());
         const [activeTab,   setActiveTab]   = useState('builder'); // builder | history
@@ -4887,7 +4886,6 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
             setSelectedChem(chem);
             setChemQuery(chem.un + ' — ' + chem.name);
             setChemResults([]);
-            setIsLtdQty(!!chem.ltdQty);
         };
 
         const kgFromGal = (gal, density) => {
@@ -4895,9 +4893,30 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
             return liters * density;
         };
 
+        // Parse threshold string like "1 L", "500 mL", "500 g" and compare to entered qty in gallons
+        const computeIsLtdQty = (chem, gal) => {
+            if (!chem.ltdQty) return false;
+            const totalLiters = parseFloat(gal) * 3.78541;
+            const threshold = chem.ltdQty.trim().toLowerCase();
+            if (threshold.endsWith('ml')) {
+                const threshLiters = parseFloat(threshold) / 1000;
+                return totalLiters <= threshLiters;
+            } else if (threshold.endsWith('l')) {
+                const threshLiters = parseFloat(threshold);
+                return totalLiters <= threshLiters;
+            } else if (threshold.endsWith('g') || threshold.endsWith('kg')) {
+                // Solid threshold — compare kg
+                const threshKg = threshold.endsWith('kg') ? parseFloat(threshold) : parseFloat(threshold) / 1000;
+                const totalKg = kgFromGal(gal, chem.density);
+                return totalKg <= threshKg;
+            }
+            return false;
+        };
+
         const addItem = () => {
             if (!selectedLoc || !selectedChem || !qtyGal || isNaN(parseFloat(qtyGal))) return;
             const kg = kgFromGal(qtyGal, selectedChem.density);
+            const isLtdQty = computeIsLtdQty(selectedChem, qtyGal);
             const newItem = {
                 id:                Date.now(),
                 locationCode:      selectedLoc.code,
@@ -4920,7 +4939,6 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
             setChemQuery('');
             setQtyGal('');
             setPieces('1');
-            setIsLtdQty(false);
         };
 
         const removeItem = (id) => setItems(prev => prev.filter(i => i.id !== id));
@@ -5088,17 +5106,14 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                                         <label className="form-label">Pieces</label>
                                         <input type="number" className="form-input" min="1" step="1" value={pieces} onChange={e => setPieces(e.target.value)} placeholder="1" />
                                     </div>
-                                    {selectedChem && selectedChem.ltdQty && (
-                                        <div style={{display:'flex', alignItems:'center', gap:'8px', paddingBottom:'2px'}}>
-                                            <input type="checkbox" id="ltdqty" checked={isLtdQty} onChange={e => setIsLtdQty(e.target.checked)} style={{width:'16px', height:'16px'}} />
-                                            <label htmlFor="ltdqty" style={{fontSize:'13px', cursor:'pointer', userSelect:'none'}}>
-                                                Limited Quantity (≤{selectedChem.ltdQty})
-                                            </label>
-                                        </div>
-                                    )}
                                     {selectedChem && qtyGal && !isNaN(parseFloat(qtyGal)) && (
                                         <div style={{fontSize:'13px', color:'var(--muted)', paddingBottom:'2px'}}>
                                             ≈ <strong>{kgFromGal(qtyGal, selectedChem.density).toFixed(2)} kg</strong>
+                                            {selectedChem.ltdQty && (
+                                                computeIsLtdQty(selectedChem, qtyGal)
+                                                    ? <span style={{marginLeft:'10px', color:'#00873a', fontWeight:600}}>✓ Within Ltd Qty (≤{selectedChem.ltdQty})</span>
+                                                    : <span style={{marginLeft:'10px', color:'#FF5B45', fontWeight:600}}>⚠ Exceeds Ltd Qty threshold ({selectedChem.ltdQty}) — full labels required</span>
+                                            )}
                                         </div>
                                     )}
                                     <button
