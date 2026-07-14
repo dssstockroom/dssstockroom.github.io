@@ -17,7 +17,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
     <style>
         /* ── Pitt Color Palette ─────────────────────────────────────────── */
@@ -4825,7 +4824,8 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
         const [items,       setItems]       = useState([]);
         const [history,     setHistory]     = useState(() => loadIBOLHistory());
         const [activeTab,   setActiveTab]   = useState('builder'); // builder | history
-        const [addresses,   setAddresses]   = useState(PITT_ADDRESSES_FALLBACK);
+        const [locHighlight,  setLocHighlight]  = useState(-1);
+        const [chemHighlight, setChemHighlight] = useState(-1);
         const [savedMsg,    setSavedMsg]    = useState('');
 
         // Load Pitt_Address.xlsx if present alongside the file
@@ -4953,48 +4953,6 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
             printDocument(buildInternalBOLHTML(bol));
         };
 
-        const handleDownloadPDF = async (bolOverride) => {
-            const bol = bolOverride || (items.length > 0 ? { date, items } : null);
-            if (!bol) return;
-            const html = buildInternalBOLHTML(bol);
-
-            // Render into a hidden iframe to get proper layout
-            const iframe = document.createElement('iframe');
-            iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:816px;height:1056px;border:none;visibility:hidden;';
-            document.body.appendChild(iframe);
-
-            await new Promise(resolve => {
-                iframe.onload = resolve;
-                iframe.srcdoc = html;
-            });
-
-            // Give images/fonts a moment to load
-            await new Promise(r => setTimeout(r, 600));
-
-            try {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({ unit: 'pt', format: 'letter', orientation: 'portrait' });
-                const iDoc = iframe.contentDocument;
-                const pages = iDoc.querySelectorAll('div[style*="page-break"]');
-                const targets = pages.length > 0 ? Array.from(pages) : [iDoc.body];
-
-                for (let i = 0; i < targets.length; i++) {
-                    const canvas = await html2canvas(targets[i], {
-                        scale: 1.5,
-                        useCORS: true,
-                        backgroundColor: '#ffffff',
-                        width: 816,
-                        windowWidth: 816,
-                    });
-                    if (i > 0) doc.addPage();
-                    doc.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 612, 792);
-                }
-
-                doc.save(`HazmatBOL_${date}.pdf`);
-            } finally {
-                document.body.removeChild(iframe);
-            }
-        };
 
         const handleSave = () => {
             if (items.length === 0) return;
@@ -5010,14 +4968,6 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
             saveIBOLHistory(updated);
             setSavedMsg('Saved to history.');
             setTimeout(() => setSavedMsg(''), 3000);
-        };
-
-        const [pdfBusy, setPdfBusy] = useState(false);
-
-        const handleDownloadPDFClick = async () => {
-            setPdfBusy(true);
-            try { await handleDownloadPDF(); } catch(e) { alert('PDF error: ' + e.message); }
-            setPdfBusy(false);
         };
 
         const handleEmailExport = () => {
@@ -5088,15 +5038,23 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                                                 className="form-input"
                                                 placeholder="Search by name or code (e.g. BENDM, Langley)…"
                                                 value={locQuery}
-                                                onChange={e => { setLocQuery(e.target.value); setSelectedLoc(null); }}
+                                                onChange={e => { setLocQuery(e.target.value); setSelectedLoc(null); setLocHighlight(-1); }}
+                                                onKeyDown={e => {
+                                                    if (!locResults.length) return;
+                                                    if (e.key === 'ArrowDown') { e.preventDefault(); setLocHighlight(h => Math.min(h + 1, locResults.length - 1)); }
+                                                    else if (e.key === 'ArrowUp') { e.preventDefault(); setLocHighlight(h => Math.max(h - 1, 0)); }
+                                                    else if (e.key === 'Enter') { e.preventDefault(); selectLocation(locResults[locHighlight >= 0 ? locHighlight : 0]); setLocHighlight(-1); }
+                                                    else if (e.key === 'Escape') { setLocResults([]); setLocHighlight(-1); }
+                                                }}
                                             />
                                             {locResults.length > 0 && (
                                                 <div style={{position:'absolute', top:'100%', left:0, right:0, background:'#fff', border:'1px solid var(--border)', borderRadius:'0 0 6px 6px', zIndex:100, maxHeight:'220px', overflowY:'auto', boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}}>
-                                                    {locResults.map(loc => (
-                                                        <div key={loc.code} onClick={() => selectLocation(loc)}
-                                                            style={{padding:'8px 12px', cursor:'pointer', borderBottom:'1px solid var(--border)', fontSize:'13px'}}
-                                                            onMouseEnter={e => e.currentTarget.style.background='var(--sky)'}
-                                                            onMouseLeave={e => e.currentTarget.style.background='#fff'}
+                                                    {locResults.map((loc, idx) => (
+                                                        <div key={loc.code}
+                                                            onClick={() => { selectLocation(loc); setLocHighlight(-1); }}
+                                                            style={{padding:'8px 12px', cursor:'pointer', borderBottom:'1px solid var(--border)', fontSize:'13px', background: idx === locHighlight ? 'var(--sky)' : '#fff'}}
+                                                            onMouseEnter={() => setLocHighlight(idx)}
+                                                            onMouseLeave={() => setLocHighlight(-1)}
                                                         >
                                                             <strong>{loc.code}</strong> — {loc.name}
                                                             <div style={{fontSize:'11px', color:'var(--muted)'}}>{loc.address}</div>
@@ -5121,15 +5079,23 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                                                 className="form-input"
                                                 placeholder="Search by UN# or name (e.g. UN1090, Acetone)…"
                                                 value={chemQuery}
-                                                onChange={e => { setChemQuery(e.target.value); setSelectedChem(null); }}
+                                                onChange={e => { setChemQuery(e.target.value); setSelectedChem(null); setChemHighlight(-1); }}
+                                                onKeyDown={e => {
+                                                    if (!chemResults.length) return;
+                                                    if (e.key === 'ArrowDown') { e.preventDefault(); setChemHighlight(h => Math.min(h + 1, chemResults.length - 1)); }
+                                                    else if (e.key === 'ArrowUp') { e.preventDefault(); setChemHighlight(h => Math.max(h - 1, 0)); }
+                                                    else if (e.key === 'Enter') { e.preventDefault(); selectChem(chemResults[chemHighlight >= 0 ? chemHighlight : 0]); setChemHighlight(-1); }
+                                                    else if (e.key === 'Escape') { setChemResults([]); setChemHighlight(-1); }
+                                                }}
                                             />
                                             {chemResults.length > 0 && (
                                                 <div style={{position:'absolute', top:'100%', left:0, right:0, background:'#fff', border:'1px solid var(--border)', borderRadius:'0 0 6px 6px', zIndex:100, maxHeight:'220px', overflowY:'auto', boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}}>
-                                                    {chemResults.map(chem => (
-                                                        <div key={chem.un} onClick={() => selectChem(chem)}
-                                                            style={{padding:'8px 12px', cursor:'pointer', borderBottom:'1px solid var(--border)', fontSize:'13px'}}
-                                                            onMouseEnter={e => e.currentTarget.style.background='var(--sky)'}
-                                                            onMouseLeave={e => e.currentTarget.style.background='#fff'}
+                                                    {chemResults.map((chem, idx) => (
+                                                        <div key={chem.un}
+                                                            onClick={() => { selectChem(chem); setChemHighlight(-1); }}
+                                                            style={{padding:'8px 12px', cursor:'pointer', borderBottom:'1px solid var(--border)', fontSize:'13px', background: idx === chemHighlight ? 'var(--sky)' : '#fff'}}
+                                                            onMouseEnter={() => setChemHighlight(idx)}
+                                                            onMouseLeave={() => setChemHighlight(-1)}
                                                         >
                                                             <strong>{chem.un}</strong> — {chem.name}
                                                             <div style={{fontSize:'11px', color:'var(--muted)'}}>Class {chem.hazClass} · PG {chem.pg || 'N/A'} · Density {chem.density} g/mL{chem.ltdQty ? ` · Ltd Qty: ${chem.ltdQty}` : ' · No Ltd Qty'}</div>
@@ -5221,10 +5187,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                                     ))}
 
                                     <div style={{display:'flex', gap:'10px', flexWrap:'wrap', marginTop:'8px'}}>
-                                        <button className="btn btn-primary" onClick={handlePrint}>🖨️ Print BOL</button>
-                                        <button className="btn btn-outline" onClick={handleDownloadPDFClick} disabled={pdfBusy}>
-                                            {pdfBusy ? '⏳ Generating PDF…' : '⬇️ Download PDF'}
-                                        </button>
+                                        <button className="btn btn-primary" onClick={handlePrint}>🖨️ Print / Save as PDF</button>
                                         <button className="btn btn-outline" onClick={handleSave}>💾 Save to History</button>
                                         <button className="btn btn-outline" onClick={handleEmailExport}>📧 Email BOL</button>
                                         <button className="btn btn-ghost" onClick={handleClear}>Clear All</button>
@@ -5262,7 +5225,6 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                                                     <td style={{padding:'8px 12px', fontSize:'12px', color:'var(--muted)'}}>{new Date(rec._savedAt).toLocaleDateString()}</td>
                                                     <td style={{padding:'8px 12px', display:'flex', gap:'8px'}}>
                                                         <button className="btn btn-outline" style={{fontSize:'11px', padding:'3px 10px'}} onClick={() => printDocument(buildInternalBOLHTML(rec))}>🖨️ Reprint</button>
-                                                        <button className="btn btn-outline" style={{fontSize:'11px', padding:'3px 10px'}} onClick={async () => { setPdfBusy(true); try { await handleDownloadPDF(rec); } catch(e){} setPdfBusy(false); }}>⬇️ PDF</button>
                                                         <button onClick={() => deleteHistory(rec._id)} style={{background:'none', border:'none', cursor:'pointer', color:'#FF5B45', fontSize:'16px', padding:'0 4px'}} title="Delete">×</button>
                                                     </td>
                                                 </tr>
