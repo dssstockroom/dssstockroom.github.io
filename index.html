@@ -4738,7 +4738,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
             return `
             <div style="page-break-after:${pageIdx < pages.length - 1 ? 'always' : 'avoid'};padding:18px;font-family:Arial,sans-serif;font-size:10pt;max-width:720px;margin:0 auto;">
                 <h2 style="text-align:center;margin:0 0 4px 0;font-size:14pt;font-weight:bold;text-transform:uppercase;letter-spacing:0.05em;">Hazardous Materials Transportation Log</h2>
-                <p style="text-align:center;margin:0 0 10px 0;font-size:9pt;">For Internal University Transport — Not in Commerce (49 CFR §173.6)</p>
+                <p style="text-align:center;margin:0 0 10px 0;font-size:9pt;">For Internal University Transport — Not in Commerce</p>
 
                 <table style="width:100%;border-collapse:collapse;margin-bottom:8px;">
                     <tr>
@@ -4763,7 +4763,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                         <td style="border:1px solid #000;padding:5px 8px;vertical-align:top;">
                             <strong>Shipper:</strong><br>
                             University of Pittsburgh<br>
-                            DSS Stockroom — 326 Chevron Science Center<br>
+                            326 Chevron Science Center<br>
                             219 Parkman Avenue, Pittsburgh, PA 15260
                         </td>
                     </tr>
@@ -4774,7 +4774,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                         <tr style="background:#000;color:#fff;">
                             <th style="border:1px solid #000;padding:5px 6px;width:8%;text-align:center;">Pieces</th>
                             <th style="border:1px solid #000;padding:5px 6px;width:4%;text-align:center;">HM</th>
-                            <th style="border:1px solid #000;padding:5px 6px;">Description (UN# / Proper Shipping Name / Hazard Class / Packing Group)</th>
+                            <th style="border:1px solid #000;padding:5px 6px;">Description<br><span style="font-size:8pt;font-weight:normal;">(UN# / Proper Shipping Name / Hazard Class / Packing Group)</span></th>
                             <th style="border:1px solid #000;padding:5px 6px;width:12%;text-align:center;">Labels / Markings</th>
                             <th style="border:1px solid #000;padding:5px 6px;width:10%;text-align:center;">Limited Qty.</th>
                             <th style="border:1px solid #000;padding:5px 6px;width:10%;text-align:right;">Total Wt. (Kg)</th>
@@ -4822,7 +4822,13 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
         const [history,     setHistory]     = useState(() => loadIBOLHistory());
         const [activeTab,   setActiveTab]   = useState('builder'); // builder | history
         const [addresses,     setAddresses]     = useState(PITT_ADDRESSES_FALLBACK);
-        const [locHighlight,  setLocHighlight]  = useState(-1);
+        const [useCustomChem, setUseCustomChem] = useState(false);
+        const [customChemUN,   setCustomChemUN]   = useState('');
+        const [customChemName, setCustomChemName] = useState('');
+        const [customChemClass,setCustomChemClass]= useState('');
+        const [customChemPG,   setCustomChemPG]   = useState('');
+        const [customChemDensity,setCustomChemDensity]= useState('');
+        const [customChemLabels, setCustomChemLabels] = useState('');
         const [chemHighlight, setChemHighlight] = useState(-1);
         const [savedMsg,    setSavedMsg]    = useState('');
 
@@ -4910,31 +4916,44 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
         };
 
         const addItem = () => {
-            if (!selectedLoc || !selectedChem || !qtyGal || isNaN(parseFloat(qtyGal))) return;
-            const kg = kgFromGal(qtyGal, selectedChem.density);
-            const isLtdQty = computeIsLtdQty(selectedChem, qtyGal);
+            if (!selectedLoc) return;
+            const density = useCustomChem ? parseFloat(customChemDensity) || 1.0 : selectedChem?.density;
+            if (!qtyGal || isNaN(parseFloat(qtyGal))) return;
+            if (useCustomChem && (!customChemUN.trim() || !customChemName.trim())) return;
+            if (!useCustomChem && !selectedChem) return;
+
+            const kg = kgFromGal(qtyGal, density);
+            const chem = useCustomChem
+                ? { un: customChemUN.trim(), name: customChemName.trim(), hazClass: customChemClass.trim(), pg: customChemPG.trim(), labels: customChemLabels.trim(), ltdQty: null, density }
+                : selectedChem;
+            const isLtdQty = useCustomChem ? false : computeIsLtdQty(selectedChem, qtyGal);
             const newItem = {
                 id:                Date.now(),
                 locationCode:      selectedLoc.code,
                 locationName:      selectedLoc.name,
                 locationAddress:   selectedLoc.address,
-                un:                selectedChem.un,
-                name:              selectedChem.name,
-                hazClass:          selectedChem.hazClass,
-                pg:                selectedChem.pg,
-                labels:            selectedChem.labels || '',
-                ltdQtyThreshold:   selectedChem.ltdQty || '',
+                un:                chem.un,
+                name:              chem.name,
+                hazClass:          chem.hazClass,
+                pg:                chem.pg,
+                labels:            chem.labels || '',
+                ltdQtyThreshold:   chem.ltdQty || '',
                 isLtdQty,
                 qtyGal:            parseFloat(qtyGal),
                 qtyKg:             kg,
                 pieces:            parseInt(pieces) || 1,
             };
             setItems(prev => [...prev, newItem]);
-            // Reset item fields but keep location
             setSelectedChem(null);
             setChemQuery('');
             setQtyGal('');
             setPieces('1');
+            setCustomChemUN('');
+            setCustomChemName('');
+            setCustomChemClass('');
+            setCustomChemPG('');
+            setCustomChemDensity('');
+            setCustomChemLabels('');
         };
 
         const removeItem = (id) => setItems(prev => prev.filter(i => i.id !== id));
@@ -5070,41 +5089,58 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
 
                                     {/* Chemical */}
                                     <div>
-                                        <label className="form-label">Chemical / UN Number</label>
-                                        <div style={{position:'relative'}}>
-                                            <input
-                                                type="text"
-                                                className="form-input"
-                                                placeholder="Search by UN# or name (e.g. UN1090, Acetone)…"
-                                                value={chemQuery}
-                                                onChange={e => { setChemQuery(e.target.value); setSelectedChem(null); setChemHighlight(-1); }}
-                                                onKeyDown={e => {
-                                                    if (!chemResults.length) return;
-                                                    if (e.key === 'ArrowDown') { e.preventDefault(); setChemHighlight(h => Math.min(h + 1, chemResults.length - 1)); }
-                                                    else if (e.key === 'ArrowUp') { e.preventDefault(); setChemHighlight(h => Math.max(h - 1, 0)); }
-                                                    else if (e.key === 'Enter') { e.preventDefault(); selectChem(chemResults[chemHighlight >= 0 ? chemHighlight : 0]); setChemHighlight(-1); }
-                                                    else if (e.key === 'Escape') { setChemResults([]); setChemHighlight(-1); }
-                                                }}
-                                            />
-                                            {chemResults.length > 0 && (
-                                                <div style={{position:'absolute', top:'100%', left:0, right:0, background:'#fff', border:'1px solid var(--border)', borderRadius:'0 0 6px 6px', zIndex:100, maxHeight:'220px', overflowY:'auto', boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}}>
-                                                    {chemResults.map((chem, idx) => (
-                                                        <div key={chem.un}
-                                                            onClick={() => { selectChem(chem); setChemHighlight(-1); }}
-                                                            style={{padding:'8px 12px', cursor:'pointer', borderBottom:'1px solid var(--border)', fontSize:'13px', background: idx === chemHighlight ? 'var(--sky)' : '#fff'}}
-                                                            onMouseEnter={() => setChemHighlight(idx)}
-                                                            onMouseLeave={() => setChemHighlight(-1)}
-                                                        >
-                                                            <strong>{chem.un}</strong> — {chem.name}
-                                                            <div style={{fontSize:'11px', color:'var(--muted)'}}>Class {chem.hazClass} · PG {chem.pg || 'N/A'} · Density {chem.density} g/mL{chem.ltdQty ? ` · Ltd Qty: ${chem.ltdQty}` : ' · No Ltd Qty'}</div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
+                                        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'6px'}}>
+                                            <label className="form-label" style={{margin:0}}>Chemical / UN Number</label>
+                                            <label style={{fontSize:'12px', color:'var(--muted)', cursor:'pointer', display:'flex', alignItems:'center', gap:'5px', userSelect:'none'}}>
+                                                <input type="checkbox" checked={useCustomChem} onChange={e => { setUseCustomChem(e.target.checked); setSelectedChem(null); setChemQuery(''); }} />
+                                                Enter manually
+                                            </label>
                                         </div>
-                                        {selectedChem && (
-                                            <div style={{fontSize:'12px', color:'var(--muted)', marginTop:'4px'}}>
-                                                Class {selectedChem.hazClass} · PG {selectedChem.pg || 'N/A'} · {selectedChem.density} g/mL
+                                        {!useCustomChem ? (
+                                            <div style={{position:'relative'}}>
+                                                <input
+                                                    type="text"
+                                                    className="form-input"
+                                                    placeholder="Search by UN# or name (e.g. UN1090, Acetone)…"
+                                                    value={chemQuery}
+                                                    onChange={e => { setChemQuery(e.target.value); setSelectedChem(null); setChemHighlight(-1); }}
+                                                    onKeyDown={e => {
+                                                        if (!chemResults.length) return;
+                                                        if (e.key === 'ArrowDown') { e.preventDefault(); setChemHighlight(h => Math.min(h + 1, chemResults.length - 1)); }
+                                                        else if (e.key === 'ArrowUp') { e.preventDefault(); setChemHighlight(h => Math.max(h - 1, 0)); }
+                                                        else if (e.key === 'Enter') { e.preventDefault(); selectChem(chemResults[chemHighlight >= 0 ? chemHighlight : 0]); setChemHighlight(-1); }
+                                                        else if (e.key === 'Escape') { setChemResults([]); setChemHighlight(-1); }
+                                                    }}
+                                                />
+                                                {chemResults.length > 0 && (
+                                                    <div style={{position:'absolute', top:'100%', left:0, right:0, background:'#fff', border:'1px solid var(--border)', borderRadius:'0 0 6px 6px', zIndex:100, maxHeight:'220px', overflowY:'auto', boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}}>
+                                                        {chemResults.map((chem, idx) => (
+                                                            <div key={chem.un}
+                                                                onClick={() => { selectChem(chem); setChemHighlight(-1); }}
+                                                                style={{padding:'8px 12px', cursor:'pointer', borderBottom:'1px solid var(--border)', fontSize:'13px', background: idx === chemHighlight ? 'var(--sky)' : '#fff'}}
+                                                                onMouseEnter={() => setChemHighlight(idx)}
+                                                                onMouseLeave={() => setChemHighlight(-1)}
+                                                            >
+                                                                <strong>{chem.un}</strong> — {chem.name}
+                                                                <div style={{fontSize:'11px', color:'var(--muted)'}}>Class {chem.hazClass} · PG {chem.pg || 'N/A'} · Density {chem.density} g/mL{chem.ltdQty ? ` · Ltd Qty: ${chem.ltdQty}` : ' · No Ltd Qty'}</div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {selectedChem && (
+                                                    <div style={{fontSize:'12px', color:'var(--muted)', marginTop:'4px'}}>
+                                                        Class {selectedChem.hazClass} · PG {selectedChem.pg || 'N/A'} · {selectedChem.density} g/mL
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px'}}>
+                                                <input type="text" className="form-input" placeholder="UN# (e.g. UN1234)" value={customChemUN} onChange={e => setCustomChemUN(e.target.value)} style={{fontSize:'13px'}} />
+                                                <input type="text" className="form-input" placeholder="Hazard Class (e.g. 3)" value={customChemClass} onChange={e => setCustomChemClass(e.target.value)} style={{fontSize:'13px'}} />
+                                                <input type="text" className="form-input" placeholder="Proper Shipping Name" value={customChemName} onChange={e => setCustomChemName(e.target.value)} style={{gridColumn:'span 2', fontSize:'13px'}} />
+                                                <input type="text" className="form-input" placeholder="Packing Group (I, II, or III)" value={customChemPG} onChange={e => setCustomChemPG(e.target.value)} style={{fontSize:'13px'}} />
+                                                <input type="text" className="form-input" placeholder="Labels / Markings" value={customChemLabels} onChange={e => setCustomChemLabels(e.target.value)} style={{fontSize:'13px'}} />
+                                                <input type="number" className="form-input" placeholder="Density g/mL (default 1.0)" value={customChemDensity} onChange={e => setCustomChemDensity(e.target.value)} style={{gridColumn:'span 2', fontSize:'13px'}} step="0.001" min="0" />
                                             </div>
                                         )}
                                     </div>
@@ -5119,10 +5155,10 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                                         <label className="form-label">Pieces</label>
                                         <input type="number" className="form-input" min="1" step="1" value={pieces} onChange={e => setPieces(e.target.value)} placeholder="1" />
                                     </div>
-                                    {selectedChem && qtyGal && !isNaN(parseFloat(qtyGal)) && (
+                                    {(selectedChem || useCustomChem) && qtyGal && !isNaN(parseFloat(qtyGal)) && (
                                         <div style={{fontSize:'13px', color:'var(--muted)', paddingBottom:'2px'}}>
-                                            ≈ <strong>{kgFromGal(qtyGal, selectedChem.density).toFixed(2)} kg</strong>
-                                            {selectedChem.ltdQty && (
+                                            ≈ <strong>{kgFromGal(qtyGal, useCustomChem ? (parseFloat(customChemDensity) || 1.0) : selectedChem.density).toFixed(2)} kg</strong>
+                                            {!useCustomChem && selectedChem && selectedChem.ltdQty && (
                                                 computeIsLtdQty(selectedChem, qtyGal)
                                                     ? <span style={{marginLeft:'10px', color:'#00873a', fontWeight:600}}>✓ Within Ltd Qty (≤{selectedChem.ltdQty})</span>
                                                     : <span style={{marginLeft:'10px', color:'#FF5B45', fontWeight:600}}>⚠ Exceeds Ltd Qty threshold ({selectedChem.ltdQty}) — full labels required</span>
@@ -5132,7 +5168,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                                     <button
                                         className="btn btn-primary"
                                         onClick={addItem}
-                                        disabled={!selectedLoc || !selectedChem || !qtyGal || isNaN(parseFloat(qtyGal))}
+                                        disabled={!selectedLoc || (!useCustomChem && !selectedChem) || (useCustomChem && (!customChemUN.trim() || !customChemName.trim())) || !qtyGal || isNaN(parseFloat(qtyGal))}
                                         style={{flex:'0 0 auto'}}
                                     >
                                         + Add Item
