@@ -4718,7 +4718,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                     <td style="border:1px solid #000;padding:4px 6px;text-align:center;font-weight:bold;">X</td>
                     <td style="border:1px solid #000;padding:4px 6px;">${desc}</td>
                     <td style="border:1px solid #000;padding:4px 6px;text-align:center;">${labels}</td>
-                    <td style="border:1px solid #000;padding:4px 6px;text-align:center;">${isLtdQty ? item.ltdQtyThreshold : ''}</td>
+                    <td style="border:1px solid #000;padding:4px 6px;text-align:center;">${item.ltdQtyThreshold ? (isLtdQty ? '✓ ' : '') + item.ltdQtyThreshold : '—'}</td>
                     <td style="border:1px solid #000;padding:4px 6px;text-align:right;">${item.qtyKg.toFixed(2)}</td>
                 </tr>`;
             }).join('');
