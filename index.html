@@ -4764,7 +4764,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                             <strong>Shipper:</strong><br>
                             University of Pittsburgh<br>
                             326 Chevron Science Center<br>
-                            219 Parkman Avenue, Pittsburgh, PA 15260
+                            219 Parkman Avenue, Pittsburgh, PA 15213
                         </td>
                     </tr>
                 </table>
@@ -4822,11 +4822,12 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
         const [history,     setHistory]     = useState(() => loadIBOLHistory());
         const [activeTab,   setActiveTab]   = useState('builder'); // builder | history
         const [addresses,     setAddresses]     = useState(PITT_ADDRESSES_FALLBACK);
-        const [useCustomChem, setUseCustomChem] = useState(false);
-        const [customChemUN,   setCustomChemUN]   = useState('');
-        const [customChemName, setCustomChemName] = useState('');
-        const [customChemClass,setCustomChemClass]= useState('');
-        const [customChemPG,   setCustomChemPG]   = useState('');
+        const [qtyUnit,          setQtyUnit]          = useState('gal');
+        const [useCustomChem,    setUseCustomChem]    = useState(false);
+        const [customChemUN,     setCustomChemUN]     = useState('');
+        const [customChemName,   setCustomChemName]   = useState('');
+        const [customChemClass,  setCustomChemClass]  = useState('');
+        const [customChemPG,     setCustomChemPG]     = useState('');
         const [customChemDensity,setCustomChemDensity]= useState('');
         const [customChemLabels, setCustomChemLabels] = useState('');
         const [chemHighlight, setChemHighlight] = useState(-1);
@@ -4890,28 +4891,45 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
             setChemResults([]);
         };
 
-        const kgFromGal = (gal, density) => {
-            const liters = parseFloat(gal) * 3.78541;
-            return liters * density;
+        const toKg = (qty, unit, density) => {
+            const q = parseFloat(qty);
+            if (isNaN(q)) return 0;
+            switch(unit) {
+                case 'gal': return q * 3.78541 * density;
+                case 'L':   return q * density;
+                case 'mL':  return (q / 1000) * density;
+                case 'g':   return q / 1000;
+                case 'kg':  return q;
+                default:    return q * 3.78541 * density;
+            }
         };
 
-        // Parse threshold string like "1 L", "500 mL", "500 g" and compare to entered qty in gallons
-        const computeIsLtdQty = (chem, gal) => {
-            if (!chem.ltdQty) return false;
-            const totalLiters = parseFloat(gal) * 3.78541;
-            const threshold = chem.ltdQty.trim().toLowerCase();
-            if (threshold.endsWith('ml')) {
-                const threshLiters = parseFloat(threshold) / 1000;
-                return totalLiters <= threshLiters;
-            } else if (threshold.endsWith('l')) {
-                const threshLiters = parseFloat(threshold);
-                return totalLiters <= threshLiters;
-            } else if (threshold.endsWith('g') || threshold.endsWith('kg')) {
-                // Solid threshold — compare kg
-                const threshKg = threshold.endsWith('kg') ? parseFloat(threshold) : parseFloat(threshold) / 1000;
-                const totalKg = kgFromGal(gal, chem.density);
-                return totalKg <= threshKg;
+        const toLiters = (qty, unit, density) => {
+            const q = parseFloat(qty);
+            if (isNaN(q)) return 0;
+            switch(unit) {
+                case 'gal': return q * 3.78541;
+                case 'L':   return q;
+                case 'mL':  return q / 1000;
+                case 'g':   return (q / 1000) / density;
+                case 'kg':  return q / density;
+                default:    return q * 3.78541;
             }
+        };
+
+        // Keep kgFromGal as alias for history reprint compatibility
+        const kgFromGal = (gal, density) => gal * 3.78541 * density;
+
+        const computeIsLtdQty = (chem, qty, unit) => {
+            if (!chem.ltdQty) return false;
+            const threshold = chem.ltdQty.trim().toLowerCase();
+            if (threshold === 'no lq') return false;
+            const totalLiters = toLiters(qty, unit, chem.density);
+            const totalKg     = toKg(qty, unit, chem.density);
+            if (threshold.endsWith('ml')) return totalLiters * 1000 <= parseFloat(threshold);
+            if (threshold.endsWith('l'))  return totalLiters <= parseFloat(threshold);
+            if (threshold.endsWith('kg')) return totalKg <= parseFloat(threshold);
+            if (threshold.endsWith('g'))  return totalKg * 1000 <= parseFloat(threshold);
             return false;
         };
 
@@ -4922,11 +4940,11 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
             if (useCustomChem && (!customChemUN.trim() || !customChemName.trim())) return;
             if (!useCustomChem && !selectedChem) return;
 
-            const kg = kgFromGal(qtyGal, density);
+            const kg = toKg(qtyGal, qtyUnit, density);
             const chem = useCustomChem
                 ? { un: customChemUN.trim(), name: customChemName.trim(), hazClass: customChemClass.trim(), pg: customChemPG.trim(), labels: customChemLabels.trim(), ltdQty: null, density }
                 : selectedChem;
-            const isLtdQty = useCustomChem ? false : computeIsLtdQty(selectedChem, qtyGal);
+            const isLtdQty = useCustomChem ? false : computeIsLtdQty(selectedChem, qtyGal, qtyUnit);
             const newItem = {
                 id:                Date.now(),
                 locationCode:      selectedLoc.code,
@@ -4940,6 +4958,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                 ltdQtyThreshold:   chem.ltdQty || '',
                 isLtdQty,
                 qtyGal:            parseFloat(qtyGal),
+                qtyUnit,
                 qtyKg:             kg,
                 pieces:            parseInt(pieces) || 1,
             };
@@ -5022,7 +5041,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                 <div className="container page-content">
 
                     {/* Sub-tabs */}
-                    <div className="sub-tab-bar" style={{marginBottom:'24px'}}>
+                    <div className="sub-tabs" style={{marginBottom:'24px'}}>
                         <button className={`sub-tab ${activeTab==='builder'?'active':''}`} onClick={() => setActiveTab('builder')}>📝 New BOL</button>
                         <button className={`sub-tab ${activeTab==='history'?'active':''}`} onClick={() => setActiveTab('history')}>🗂️ History</button>
                     </div>
@@ -5147,9 +5166,19 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                                 </div>
 
                                 <div style={{display:'flex', gap:'16px', alignItems:'flex-end', flexWrap:'wrap', marginBottom:'12px'}}>
-                                    <div className="form-group" style={{marginBottom:0, flex:'0 0 140px'}}>
-                                        <label className="form-label">Quantity (gallons)</label>
-                                        <input type="number" className="form-input" min="0" step="0.1" value={qtyGal} onChange={e => setQtyGal(e.target.value)} placeholder="e.g. 1" />
+                                    <div className="form-group" style={{marginBottom:0, flex:'0 0 120px'}}>
+                                        <label className="form-label">Quantity</label>
+                                        <input type="number" className="form-input" min="0" step="0.001" value={qtyGal} onChange={e => setQtyGal(e.target.value)} placeholder="e.g. 1" />
+                                    </div>
+                                    <div className="form-group" style={{marginBottom:0, flex:'0 0 100px'}}>
+                                        <label className="form-label">Unit</label>
+                                        <select className="form-input" value={qtyUnit} onChange={e => setQtyUnit(e.target.value)} style={{cursor:'pointer'}}>
+                                            <option value="gal">Gallons</option>
+                                            <option value="L">Liters</option>
+                                            <option value="mL">mL</option>
+                                            <option value="g">Grams</option>
+                                            <option value="kg">kg</option>
+                                        </select>
                                     </div>
                                     <div className="form-group" style={{marginBottom:0, flex:'0 0 100px'}}>
                                         <label className="form-label">Pieces</label>
@@ -5157,9 +5186,9 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                                     </div>
                                     {(selectedChem || useCustomChem) && qtyGal && !isNaN(parseFloat(qtyGal)) && (
                                         <div style={{fontSize:'13px', color:'var(--muted)', paddingBottom:'2px'}}>
-                                            ≈ <strong>{kgFromGal(qtyGal, useCustomChem ? (parseFloat(customChemDensity) || 1.0) : selectedChem.density).toFixed(2)} kg</strong>
-                                            {!useCustomChem && selectedChem && selectedChem.ltdQty && (
-                                                computeIsLtdQty(selectedChem, qtyGal)
+                                            ≈ <strong>{toKg(qtyGal, qtyUnit, useCustomChem ? (parseFloat(customChemDensity) || 1.0) : selectedChem.density).toFixed(3)} kg</strong>
+                                            {!useCustomChem && selectedChem && selectedChem.ltdQty && selectedChem.ltdQty !== 'No LQ' && (
+                                                computeIsLtdQty(selectedChem, qtyGal, qtyUnit)
                                                     ? <span style={{marginLeft:'10px', color:'#00873a', fontWeight:600}}>✓ Within Ltd Qty (≤{selectedChem.ltdQty})</span>
                                                     : <span style={{marginLeft:'10px', color:'#FF5B45', fontWeight:600}}>⚠ Exceeds Ltd Qty threshold ({selectedChem.ltdQty}) — full labels required</span>
                                             )}
@@ -5193,7 +5222,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                                                         <th style={{padding:'6px 10px', textAlign:'center', borderBottom:'1px solid var(--border)', fontSize:'11px', textTransform:'uppercase', letterSpacing:'0.04em'}}>Class</th>
                                                         <th style={{padding:'6px 10px', textAlign:'center', borderBottom:'1px solid var(--border)', fontSize:'11px', textTransform:'uppercase', letterSpacing:'0.04em'}}>PG</th>
                                                         <th style={{padding:'6px 10px', textAlign:'center', borderBottom:'1px solid var(--border)', fontSize:'11px', textTransform:'uppercase', letterSpacing:'0.04em'}}>Pcs</th>
-                                                        <th style={{padding:'6px 10px', textAlign:'right', borderBottom:'1px solid var(--border)', fontSize:'11px', textTransform:'uppercase', letterSpacing:'0.04em'}}>Gal</th>
+                                                        <th style={{padding:'6px 10px', textAlign:'right', borderBottom:'1px solid var(--border)', fontSize:'11px', textTransform:'uppercase', letterSpacing:'0.04em'}}>Qty</th>
                                                         <th style={{padding:'6px 10px', textAlign:'right', borderBottom:'1px solid var(--border)', fontSize:'11px', textTransform:'uppercase', letterSpacing:'0.04em'}}>Kg</th>
                                                         <th style={{padding:'6px 10px', textAlign:'center', borderBottom:'1px solid var(--border)', fontSize:'11px', textTransform:'uppercase', letterSpacing:'0.04em'}}>Ltd Qty</th>
                                                         <th style={{padding:'6px 10px', borderBottom:'1px solid var(--border)'}}></th>
@@ -5207,7 +5236,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                                                             <td style={{padding:'6px 10px', textAlign:'center'}}>{item.hazClass}</td>
                                                             <td style={{padding:'6px 10px', textAlign:'center'}}>{item.pg || '—'}</td>
                                                             <td style={{padding:'6px 10px', textAlign:'center'}}>{item.pieces}</td>
-                                                            <td style={{padding:'6px 10px', textAlign:'right', fontFamily:'var(--mono)'}}>{item.qtyGal.toFixed(2)}</td>
+                                                            <td style={{padding:'6px 10px', textAlign:'right', fontFamily:'var(--mono)'}}>{item.qtyGal.toFixed(3)} {item.qtyUnit || 'gal'}</td>
                                                             <td style={{padding:'6px 10px', textAlign:'right', fontFamily:'var(--mono)'}}>{item.qtyKg.toFixed(2)}</td>
                                                             <td style={{padding:'6px 10px', textAlign:'center'}}>{item.isLtdQty ? <span style={{color:'#00873a', fontWeight:600}}>Yes</span> : '—'}</td>
                                                             <td style={{padding:'6px 10px', textAlign:'center'}}>
