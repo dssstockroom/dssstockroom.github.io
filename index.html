@@ -1954,6 +1954,7 @@
             { id:'phonebook',  icon:'📞', name:'Phonebook',    desc:'Search the department phonebook across Chemistry, SRSS, Biology, Pitt contacts, vendors, and more.' },
             { id:'emails',     icon:'✉️', name:'Emails',       desc:'Send order status notifications to customers. One-click mailto launch or copy a styled HTML email for Outlook.' },
             { id:'internalbol',icon:'☢️', name:'Internal BOL',  desc:'Generate DOT-compliant hazardous materials BOLs for internal University deliveries. One BOL per location, saved to history.' },
+            { id:'metrics',    icon:'📊', name:'Metrics',        desc:'Order history, revenue, top items, top customers, and quarterly review dashboards.', href:'metrics.html' },
         ];
 
         return (
@@ -2044,11 +2045,11 @@
                     <h2 style={{fontFamily:'var(--gothic)', color:'var(--navy)', fontSize:'13px', letterSpacing:'0.12em', textTransform:'uppercase', fontWeight:700, marginBottom:'16px'}}>Available Tools</h2>
                     <div className="tool-grid">
                         {tools.map(t => (
-                            <button key={t.id} className="tool-card" onClick={() => navigate(t.id)}>
+                            <button key={t.id} className="tool-card" onClick={() => t.href ? window.open(t.href, '_blank') : navigate(t.id)}>
                                 <div className="tool-card-icon">{t.icon}</div>
                                 <div className="tool-card-name">{t.name}</div>
                                 <div className="tool-card-desc">{t.desc}</div>
-                                <div className="tool-card-arrow">→</div>
+                                <div className="tool-card-arrow">{t.href ? '↗' : '→'}</div>
                             </button>
                         ))}
                     </div>
