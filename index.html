@@ -2055,7 +2055,7 @@
                         {renderToolCards(primaryTools)}
                     </div>
                     <h2 style={{fontFamily:'var(--gothic)', color:'var(--navy)', fontSize:'13px', letterSpacing:'0.12em', textTransform:'uppercase', fontWeight:700, marginBottom:'16px'}}>Additional Tools</h2>
-                    <div className="tool-grid">
+                    <div style={{display:'grid', gridTemplateColumns:'repeat(3, minmax(240px, 280px))', gap:'18px', marginBottom:'0'}}>
                         {renderToolCards(additionalTools)}
                     </div>
                 </div>
