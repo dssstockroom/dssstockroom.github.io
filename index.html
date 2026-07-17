@@ -1430,11 +1430,9 @@
         const pages = [
             { id:'home',        label:'Home',         icon:'🏠' },
             { id:'forms',       label:'Forms',         icon:'📋' },
-            { id:'cyclecount',  label:'Cycle Count',   icon:'📦' },
-            { id:'labels',      label:'Label Maker',   icon:'🏷️' },
-            { id:'phonebook',   label:'Phonebook',     icon:'📞' },
-            { id:'emails',      label:'Emails',        icon:'✉️' },
             { id:'internalbol', label:'Internal BOL',  icon:'☢️' },
+            { id:'emails',      label:'Emails',        icon:'✉️' },
+            { id:'phonebook',   label:'Phonebook',     icon:'📞' },
         ];
 
         const handleNavSearch = (e) => {
@@ -1947,15 +1945,25 @@
             });
         };
 
-        const tools = [
+        const primaryTools = [
             { id:'forms',      icon:'📋', name:'Forms',        desc:'Generate receiving packing slips and hazardous materials bills of lading. View and reprint past records.' },
+            { id:'internalbol',icon:'☢️', name:'Internal BOL',  desc:'Generate DOT-compliant hazardous materials BOLs for internal University deliveries. One BOL per location, saved to history.' },
+            { id:'emails',     icon:'✉️', name:'Emails',       desc:'Send order status notifications to customers. One-click mailto launch or copy a styled HTML email for Outlook.' },
+            { id:'phonebook',  icon:'📞', name:'Phonebook',    desc:'Search the department phonebook across Chemistry, SRSS, Biology, Pitt contacts, vendors, and more.' },
+        ];
+        const additionalTools = [
             { id:'cyclecount', icon:'📦', name:'Cycle Count',  desc:'Scan-based physical inventory verification by section and rack. Exports variance reports as CSV.' },
             { id:'labels',     icon:'🏷️', name:'Label Maker',  desc:'Generate Avery 5162 or 5160 barcode shelf labels from the inventory database or manual entry.' },
-            { id:'phonebook',  icon:'📞', name:'Phonebook',    desc:'Search the department phonebook across Chemistry, SRSS, Biology, Pitt contacts, vendors, and more.' },
-            { id:'emails',     icon:'✉️', name:'Emails',       desc:'Send order status notifications to customers. One-click mailto launch or copy a styled HTML email for Outlook.' },
-            { id:'internalbol',icon:'☢️', name:'Internal BOL',  desc:'Generate DOT-compliant hazardous materials BOLs for internal University deliveries. One BOL per location, saved to history.' },
-            { id:'metrics',    icon:'📊', name:'Metrics',        desc:'Order history, revenue, top items, top customers, and quarterly review dashboards.', href:'metrics.html' },
+            { id:'metrics',    icon:'📊', name:'Metrics',       desc:'Order history, revenue, top items, top customers, and quarterly review dashboards.', href:'metrics.html' },
         ];
+        const renderToolCards = (toolList) => toolList.map(t => (
+            <button key={t.id} className="tool-card" onClick={() => t.href ? window.open(t.href, '_blank') : navigate(t.id)}>
+                <div className="tool-card-icon">{t.icon}</div>
+                <div className="tool-card-name">{t.name}</div>
+                <div className="tool-card-desc">{t.desc}</div>
+                <div className="tool-card-arrow">{t.href ? '↗' : '→'}</div>
+            </button>
+        ));
 
         return (
             <div>
@@ -1965,7 +1973,7 @@
                         <div className="hero-layout">
                             <div className="hero-text">
                                 <h1>Dietrich School<br/><em>Scientific Stockroom</em></h1>
-                                <p>Inventory management tools for receiving, cataloging, cycle counting, and labeling. Search the catalog below or navigate to a specific tool.</p>
+                                <p>Staff operations platform for inventory management, hazmat compliance, order processing, communications, and metrics. Search the catalog below or navigate to a tool.</p>
                             </div>
                             <div className="hero-search-box">
                                 <h3>Catalog Search</h3>
@@ -2042,16 +2050,13 @@
                     )}
 
                     {/* Tool cards */}
-                    <h2 style={{fontFamily:'var(--gothic)', color:'var(--navy)', fontSize:'13px', letterSpacing:'0.12em', textTransform:'uppercase', fontWeight:700, marginBottom:'16px'}}>Available Tools</h2>
+                    <h2 style={{fontFamily:'var(--gothic)', color:'var(--navy)', fontSize:'13px', letterSpacing:'0.12em', textTransform:'uppercase', fontWeight:700, marginBottom:'16px'}}>Primary Tools</h2>
+                    <div className="tool-grid" style={{marginBottom:'32px'}}>
+                        {renderToolCards(primaryTools)}
+                    </div>
+                    <h2 style={{fontFamily:'var(--gothic)', color:'var(--navy)', fontSize:'13px', letterSpacing:'0.12em', textTransform:'uppercase', fontWeight:700, marginBottom:'16px'}}>Additional Tools</h2>
                     <div className="tool-grid">
-                        {tools.map(t => (
-                            <button key={t.id} className="tool-card" onClick={() => t.href ? window.open(t.href, '_blank') : navigate(t.id)}>
-                                <div className="tool-card-icon">{t.icon}</div>
-                                <div className="tool-card-name">{t.name}</div>
-                                <div className="tool-card-desc">{t.desc}</div>
-                                <div className="tool-card-arrow">{t.href ? '↗' : '→'}</div>
-                            </button>
-                        ))}
+                        {renderToolCards(additionalTools)}
                     </div>
                 </div>
             </div>
