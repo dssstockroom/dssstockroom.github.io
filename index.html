@@ -513,7 +513,7 @@
         /* Tool cards on home */
         .tool-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 18px;
             margin-bottom: 32px;
         }
@@ -2055,8 +2055,48 @@
                         {renderToolCards(primaryTools)}
                     </div>
                     <h2 style={{fontFamily:'var(--gothic)', color:'var(--navy)', fontSize:'13px', letterSpacing:'0.12em', textTransform:'uppercase', fontWeight:700, marginBottom:'16px'}}>Additional Tools</h2>
-                    <div style={{display:'grid', gridTemplateColumns:'repeat(3, minmax(240px, 280px))', gap:'18px', marginBottom:'0'}}>
+                    <div className="tool-grid">
                         {renderToolCards(additionalTools)}
+                    </div>
+
+                    {/* Useful Links */}
+                    <h2 style={{fontFamily:'var(--gothic)', color:'var(--navy)', fontSize:'13px', letterSpacing:'0.12em', textTransform:'uppercase', fontWeight:700, marginBottom:'16px', marginTop:'36px'}}>Useful Links</h2>
+                    <div style={{display:'flex', flexWrap:'wrap', gap:'10px'}}>
+                        {[
+                            { label:'DSSS Public Website',           url:'https://www.researchservices.pitt.edu/facilities/dietrich-school-scientific-stockroom' },
+                            { label:'Product Request Form',          url:'https://pitt.co1.qualtrics.com/jfe/form/SV_6Q0XFOmvhbcJSiG' },
+                            { label:'Return Request Form',           url:'https://pitt.co1.qualtrics.com/jfe/form/SV_bK3b6Tif3i8QTCC' },
+                            { label:'Transportation Request Form',   url:'https://pitt.co1.qualtrics.com/jfe/form/SV_eD2qQiMIShO50bk' },
+                            { label:'DOT Hazardous Materials Table', url:'https://www.ecfr.gov/current/title-49/subtitle-B/chapter-I/subchapter-C/part-172/subpart-B/section-172.101' },
+                            { label:'Facebook',                      url:'https://www.facebook.com/DSSStockroom/' },
+                            { label:'Instagram',                     url:'https://www.instagram.com/dssstockroom' },
+                            { label:'X / Twitter',                   url:'https://x.com/dssstockroom' },
+                        ].map(link => (
+                            <a
+                                key={link.url}
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                    display:'inline-flex',
+                                    alignItems:'center',
+                                    gap:'6px',
+                                    padding:'7px 14px',
+                                    background:'var(--surface)',
+                                    border:'1px solid var(--border)',
+                                    borderRadius:'6px',
+                                    fontSize:'12.5px',
+                                    color:'var(--royal)',
+                                    textDecoration:'none',
+                                    fontWeight:500,
+                                    transition:'background 0.15s, border-color 0.15s',
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.background='var(--sky)'; e.currentTarget.style.borderColor='var(--royal)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.background='var(--surface)'; e.currentTarget.style.borderColor='var(--border)'; }}
+                            >
+                                {link.label} <span style={{fontSize:'10px', opacity:0.6}}>↗</span>
+                            </a>
+                        ))}
                     </div>
                 </div>
             </div>
