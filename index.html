@@ -1406,7 +1406,9 @@
                                     vendor: String(r[12]||'').trim(),
                                     externalPrice: String(r[26]||'').trim(),
                                     ourPrice: String(r[27]||'').trim(),
-                                    onHand: String(r[23]||'').trim()
+                                    onHand:      String(r[23]||'').trim(),
+                                    maxStock:    String(r[19]||'').trim(),
+                                    reorderPoint:String(r[20]||'').trim()
                                 };
                                 if (item.internalSKU && item.location) data.push(item);
                             }
@@ -2014,6 +2016,7 @@
                                                     <th onClick={() => handleSort('vendor')}>Vendor <SortIcon sortConfig={sortConfig} columnKey="vendor"/></th>
                                                     <th onClick={() => handleSort('uom')}>UoM <SortIcon sortConfig={sortConfig} columnKey="uom"/></th>
                                                     <th onClick={() => handleSort('ourPrice')}>Price <SortIcon sortConfig={sortConfig} columnKey="ourPrice"/></th>
+                                                    <th onClick={() => handleSort('onHand')} style={{textAlign:'center'}}>On Hand <SortIcon sortConfig={sortConfig} columnKey="onHand"/></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -2033,6 +2036,23 @@
                                                             {item.ourPrice && <div style={{fontWeight:700, color:'var(--green)', fontSize:'14px'}}>${item.ourPrice}</div>}
                                                             {item.externalPrice && <div style={{fontSize:'12px', color:'var(--red)'}}>Ext: ${(parseFloat(item.externalPrice)*1.54).toFixed(2)}</div>}
                                                             {!item.ourPrice && !item.externalPrice && <span style={{color:'var(--muted)'}}>—</span>}
+                                                        </td>
+                                                        <td style={{textAlign:'center'}}>
+                                                            {(() => {
+                                                                const n   = parseFloat(item.onHand);
+                                                                const max = parseFloat(item.maxStock);
+                                                                if (isNaN(n) || item.onHand === '') return <span style={{color:'var(--muted)'}}>—</span>;
+                                                                if (n <= 0) return <span style={{background:'#ffe0dc', color:'#b03020', borderRadius:'10px', padding:'2px 8px', fontSize:'12px', fontWeight:600}}>Out</span>;
+                                                                if (!isNaN(max) && max > 0) {
+                                                                    const ratio = n / max;
+                                                                    if (ratio <= 0.25) return <span style={{background:'#ffe0dc', color:'#b03020', borderRadius:'10px', padding:'2px 8px', fontSize:'12px', fontWeight:600}}>{n}</span>;
+                                                                    if (ratio <= 0.50) return <span style={{background:'#fff3cd', color:'#7a5c00', borderRadius:'10px', padding:'2px 8px', fontSize:'12px', fontWeight:600}}>{n}</span>;
+                                                                    return <span style={{background:'#d4f5e5', color:'#006b30', borderRadius:'10px', padding:'2px 8px', fontSize:'12px', fontWeight:600}}>{n}</span>;
+                                                                }
+                                                                // No max stock — fall back to absolute value
+                                                                if (n <= 3) return <span style={{background:'#fff3cd', color:'#7a5c00', borderRadius:'10px', padding:'2px 8px', fontSize:'12px', fontWeight:600}}>{n}</span>;
+                                                                return <span style={{background:'#d4f5e5', color:'#006b30', borderRadius:'10px', padding:'2px 8px', fontSize:'12px', fontWeight:600}}>{n}</span>;
+                                                            })()}
                                                         </td>
                                                     </tr>
                                                 ))}
