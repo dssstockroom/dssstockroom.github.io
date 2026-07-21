@@ -4887,6 +4887,10 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
         const [locQuery,    setLocQuery]    = useState('');
         const [locResults,  setLocResults]  = useState([]);
         const [selectedLoc, setSelectedLoc] = useState(null);
+        const [useCustomLoc,    setUseCustomLoc]    = useState(false);
+        const [customLocName,   setCustomLocName]   = useState('');
+        const [customLocCode,   setCustomLocCode]   = useState('');
+        const [customLocAddr,   setCustomLocAddr]   = useState('');
         const [chemQuery,   setChemQuery]   = useState('');
         const [chemResults, setChemResults] = useState([]);
         const [selectedChem,setSelectedChem]= useState(null);
@@ -5009,7 +5013,10 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
         };
 
         const addItem = () => {
-            if (!selectedLoc) return;
+            const loc = useCustomLoc
+                ? (customLocName.trim() ? { code: customLocCode.trim() || '—', name: customLocName.trim(), address: customLocAddr.trim() } : null)
+                : selectedLoc;
+            if (!loc) return;
             const density = useCustomChem ? parseFloat(customChemDensity) || 1.0 : selectedChem?.density;
             if (!qtyGal || isNaN(parseFloat(qtyGal))) return;
             if (useCustomChem && (!customChemUN.trim() || !customChemName.trim())) return;
@@ -5022,9 +5029,9 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
             const isLtdQty = useCustomChem ? false : computeIsLtdQty(selectedChem, qtyGal, qtyUnit);
             const newItem = {
                 id:                Date.now(),
-                locationCode:      selectedLoc.code,
-                locationName:      selectedLoc.name,
-                locationAddress:   selectedLoc.address,
+                locationCode:      loc.code,
+                locationName:      loc.name,
+                locationAddress:   loc.address,
                 un:                chem.un,
                 name:              chem.name,
                 hazClass:          chem.hazClass,
@@ -5090,6 +5097,10 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
             setItems([]);
             setSelectedLoc(null);
             setLocQuery('');
+            setUseCustomLoc(false);
+            setCustomLocName('');
+            setCustomLocCode('');
+            setCustomLocAddr('');
             setSelectedChem(null);
             setChemQuery('');
             setQtyGal('');
@@ -5142,41 +5153,55 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                                 <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px', marginBottom:'12px'}}>
                                     {/* Location */}
                                     <div>
-                                        <label className="form-label">Delivery Location</label>
-                                        <div style={{position:'relative'}}>
-                                            <input
-                                                type="text"
-                                                className="form-input"
-                                                placeholder="Search by name or code (e.g. BENDM, Langley)…"
-                                                value={locQuery}
-                                                onChange={e => { setLocQuery(e.target.value); setSelectedLoc(null); setLocHighlight(-1); }}
-                                                onKeyDown={e => {
-                                                    if (!locResults.length) return;
-                                                    if (e.key === 'ArrowDown') { e.preventDefault(); setLocHighlight(h => Math.min(h + 1, locResults.length - 1)); }
-                                                    else if (e.key === 'ArrowUp') { e.preventDefault(); setLocHighlight(h => Math.max(h - 1, 0)); }
-                                                    else if (e.key === 'Enter') { e.preventDefault(); selectLocation(locResults[locHighlight >= 0 ? locHighlight : 0]); setLocHighlight(-1); }
-                                                    else if (e.key === 'Escape') { setLocResults([]); setLocHighlight(-1); }
-                                                }}
-                                            />
-                                            {locResults.length > 0 && (
-                                                <div style={{position:'absolute', top:'100%', left:0, right:0, background:'#fff', border:'1px solid var(--border)', borderRadius:'0 0 6px 6px', zIndex:100, maxHeight:'220px', overflowY:'auto', boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}}>
-                                                    {locResults.map((loc, idx) => (
-                                                        <div key={loc.code}
-                                                            onClick={() => { selectLocation(loc); setLocHighlight(-1); }}
-                                                            style={{padding:'8px 12px', cursor:'pointer', borderBottom:'1px solid var(--border)', fontSize:'13px', background: idx === locHighlight ? 'var(--sky)' : '#fff'}}
-                                                            onMouseEnter={() => setLocHighlight(idx)}
-                                                            onMouseLeave={() => setLocHighlight(-1)}
-                                                        >
-                                                            <strong>{loc.code}</strong> — {loc.name}
-                                                            <div style={{fontSize:'11px', color:'var(--muted)'}}>{loc.address}</div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
+                                        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'6px'}}>
+                                            <label className="form-label" style={{margin:0}}>Delivery Location</label>
+                                            <label style={{fontSize:'12px', color:'var(--muted)', cursor:'pointer', display:'flex', alignItems:'center', gap:'5px', userSelect:'none'}}>
+                                                <input type="checkbox" checked={useCustomLoc} onChange={e => { setUseCustomLoc(e.target.checked); setSelectedLoc(null); setLocQuery(''); }} />
+                                                Enter manually
+                                            </label>
                                         </div>
-                                        {selectedLoc && (
-                                            <div style={{fontSize:'12px', color:'var(--muted)', marginTop:'4px'}}>
-                                                📍 {selectedLoc.address}
+                                        {!useCustomLoc ? (
+                                            <div style={{position:'relative'}}>
+                                                <input
+                                                    type="text"
+                                                    className="form-input"
+                                                    placeholder="Search by name or code (e.g. BENDM, Langley)…"
+                                                    value={locQuery}
+                                                    onChange={e => { setLocQuery(e.target.value); setSelectedLoc(null); setLocHighlight(-1); }}
+                                                    onKeyDown={e => {
+                                                        if (!locResults.length) return;
+                                                        if (e.key === 'ArrowDown') { e.preventDefault(); setLocHighlight(h => Math.min(h + 1, locResults.length - 1)); }
+                                                        else if (e.key === 'ArrowUp') { e.preventDefault(); setLocHighlight(h => Math.max(h - 1, 0)); }
+                                                        else if (e.key === 'Enter') { e.preventDefault(); selectLocation(locResults[locHighlight >= 0 ? locHighlight : 0]); setLocHighlight(-1); }
+                                                        else if (e.key === 'Escape') { setLocResults([]); setLocHighlight(-1); }
+                                                    }}
+                                                />
+                                                {locResults.length > 0 && (
+                                                    <div style={{position:'absolute', top:'100%', left:0, right:0, background:'#fff', border:'1px solid var(--border)', borderRadius:'0 0 6px 6px', zIndex:100, maxHeight:'220px', overflowY:'auto', boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}}>
+                                                        {locResults.map((loc, idx) => (
+                                                            <div key={loc.code}
+                                                                onClick={() => { selectLocation(loc); setLocHighlight(-1); }}
+                                                                style={{padding:'8px 12px', cursor:'pointer', borderBottom:'1px solid var(--border)', fontSize:'13px', background: idx === locHighlight ? 'var(--sky)' : '#fff'}}
+                                                                onMouseEnter={() => setLocHighlight(idx)}
+                                                                onMouseLeave={() => setLocHighlight(-1)}
+                                                            >
+                                                                <strong>{loc.code}</strong> — {loc.name}
+                                                                <div style={{fontSize:'11px', color:'var(--muted)'}}>{loc.address}</div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {selectedLoc && (
+                                                    <div style={{fontSize:'12px', color:'var(--muted)', marginTop:'4px'}}>
+                                                        📍 {selectedLoc.address}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px'}}>
+                                                <input type="text" className="form-input" placeholder="Building Name" value={customLocName} onChange={e => setCustomLocName(e.target.value)} style={{gridColumn:'span 2', fontSize:'13px'}} />
+                                                <input type="text" className="form-input" placeholder="Building Code (e.g. CHVRN)" value={customLocCode} onChange={e => setCustomLocCode(e.target.value)} style={{fontSize:'13px'}} />
+                                                <input type="text" className="form-input" placeholder="Street Address" value={customLocAddr} onChange={e => setCustomLocAddr(e.target.value)} style={{fontSize:'13px'}} />
                                             </div>
                                         )}
                                     </div>
@@ -5272,7 +5297,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                                     <button
                                         className="btn btn-primary"
                                         onClick={addItem}
-                                        disabled={!selectedLoc || (!useCustomChem && !selectedChem) || (useCustomChem && (!customChemUN.trim() || !customChemName.trim())) || !qtyGal || isNaN(parseFloat(qtyGal))}
+                                        disabled={(!useCustomLoc && !selectedLoc) || (useCustomLoc && !customLocName.trim()) || (!useCustomChem && !selectedChem) || (useCustomChem && (!customChemUN.trim() || !customChemName.trim())) || !qtyGal || isNaN(parseFloat(qtyGal))}
                                         style={{flex:'0 0 auto'}}
                                     >
                                         + Add Item
