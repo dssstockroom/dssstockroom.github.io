@@ -1919,7 +1919,7 @@
                 if (nm.some(m => m.includes(nq) || nq.includes(m))) return true;
                 if (words.every(w => item.itemName.toLowerCase().includes(w))) return true;
                 if (item.vendor && words.every(w => item.vendor.toLowerCase().includes(w))) return true;
-                if (item.location && item.location.toLowerCase().includes(nq)) return true;
+                if (item.location && item.location.toLowerCase().includes(query.toLowerCase())) return true;
                 return false;
             });
             setSearchResults(found); setSortConfig({ key: null, direction: 'asc' }); setError('');
