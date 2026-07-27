@@ -1919,6 +1919,7 @@
                 if (nm.some(m => m.includes(nq) || nq.includes(m))) return true;
                 if (words.every(w => item.itemName.toLowerCase().includes(w))) return true;
                 if (item.vendor && words.every(w => item.vendor.toLowerCase().includes(w))) return true;
+                if (item.location && item.location.toLowerCase().includes(nq)) return true;
                 return false;
             });
             setSearchResults(found); setSortConfig({ key: null, direction: 'asc' }); setError('');
@@ -1992,7 +1993,7 @@
                                     <button className="hero-search-btn" onClick={handleSearch} style={{fontSize:'13px', padding:'15px 24px'}}>Search</button>
                                 </div>
                                 {error && <div style={{fontSize:'12px', color:'#ffb3a5', marginTop:'8px'}}>{error}</div>}
-                                <div className="hero-search-hint">Search by internal SKU, manufacturer SKU, or item name</div>
+                                <div className="hero-search-hint">Search by internal SKU, manufacturer SKU, item name, or bin location</div>
                             </div>
                         </div>
                     </div>
