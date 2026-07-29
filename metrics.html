@@ -509,39 +509,61 @@ function normalizeRows(rows) {
     poMap[po].push(r);
   });
 
+  // Detect whether this export includes PO Line # — the stripped format omits it.
+  // If absent, we assign line numbers by position within each PO group.
+  const hasLineNum = rows.length > 0 && (
+    'PO Line #' in rows[0] || 'Line #' in rows[0]
+  );
+
   const records = [];
   Object.entries(poMap).forEach(([po, group]) => {
-    group.sort((a,b) => Number(a['PO Line #']||a['Line #']||0) - Number(b['PO Line #']||b['Line #']||0));
+    if (hasLineNum) {
+      group.sort((a,b) => Number(a['PO Line #']||a['Line #']||0) - Number(b['PO Line #']||b['Line #']||0));
+    }
+    // If no line number column, preserve original row order (already insertion order from forEach)
+
     const r0 = group[0];
     const isInternal = String(r0['ShipTo Address 1']||'').trim() === 'Chevron Science Center';
 
     const addrParts = [];
     ['ShipTo Address 1','ShipTo Address 2','ShipTo Address 3'].forEach(k => {
       const v = String(r0[k]||'').trim();
-      if (v) addrParts.push(v);
+      if (v && v.toLowerCase() !== 'nan') addrParts.push(v);
     });
     const city = String(r0['ShipTo City']||'').trim();
     const state = String(r0['ShipTo State']||'').trim();
     const zip = String(r0['ShipTo Postal Code']||'').trim();
     if (city||state) addrParts.push((city+', '+state+' '+zip).trim().replace(/,\s*$/,''));
 
-    // Normalize date
-    let dateStr = String(r0['Workflow Completion Date']||'').trim();
-    if (dateStr instanceof Date) dateStr = dateStr.toISOString().substring(0,10);
-    if (dateStr.length > 10) dateStr = dateStr.substring(0,10);
+    // Normalize date — handles JS Date objects (SheetJS cellDates:true),
+    // ISO strings ('2026-06-30'), and datetime strings ('2026-06-30 00:00:00')
+    let rawDate = r0['Workflow Completion Date'] || '';
+    let dateStr;
+    if (rawDate instanceof Date) {
+      // JS Date object — use ISO string to avoid locale-dependent toString()
+      dateStr = rawDate.toISOString().substring(0, 10);
+    } else {
+      dateStr = String(rawDate).trim();
+      // Strip time component if present ('2026-06-30 00:00:00' or '2026-06-30T00:00:00')
+      dateStr = dateStr.replace(/[\sT].*$/, '').substring(0, 10);
+    }
 
-    const lines = group.map(l => ({
-      line: String(l['PO Line #']||l['Line #']||''),
+    const lines = group.map((l, idx) => ({
+      // Use explicit line number if present; otherwise use 1-based position
+      line: hasLineNum
+        ? String(l['PO Line #']||l['Line #']||String(idx+1))
+        : String(idx + 1),
       sku: String(l['SKU/Catalog #']||l['SKU']||'').trim(),
       desc: String(l['Product Description']||l['Description']||'').trim(),
       mfr: String(l['Manufacturer']||'').trim(),
-      mfrCat: String(l['Mfr Catalog #']||'').trim()||'Unknown',
+      mfrCat: String(l['Mfr Catalog #']||'').trim()||'',
       qty: Number(l['Quantity']||0),
       uom: String(l['Amount/UOM & UOM']||l['UOM']||'').trim(),
       unitPrice: Number(l['Unit Price']||0),
       extPrice: Number(l['Extended Price']||0),
       category: String(l['Category Name']||'').trim(),
       cas: String(l['CAS #']||'').trim(),
+      // Hazmat/Controlled/Radioactive absent in stripped exports — default false
       hazmat: String(l['Hazmat']||'').trim()==='T',
       controlled: String(l['Controlled']||'').trim()==='T',
       radioactive: String(l['Radioactive']||'').trim()==='T',
