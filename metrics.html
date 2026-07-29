@@ -165,6 +165,8 @@
   .csv-status{font-family:var(--mono);font-size:10px;padding:2px 9px;border-radius:3px;border:1px solid var(--border);color:var(--text3)}
   .csv-status.ok{color:var(--int);border-color:rgba(52,216,154,.3);background:var(--int-bg)}
   .csv-status.warn{color:var(--ext);border-color:rgba(245,166,35,.3);background:var(--ext-bg)}
+
+  .active-chart-btn { color: var(--accent) !important; border-color: var(--accent) !important; background: rgba(79,142,247,0.1) !important; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -290,6 +292,7 @@ let metricsQuarter = '';
 let metricsType = '';
 let metricsTopN = 15;
 let metricsItemMode = 'spend'; // 'spend' | 'qty' | 'orders'
+let itemDrillKey = null; // SKU key of item being drilled into
 let buyerDrillPO = null; // po# being shown in buyer drill
 let buyerDrillName = null;
 
@@ -1233,6 +1236,7 @@ let itemsSearch = '';
 let itemsTopN = 25;
 
 function renderItems() {
+  if (itemDrillKey !== null) { renderItemDetail(itemDrillKey); return; }
   const panel = document.getElementById('items-panel');
   const years = [...new Set(ALL_ORDERS.map(r=>r.date.substring(0,4)))].sort().reverse();
 
@@ -1268,7 +1272,7 @@ function renderItems() {
       <thead><tr>
         <th style="width:28px">#</th><th>SKU</th><th>Description</th>
         <th class="right">Orders</th><th class="right">Qty Sold</th>
-        <th class="right">Avg Unit $</th><th class="right">Total Spend</th>
+        <th class="right">Avg Unit $</th><th class="right">Total Spend</th><th></th>
       </tr></thead>
       <tbody>
         ${sorted.slice(0,itemsTopN).map((d,i)=>`
@@ -1280,6 +1284,7 @@ function renderItems() {
             <td class="right mono">${fmtNum(d.qty)} ${d.uom}</td>
             <td class="right mono">${fmt(d.spend/Math.max(1,d.qty))}</td>
             <td class="right mono">${fmt(d.spend)}</td>
+            <td><button class="top-rows-toggle" onclick="drillItem('${d.sku||d.desc}')">Detail →</button></td>
           </tr>`).join('')}
       </tbody>
     </table>`;
@@ -1334,8 +1339,280 @@ function renderItems() {
 }
 
 function updateItemModeBtns() {
-  // re-render to sync button states
   renderItems();
+}
+
+function drillItem(key) {
+  itemDrillKey = key;
+  renderItems();
+}
+
+function renderItemDetail(key) {
+  const panel = document.getElementById('items-panel');
+
+  // Collect every order line matching this key, across ALL time (no year/quarter filter)
+  const matchingLines = [];
+  ALL_ORDERS.forEach(r => {
+    r.lines.forEach(l => {
+      const lKey = l.sku || l.desc || 'UNKNOWN';
+      if (lKey !== key) return;
+      matchingLines.push({
+        date: r.date,
+        po: r.po,
+        dept: r.dept,
+        buyerFirst: r.buyerFirst,
+        buyerLast: r.buyerLast,
+        internal: r.internal,
+        building: r.address[0] || '',
+        qty: l.qty,
+        unitPrice: l.unitPrice,
+        extPrice: l.extPrice,
+        uom: l.uom,
+        sku: l.sku,
+        desc: l.desc,
+      });
+    });
+  });
+
+  if (!matchingLines.length) {
+    panel.innerHTML = `<div style="color:var(--text3);font-family:var(--mono);padding:40px">No data found for key: ${key}</div>`;
+    return;
+  }
+
+  matchingLines.sort((a,b) => a.date.localeCompare(b.date));
+
+  const item = matchingLines[0];
+  const totalQty = matchingLines.reduce((s,l)=>s+l.qty, 0);
+  const totalSpend = matchingLines.reduce((s,l)=>s+l.extPrice, 0);
+  const avgUnit = totalSpend / Math.max(1, totalQty);
+  const orderCount = new Set(matchingLines.map(l=>l.po)).size;
+  const firstDate = matchingLines[0].date;
+  const lastDate = matchingLines[matchingLines.length-1].date;
+
+  // By fiscal quarter
+  const byQuarter = {};
+  matchingLines.forEach(l => {
+    const qk = getFiscalQuarterKey(l.date);
+    if (!byQuarter[qk]) byQuarter[qk] = {qty:0, spend:0, orders:new Set()};
+    byQuarter[qk].qty += l.qty;
+    byQuarter[qk].spend += l.extPrice;
+    byQuarter[qk].orders.add(l.po);
+  });
+  const quartersSorted = Object.entries(byQuarter).sort((a,b)=>{
+    const[fa,qa]=a[0].split(' ');const[fb,qb]=b[0].split(' ');
+    return fa!==fb?fa.localeCompare(fb):qa.localeCompare(qb);
+  });
+
+  // By month
+  const byMonth = {};
+  matchingLines.forEach(l => {
+    const ym = l.date.substring(0,7);
+    if (!byMonth[ym]) byMonth[ym] = {qty:0, spend:0};
+    byMonth[ym].qty += l.qty;
+    byMonth[ym].spend += l.extPrice;
+  });
+  const monthsSorted = Object.entries(byMonth).sort((a,b)=>a[0].localeCompare(b[0]));
+
+  // By department
+  const byDept = {};
+  matchingLines.forEach(l => {
+    byDept[l.dept||'Unknown'] = (byDept[l.dept||'Unknown']||0) + l.extPrice;
+  });
+  const deptSorted = Object.entries(byDept).sort((a,b)=>b[1]-a[1]);
+
+  // Price history — unique unit prices over time
+  const priceHistory = [];
+  let lastPrice = null;
+  matchingLines.forEach(l => {
+    if (l.unitPrice !== lastPrice) {
+      priceHistory.push({date:l.date, price:l.unitPrice});
+      lastPrice = l.unitPrice;
+    }
+  });
+
+  panel.innerHTML = `
+    <div style="width:100%">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="top-rows-toggle" onclick="itemDrillKey=null;renderItems()">← Back to Items</button>
+        <div style="font-family:var(--mono);font-size:15px;font-weight:600;color:var(--accent)">${item.sku||'—'}</div>
+        <div style="font-size:13px;color:var(--text2);flex:1">${item.desc}</div>
+        <button class="top-rows-toggle" onclick="exportItemDetailCSV('${key.replace(/'/g,"\'")}')">⬇ Export CSV</button>
+      </div>
+
+      <div class="kpi-row" style="margin-bottom:16px">
+        <div class="kpi"><div class="kpi-val">${fmt(totalSpend)}</div><div class="kpi-label">Total Spend</div></div>
+        <div class="kpi"><div class="kpi-val">${fmtNum(totalQty)} ${item.uom}</div><div class="kpi-label">Total Qty Sold</div></div>
+        <div class="kpi"><div class="kpi-val">${fmt(avgUnit)}</div><div class="kpi-label">Avg Unit Price</div></div>
+        <div class="kpi"><div class="kpi-val">${orderCount}</div><div class="kpi-label">Orders</div></div>
+        <div class="kpi"><div class="kpi-val" style="font-size:13px">${firstDate}</div><div class="kpi-label">First Sale</div></div>
+        <div class="kpi"><div class="kpi-val" style="font-size:13px">${lastDate}</div><div class="kpi-label">Last Sale</div></div>
+      </div>
+
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px">
+
+        <div class="metric-card" style="flex:2;min-width:320px">
+          <div class="mc-title">Sales Over Time (Monthly) <div class="mc-title-line"></div></div>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <button class="top-rows-toggle item-chart-mode active-chart-btn" onclick="setItemChartMode('qty')">Qty</button>
+            <button class="top-rows-toggle item-chart-mode" onclick="setItemChartMode('spend')">Spend</button>
+          </div>
+          <canvas id="item-chart" height="140" style="width:100%;display:block"></canvas>
+        </div>
+
+        <div class="metric-card" style="flex:1;min-width:220px">
+          <div class="mc-title">By Fiscal Quarter <div class="mc-title-line"></div></div>
+          <table class="lines-table" style="font-size:11px">
+            <thead><tr><th>Quarter</th><th class="right">Qty</th><th class="right">Spend</th><th class="right">Orders</th></tr></thead>
+            <tbody>
+              ${quartersSorted.map(([qk,d])=>`
+                <tr>
+                  <td class="mono" style="color:var(--accent)">${qk}</td>
+                  <td class="right mono">${fmtNum(d.qty)}</td>
+                  <td class="right mono">${fmt(d.spend)}</td>
+                  <td class="right mono">${d.orders.size}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="metric-card" style="flex:1;min-width:200px">
+          <div class="mc-title">By Department <div class="mc-title-line"></div></div>
+          ${deptSorted.map(([dept,v])=>`
+            <div class="bar-row">
+              <div class="bar-label">${dept}</div>
+              <div class="bar-track"><div class="bar-fill" style="width:${(v/totalSpend*100).toFixed(1)}%;background:var(--accent)"></div></div>
+              <div class="bar-val">${fmtShort(v)}</div>
+            </div>`).join('')}
+        </div>
+
+      </div>
+
+      ${priceHistory.length > 1 ? `
+      <div class="metric-card" style="margin-bottom:16px">
+        <div class="mc-title">Unit Price History <div class="mc-title-line"></div></div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          ${priceHistory.map((p,i)=>`
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:6px 12px;font-family:var(--mono);font-size:11px">
+              <span style="color:var(--text3)">${p.date}</span>
+              <span style="color:var(--text);margin-left:8px">${fmt(p.price)}</span>
+              ${i>0&&p.price>priceHistory[i-1].price?'<span style="color:var(--red);margin-left:4px">▲</span>':i>0?'<span style="color:var(--int);margin-left:4px">▼</span>':''}
+            </div>`).join('')}
+        </div>
+      </div>` : ''}
+
+      <div class="mc-title" style="margin-bottom:8px">Order History <div class="mc-title-line"></div></div>
+      <table class="lines-table">
+        <thead><tr>
+          <th>Date</th><th>PO #</th><th>Department</th><th>Buyer</th>
+          <th>Building</th><th class="right">Qty</th><th class="right">Unit $</th><th class="right">Ext $</th><th></th>
+        </tr></thead>
+        <tbody>
+          ${[...matchingLines].reverse().map(l=>`
+            <tr>
+              <td class="mono" style="font-size:11px">${l.date}</td>
+              <td class="mono" style="color:var(--accent)">${l.po}</td>
+              <td style="font-size:11px">${l.dept||'—'}</td>
+              <td style="font-size:11px">${[l.buyerFirst,l.buyerLast].filter(Boolean).join(' ')||'—'}</td>
+              <td style="font-size:11px">${l.building||'—'}</td>
+              <td class="right mono">${l.qty} ${l.uom}</td>
+              <td class="right mono">${fmt(l.unitPrice)}</td>
+              <td class="right mono">${fmt(l.extPrice)}</td>
+              <td><button class="top-rows-toggle" onclick="switchTab('orders');selectPO('${l.po}')">PO</button></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  // Store chart data for mode switching
+  panel._chartMonths = monthsSorted;
+  panel._chartMode = 'qty';
+  requestAnimationFrame(() => drawItemChart(monthsSorted, 'qty'));
+}
+
+let itemChartMode = 'qty';
+function setItemChartMode(mode) {
+  itemChartMode = mode;
+  document.querySelectorAll('.item-chart-mode').forEach(b => {
+    b.classList.toggle('active-chart-btn', b.textContent.toLowerCase() === mode);
+  });
+  const panel = document.getElementById('items-panel');
+  if (panel._chartMonths) drawItemChart(panel._chartMonths, mode);
+}
+
+function drawItemChart(monthsSorted, mode) {
+  const canvas = document.getElementById('item-chart');
+  if (!canvas || !monthsSorted.length) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.clientWidth || 600;
+  canvas.width = W * dpr; canvas.height = 140 * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = '140px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const vals = monthsSorted.map(([,d]) => mode === 'qty' ? d.qty : d.spend);
+  const maxV = Math.max(...vals, 1);
+  const pad = {l:56,r:16,t:10,b:26};
+  const cw = W - pad.l - pad.r, ch = 140 - pad.t - pad.b;
+  const barW = Math.max(2, cw / monthsSorted.length - 1);
+
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--canvas-bg').trim() || '#1e2332';
+  ctx.fillStyle = bg;
+  ctx.fillRect(0,0,W,140);
+
+  // Grid lines
+  [0, 0.5, 1].forEach(f => {
+    const y = pad.t + ch * (1 - f);
+    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || '#2a3045';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text3').trim() || '#5a6e8a';
+    ctx.font = '9px IBM Plex Mono,monospace'; ctx.textAlign = 'right';
+    const label = mode === 'qty'
+      ? Math.round(maxV * f).toString()
+      : '$' + Math.round(maxV * f / 1000) + 'k';
+    ctx.fillText(label, pad.l - 4, y + 3);
+  });
+
+  // Bars
+  monthsSorted.forEach(([ym, d], i) => {
+    const v = mode === 'qty' ? d.qty : d.spend;
+    const x = pad.l + i * (cw / monthsSorted.length);
+    const h = (v / maxV) * ch;
+    ctx.fillStyle = 'rgba(79,142,247,0.8)';
+    ctx.fillRect(x, pad.t + ch - h, barW, h);
+  });
+
+  // X-axis year labels
+  ctx.textAlign = 'left';
+  let lastYear = '';
+  monthsSorted.forEach(([ym], i) => {
+    const yr = ym.substring(0,4);
+    if (yr !== lastYear) {
+      const x = pad.l + i * (cw / monthsSorted.length);
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text3').trim() || '#5a6e8a';
+      ctx.font = '9px IBM Plex Mono,monospace';
+      ctx.fillText(yr, x, 140 - 6);
+      lastYear = yr;
+    }
+  });
+}
+
+function exportItemDetailCSV(key) {
+  const rows = [['Date','PO #','Department','Buyer','Building','Type','SKU','Description','Qty','UOM','Unit Price','Ext Price']];
+  ALL_ORDERS.forEach(r => {
+    r.lines.forEach(l => {
+      if ((l.sku||l.desc||'UNKNOWN') !== key) return;
+      rows.push([
+        r.date, r.po, r.dept,
+        [r.buyerFirst,r.buyerLast].filter(Boolean).join(' '),
+        r.address[0]||'', r.internal?'Internal':'External',
+        l.sku, l.desc, l.qty, l.uom, l.unitPrice, l.extPrice
+      ]);
+    });
+  });
+  rows.sort((a,b) => String(a[0]).localeCompare(String(b[0])));
+  downloadCSV(rows, 'DSS_Item_' + key.replace(/[^a-zA-Z0-9]/g,'_') + '.csv');
 }
 
 // ── EXPORT ──
