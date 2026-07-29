@@ -239,12 +239,11 @@
     <div id="import-modal">
       <div class="modal-title">IMPORT ORDER DATA</div>
       <div style="font-size:11px;color:var(--text3);font-family:var(--sans);margin-bottom:10px;line-height:1.6">
-        Import new orders from accounting (.xlsx or .csv). Merged data is held in local storage.
-        When done, export <span style="font-family:var(--mono);color:var(--text2)">metrics.csv</span>
-        and commit it to the repository to update the baseline.
+        Import new orders from accounting (.xlsx or .csv). Merged data is held in memory for this session.
+        When done, click <span style="font-family:var(--mono);color:var(--text2)">Export metrics.csv</span>
+        and commit it to the repository — that becomes the new baseline on next load.
       </div>
       <div class="storage-info" id="storage-info"></div>
-      <div class="storage-bar-wrap"><div class="storage-bar-fill" id="storage-bar" style="width:0%"></div></div>
       <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
         <div class="drop-zone-icon">📂</div>
         <div class="drop-zone-label">Drop a file here, or click to browse</div>
@@ -270,10 +269,9 @@ const EMBEDDED_ORDERS = []
 let CSV_BASELINE = [];
 
 function buildOrderSet() {
-  const stored = loadStoredOrders();
-  // Merge CSV baseline + localStorage imports, deduplicating by PO#
+  // Merge CSV baseline + in-memory imports, deduplicating by PO#
   const baselinePOs = new Set(CSV_BASELINE.map(r => r.po));
-  const newOrders = stored.filter(r => !baselinePOs.has(r.po));
+  const newOrders = IMPORTED_ORDERS.filter(r => !baselinePOs.has(r.po));
   return [...CSV_BASELINE, ...newOrders];
 }
 let ALL_ORDERS = [];
@@ -352,47 +350,27 @@ function dateInFiscalQuarter(dateStr, qKey) {
 }
 
 
-// ── LOCALSTORAGE PERSISTENCE ──
-const LS_KEY = 'dss-imported-orders';
-
-function loadStoredOrders() {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch(e) { return []; }
-}
-
-function saveStoredOrders(orders) {
-  try {
-    localStorage.setItem(LS_KEY, JSON.stringify(orders));
-    return true;
-  } catch(e) {
-    if (e.name === 'QuotaExceededError') return false;
-    return false;
-  }
-}
-
-function getStorageUsageKB() {
-  try {
-    const raw = localStorage.getItem(LS_KEY) || '';
-    return Math.round(raw.length * 2 / 1024); // UTF-16 approx
-  } catch(e) { return 0; }
-}
+// ── IN-MEMORY IMPORT STORE ──
+// Data is too large for localStorage (~40 MB). Imports are held in memory
+// for the session. Export metrics.csv and commit it to persist changes.
+let IMPORTED_ORDERS = [];
 
 function updateStorageInfo() {
-  const stored = loadStoredOrders();
-  const kb = getStorageUsageKB();
-  const maxKB = 5120; // ~5MB typical localStorage limit
-  const pct = Math.min(100, (kb / maxKB * 100)).toFixed(1);
   const el = document.getElementById('storage-info');
   const bar = document.getElementById('storage-bar');
   if (!el) return;
-  if (stored.length === 0) {
-    el.textContent = 'No imported data stored. Repository baseline: ' + CSV_BASELINE.length.toLocaleString() + ' orders.';
+  const baselineCount = CSV_BASELINE.length;
+  const importedCount = IMPORTED_ORDERS.length;
+  const totalCount = ALL_ORDERS.length;
+  if (importedCount === 0) {
+    el.textContent = 'Repository baseline: ' + baselineCount.toLocaleString() + ' orders. No unsaved imports.';
   } else {
-    el.textContent = stored.length.toLocaleString() + ' new orders in local storage (' + kb + ' KB / ~5 MB limit). Repository baseline: ' + CSV_BASELINE.length.toLocaleString() + ' orders.';
+    el.textContent = importedCount.toLocaleString() + ' new orders imported this session (not yet exported). Total: ' + totalCount.toLocaleString() + ' orders.';
   }
-  if (bar) bar.style.width = pct + '%';
+  if (bar) {
+    const pct = baselineCount > 0 ? Math.min(100, importedCount / baselineCount * 100).toFixed(1) : 0;
+    bar.style.width = pct + '%';
+  }
 }
 
 // ── IMPORT MODAL ──
@@ -535,17 +513,26 @@ function normalizeRows(rows) {
     const zip = String(r0['ShipTo Postal Code']||'').trim();
     if (city||state) addrParts.push((city+', '+state+' '+zip).trim().replace(/,\s*$/,''));
 
-    // Normalize date — handles JS Date objects (SheetJS cellDates:true),
-    // ISO strings ('2026-06-30'), and datetime strings ('2026-06-30 00:00:00')
+    // Normalize date — handles:
+    //   JS Date objects  (SheetJS cellDates:true when numFmt is recognized)
+    //   Excel serial numbers  (e.g. 46203 → 2026-06-30) — most common case when
+    //     the cell has numFmtId=0 (General), which SheetJS does NOT auto-convert
+    //   ISO strings  ('2026-06-30')
+    //   Datetime strings  ('2026-06-30 00:00:00')
     let rawDate = r0['Workflow Completion Date'] || '';
     let dateStr;
     if (rawDate instanceof Date) {
-      // JS Date object — use ISO string to avoid locale-dependent toString()
       dateStr = rawDate.toISOString().substring(0, 10);
+    } else if (typeof rawDate === 'number' || (typeof rawDate === 'string' && /^\d{4,6}(\.\d+)?$/.test(rawDate.toString().trim()))) {
+      // Excel date serial: days since 1899-12-30 (accounts for Excel's leap year bug)
+      const serial = Number(rawDate);
+      const excelEpoch = new Date(1899, 11, 30);
+      const d = new Date(excelEpoch.getTime() + serial * 86400000);
+      dateStr = d.getFullYear() + '-'
+        + String(d.getMonth() + 1).padStart(2, '0') + '-'
+        + String(d.getDate()).padStart(2, '0');
     } else {
-      dateStr = String(rawDate).trim();
-      // Strip time component if present ('2026-06-30 00:00:00' or '2026-06-30T00:00:00')
-      dateStr = dateStr.replace(/[\sT].*$/, '').substring(0, 10);
+      dateStr = String(rawDate).trim().replace(/[\sT].*$/, '').substring(0, 10);
     }
 
     const lines = group.map((l, idx) => ({
@@ -605,23 +592,16 @@ function processImportedRows(rows, filename) {
     return;
   }
 
-  // Merge with existing stored orders, deduplicating by PO#
-  const existingStored = loadStoredOrders();
+  // Merge with existing imports, deduplicating by PO#
   const existingPOs = new Set([
     ...CSV_BASELINE.map(r=>r.po),
-    ...existingStored.map(r=>r.po)
+    ...IMPORTED_ORDERS.map(r=>r.po)
   ]);
 
   const trulyNew = newRecords.filter(r => !existingPOs.has(r.po));
   const duplicateCount = newRecords.length - trulyNew.length;
 
-  const merged = [...existingStored, ...trulyNew];
-  const saved = saveStoredOrders(merged);
-
-  if (!saved) {
-    setImportStatus('Storage quota exceeded. Try clearing existing imported data first.', 'error');
-    return;
-  }
+  IMPORTED_ORDERS = [...IMPORTED_ORDERS, ...trulyNew];
 
   // Rebuild live order set and refresh UI
   ALL_ORDERS = buildOrderSet();
@@ -639,8 +619,8 @@ function processImportedRows(rows, filename) {
 
 // ── CLEAR IMPORTED DATA ──
 function clearImported() {
-  if (!confirm('Remove all imported data and revert to the repository baseline?')) return;
-  localStorage.removeItem(LS_KEY);
+  if (!confirm('Clear all imported data for this session and revert to the repository baseline?')) return;
+  IMPORTED_ORDERS = [];
   ALL_ORDERS = buildOrderSet();
   populateDropdowns();
   applyFilters();
@@ -648,7 +628,7 @@ function clearImported() {
   if (currentTab === 'items') renderItems();
   if (currentTab === 'buyer') renderBuyerPanel();
   updateStorageInfo();
-  setImportStatus('Imported data cleared. Showing repository baseline (' + CSV_BASELINE.length.toLocaleString() + ' orders).', 'info');
+  setImportStatus('Session imports cleared. Showing repository baseline (' + CSV_BASELINE.length.toLocaleString() + ' orders).', 'info');
 }
 
 // ── AUTO-FETCH metrics.csv FROM REPOSITORY ──
