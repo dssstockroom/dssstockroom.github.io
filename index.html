@@ -4161,96 +4161,123 @@ Web: https://www.researchservices.pitt.edu/facilities/dietrich-school-scientific
 Instagram / Facebook / Twitter(X): @dssstockroom`;
 
 
-        const TEMPLATES = [
+        const TEMPLATE_CATEGORIES = [
             {
-                id: 'order-ready',
-                icon: '✅',
-                title: 'Order Ready for Pick-Up',
-                subject: 'DSSS Order Ready for Pick-Up',
-                bodyParas: [
-                    'This message is to inform you that your order is available for pick-up at the DSS Stockroom at your earliest convenience.',
-                    'If you are unable to retrieve your order personally, another member of your group may pick it up on your behalf.',
+                label: 'Ready',
+                templates: [
+                    {
+                        id: 'order-ready',
+                        icon: '✅',
+                        title: 'Order Ready for Pick-Up',
+                        subject: 'DSSS Order Ready for Pick-Up',
+                        bodyParas: [
+                            'This message is to inform you that your order is available for pick-up at the DSS Stockroom at your earliest convenience.',
+                            'If you are unable to retrieve your order personally, another member of your group may pick it up on your behalf.',
+                        ],
+                        accent: '#00AD6E',
+                    },
+                    {
+                        id: 'backorder-ready',
+                        icon: '📦',
+                        title: 'Backorder Ready for Pick-Up',
+                        subject: 'DSSS Backorder Ready for Pick-Up',
+                        bodyParas: [
+                            'This message is to inform you that a previously backordered item is now available for pick-up at the DSS Stockroom at your earliest convenience.',
+                            'If you are unable to retrieve your order personally, another member of your group may pick it up on your behalf.',
+                        ],
+                        accent: '#66B2E3',
+                    },
                 ],
-                accent: '#00AD6E',
             },
             {
-                id: 'backorder-ready',
-                icon: '📦',
-                title: 'Backorder Ready for Pick-Up',
-                subject: 'DSSS Backorder Ready for Pick-Up',
-                bodyParas: [
-                    'This message is to inform you that a previously backordered item is now available for pick-up at the DSS Stockroom at your earliest convenience.',
-                    'If you are unable to retrieve your order personally, another member of your group may pick it up on your behalf.',
+                label: 'Reminders',
+                templates: [
+                    {
+                        id: 'order-reminder',
+                        icon: '🔔',
+                        title: 'Order Pick-Up Reminder',
+                        subject: 'DSSS Order Pick-Up Reminder',
+                        bodyParas: [
+                            'This is a courtesy reminder that you have an outstanding order available for pick-up at the DSS Stockroom.',
+                            'Please arrange for retrieval at your earliest convenience. If you are unable to do so personally, another member of your group may pick it up on your behalf.',
+                        ],
+                        accent: '#FF5B45',
+                    },
+                    {
+                        id: 'package-reminder',
+                        icon: '📬',
+                        title: 'Package Pick-Up Reminder',
+                        subject: 'DSSS Package Ready for Pick-Up — Reminder',
+                        bodyParas: [
+                            'This is a courtesy reminder that you currently have a package available for pick-up at the DSS Stockroom.',
+                            'Please arrange for retrieval at your earliest convenience. If you are unable to do so personally, another member of your group may pick it up on your behalf.',
+                        ],
+                        accent: '#FF5B45',
+                    },
+                    {
+                        id: 'cart-return',
+                        icon: '🛒',
+                        title: 'Cart Return Request',
+                        subject: 'DSSS Cart Return Request',
+                        bodyParas: [
+                            'Our records indicate that you currently have a Stockroom cart checked out. As a reminder, carts are intended for short-term use only and should be returned within 30 minutes of checkout.',
+                            'Please arrange for the return of the cart to the DSS Stockroom no later than 5:00 PM today. If you have any questions or require assistance, do not hesitate to contact us.',
+                        ],
+                        accent: '#770538',
+                    },
+                    {
+                        id: 'key-return',
+                        icon: '🔑',
+                        title: 'Waste Room Key Return Request',
+                        subject: 'DSSS Waste Room Key Return Request',
+                        bodyParas: [
+                            'Our records indicate that you currently have a Stockroom key checked out. As a reminder, keys are intended for short-term use only and should be returned within 30 minutes of checkout.',
+                            'Please arrange for the return of the key to the DSS Stockroom no later than 5:00 PM today. If you have any questions or require assistance, do not hesitate to contact us.',
+                        ],
+                        accent: '#770538',
+                    },
                 ],
-                accent: '#66B2E3',
             },
             {
-                id: 'order-reminder',
-                icon: '🔔',
-                title: 'Order Pick-Up Reminder',
-                subject: 'DSSS Order Pick-Up Reminder',
-                bodyParas: [
-                    'This is a courtesy reminder that you have an outstanding order available for pick-up at the DSS Stockroom.',
-                    'Please arrange for retrieval at your earliest convenience. If you are unable to do so personally, another member of your group may pick it up on your behalf.',
+                label: 'Inform',
+                templates: [
+                    {
+                        id: 'matheson-delivery',
+                        icon: '🔵',
+                        title: 'Matheson Tank Delivery',
+                        subject: 'Matheson Order Delivered to Stockroom',
+                        bodyParas: [
+                            'We are writing to inform you that an order from Matheson was accidentally delivered to the third-floor elevator lobby. Please retrieve it at your earliest convenience.',
+                        ],
+                        accent: '#66B2E3',
+                    },
+                    {
+                        id: 'dry-ice',
+                        icon: '🧊',
+                        title: 'Dry Ice Availability',
+                        subject: 'Dry Ice Availability — DSS Stockroom',
+                        bodyParas: [
+                            'Dry ice is available for purchase through the DSSS punchout catalog in PantherExpress, under Internal Suppliers. The item number is NC0084822; dry ice is sold by the pound (lb). Please note that we do not offer shipping for dry ice orders.',
+                            'Pickup is self-serve at two locations: the Chevron Science Center and Langley Hall. You will need to provide your own container rated for cryogenic transport (e.g., Styrofoam/polystyrene).',
+                            'Please do not hesitate to contact us if you have any questions.',
+                        ],
+                        accent: '#66B2E3',
+                    },
+                    {
+                        id: 'item-on-dock',
+                        icon: '🚚',
+                        title: 'Item on Loading Dock',
+                        subject: 'Item Available for Pick-Up — Loading Dock',
+                        bodyParas: [
+                            'This message is to inform you that you have an item to pick up at the loading dock of the Chevron Science Center.',
+                            'Please arrange for retrieval at your earliest convenience. If you have any questions or require assistance, do not hesitate to contact us.',
+                        ],
+                        accent: '#66B2E3',
+                    },
                 ],
-                accent: '#FF5B45',
-            },
-            {
-                id: 'cart-return',
-                icon: '🛒',
-                title: 'Cart Return Request',
-                subject: 'DSSS Cart Return Request',
-                bodyParas: [
-                    'Our records indicate that you currently have a Stockroom cart checked out. As a reminder, carts are intended for short-term use only and should be returned within 30 minutes of checkout.',
-                    'Please arrange for the return of the cart to the DSS Stockroom no later than 5:00 PM today. If you have any questions or require assistance, do not hesitate to contact us.',
-                ],
-                accent: '#770538',
-            },
-            {
-                id: 'key-return',
-                icon: '🔑',
-                title: 'Key Return Request',
-                subject: 'DSSS Key Return Request',
-                bodyParas: [
-                    'Our records indicate that you currently have a Stockroom key checked out. As a reminder, keys are intended for short-term use only and should be returned within 30 minutes of checkout.',
-                    'Please arrange for the return of the key to the DSS Stockroom no later than 5:00 PM today. If you have any questions or require assistance, do not hesitate to contact us.',
-                ],
-                accent: '#770538',
-            },
-            {
-                id: 'package-reminder',
-                icon: '📬',
-                title: 'Package Pick-Up Reminder',
-                subject: 'DSSS Package Ready for Pick-Up — Reminder',
-                bodyParas: [
-                    'This is a courtesy reminder that you currently have a package available for pick-up at the DSS Stockroom.',
-                    'Please arrange for retrieval at your earliest convenience. If you are unable to do so personally, another member of your group may pick it up on your behalf.',
-                ],
-                accent: '#FF5B45',
-            },
-            {
-                id: 'matheson-delivery',
-                icon: '🔵',
-                title: 'Matheson Accidental Delivery',
-                subject: 'Matheson Order Delivered to Stockroom',
-                bodyParas: [
-                    'We are writing to inform you that an order from Matheson was accidentally delivered to the third-floor elevator lobby. Please retrieve it at your earliest convenience.',
-                ],
-                accent: '#66B2E3',
-            },
-            {
-                id: 'dry-ice',
-                icon: '🧊',
-                title: 'Dry Ice Availability',
-                subject: 'Dry Ice Availability — DSS Stockroom',
-                bodyParas: [
-                    'Dry ice is available for purchase through the DSSS punchout catalog in PantherExpress, under Internal Suppliers. The item number is NC0084822; dry ice is sold by the pound (lb). Please note that we do not offer shipping for dry ice orders.',
-                    'Pickup is self-serve at two locations: the Chevron Science Center and Langley Hall. You will need to provide your own container rated for cryogenic transport (e.g., Styrofoam/polystyrene).',
-                    'Please do not hesitate to contact us if you have any questions.',
-                ],
-                accent: '#66B2E3',
             },
         ];
+        const TEMPLATES = TEMPLATE_CATEGORIES.flatMap(c => c.templates);
 
         const buildPlainBody = (bodyParas) =>
             bodyParas.join('\n\n');
@@ -4260,7 +4287,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
 
         const buildHtmlEmail = (subject, bodyParas) => {
             const parasHtml = bodyParas.map((p, i) =>
-                `<p style="margin:0;mso-margin-top-alt:0;mso-margin-bottom-alt:0;padding:0;font-size:15px;line-height:1.7;color:#1a1d23;text-align:justify;">${p}</p>${i < bodyParas.length - 1 ? '<br>' : ''}`
+                `<div style="margin:0;padding:0;font-size:15px;line-height:1.7;color:#1a1d23;text-align:justify;">${p}</div>${i < bodyParas.length - 1 ? '<br>' : ''}`
             ).join('');
             return `<!DOCTYPE html>
 <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
@@ -4271,7 +4298,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
 <style type="text/css">
   table { border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
   td, th { padding: 0; }
-  p { margin: 0; padding: 0; mso-margin-top-alt: 0; mso-margin-bottom-alt: 0; }
+  p, div { margin: 0; padding: 0; mso-margin-top-alt: 0; mso-margin-bottom-alt: 0; }
   .header-cell { background-color: #003594 !important; }
   .subject-cell { background-color: #00205B !important; }
   .gold-bar { background-color: #FFB81C !important; }
@@ -4433,7 +4460,12 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                     </div>
 
                     <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(480px, 1fr))', gap:'18px'}}>
-                        {TEMPLATES.map(tpl => (
+                        {TEMPLATE_CATEGORIES.map(cat => (
+                            <React.Fragment key={cat.label}>
+                                <div style={{gridColumn:'1 / -1'}}>
+                                    <h2 style={{fontFamily:'var(--gothic)', color:'var(--navy)', fontSize:'13px', letterSpacing:'0.12em', textTransform:'uppercase', fontWeight:700, margin:'8px 0 16px 0'}}>{cat.label}</h2>
+                                </div>
+                                {cat.templates.map(tpl => (
                             <div key={tpl.id} style={{
                                 background:'#fff',
                                 border:'1px solid var(--border)',
@@ -4491,6 +4523,8 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                                     </button>
                                 </div>
                             </div>
+                        ))}
+                            </React.Fragment>
                         ))}
                     </div>
 
@@ -4956,6 +4990,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
             if (isNaN(q)) return 0;
             switch(unit) {
                 case 'gal': return q * 3.78541 * density;
+                case 'pt':  return q * 0.473176 * density;
                 case 'L':   return q * density;
                 case 'mL':  return (q / 1000) * density;
                 case 'g':   return q / 1000;
@@ -4969,6 +5004,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
             if (isNaN(q)) return 0;
             switch(unit) {
                 case 'gal': return q * 3.78541;
+                case 'pt':  return q * 0.473176;
                 case 'L':   return q;
                 case 'mL':  return q / 1000;
                 case 'g':   return (q / 1000) / density;
@@ -5255,6 +5291,7 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
                                         <label className="form-label">Unit</label>
                                         <select className="form-input" value={qtyUnit} onChange={e => setQtyUnit(e.target.value)} style={{cursor:'pointer'}}>
                                             <option value="gal">Gallons</option>
+                                            <option value="pt">Pints</option>
                                             <option value="L">Liters</option>
                                             <option value="mL">mL</option>
                                             <option value="g">Grams</option>
