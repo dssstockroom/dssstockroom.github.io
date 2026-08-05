@@ -234,6 +234,55 @@
             .td-vendor, .td-mfr { display: none; }
             .btn-search span { display: none; }
         }
+
+        /* ── Notice modal ── */
+        .notice-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,32,91,0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 16px;
+        }
+        .notice-box {
+            background: #fff;
+            border-radius: 10px;
+            border-top: 4px solid var(--royal);
+            max-width: 460px;
+            width: 100%;
+            padding: 28px 28px 22px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        }
+        .notice-box h3 {
+            margin: 0 0 12px 0;
+            font-family: var(--sans);
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--navy);
+        }
+        .notice-box p {
+            margin: 0 0 20px 0;
+            font-size: 13.5px;
+            line-height: 1.65;
+            color: var(--text);
+        }
+        .notice-box a { color: var(--royal); }
+        .notice-dismiss {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background: var(--royal);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-family: var(--sans);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .notice-dismiss:hover { background: var(--navy); }
     </style>
 </head>
 <body>
@@ -308,6 +357,7 @@
         const [query, setQuery]           = useState('');
         const [submitted, setSubmitted]   = useState('');
         const [sort, setSort]             = useState({ key: null, dir: 'asc' });
+        const [dismissed, setDismissed]   = useState(false);
 
         useEffect(() => {
             fetch(EXCEL_URL)
@@ -380,6 +430,23 @@
 
         return (
             <div>
+                {/* Notice modal */}
+                {!dismissed && (
+                    <div className="notice-overlay">
+                        <div className="notice-box">
+                            <h3>📋 Before You Search</h3>
+                            <p>
+                                Due to character limits in our inventory system, most items use abbreviated names and descriptions.
+                                For best results, <strong>search by item number</strong> (e.g. internal SKU or manufacturer part number) where possible.
+                                Inventory levels shown are estimates and may not reflect real-time availability.
+                                If you cannot find the item you are looking for, contact us at <a href="mailto:stockroom@pitt.edu">stockroom@pitt.edu</a>.
+                            </p>
+                            <button className="notice-dismiss" onClick={() => setDismissed(true)}>
+                                Got it
+                            </button>
+                        </div>
+                    </div>
+                )}
                 {/* Header */}
                 <div className="header">
                     <div className="header-inner">
