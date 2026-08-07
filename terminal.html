@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dan's Terminal — DSS Stockroom</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.typekit.net/myu6uxh.css">
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --royal:   #003594;
+            --gold:    #FFB81C;
+            --navy:    #00205B;
+            --sky:     #DBEEFF;
+            --bg:      #f4f5f7;
+            --surface: #ffffff;
+            --border:  #e2e4e8;
+            --text:    #1a1d23;
+            --muted:   #5a6072;
+            --green:   #00AD6E;
+            --red:     #c0392b;
+            --sans:    'Roboto', Arial, sans-serif;
+            --mono:    'Roboto Mono', monospace;
+            --gothic:  alternate-gothic-no-3-d, 'Arial Narrow', sans-serif;
+            --serif:   'Instrument Serif', Georgia, serif;
+        }
+
+        body { font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh; }
+
+        /* ── Nav ── */
+        .nav {
+            background: var(--royal);
+            border-bottom: 3px solid var(--gold);
+            position: sticky; top: 0; z-index: 200;
+        }
+        .nav-inner {
+            max-width: 1280px; margin: 0 auto;
+            display: flex; align-items: center; gap: 0;
+            padding: 0 24px; height: 52px;
+        }
+        .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: 24px; }
+        .nav-brand img { width: 32px; height: 32px; border-radius: 50%; background: #fff; padding: 2px; }
+        .nav-brand-text .nav-title { font-family: var(--gothic); font-size: 13px; font-weight: 700; color: #fff; letter-spacing: 0.08em; text-transform: uppercase; display: block; }
+        .nav-brand-text .nav-sub   { font-size: 9px; color: rgba(219,238,255,0.7); letter-spacing: 0.06em; text-transform: uppercase; display: block; }
+        .nav-links { display: flex; gap: 2px; flex: 1; }
+        .nav-link {
+            color: rgba(255,255,255,0.75); text-decoration: none;
+            font-family: var(--gothic); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase;
+            padding: 0 14px; height: 52px; display: flex; align-items: center;
+            border-bottom: 3px solid transparent; margin-bottom: -3px;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .nav-link:hover { color: #fff; border-color: rgba(255,184,28,0.5); }
+        .nav-link.active { color: #fff; border-color: var(--gold); }
+
+        /* ── Search box ── */
+        .search-section {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--royal) 100%);
+            padding: 32px 24px 28px;
+            border-bottom: 3px solid var(--gold);
+        }
+        .search-inner { max-width: 1280px; margin: 0 auto; }
+        .search-title { font-family: var(--gothic); font-size: 22px; color: #fff; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
+        .search-sub { font-size: 13px; color: rgba(219,238,255,0.75); margin-bottom: 18px; }
+        .search-row { display: flex; gap: 10px; max-width: 640px; }
+        .search-input {
+            flex: 1; height: 40px; padding: 0 14px;
+            border: none; border-radius: 6px;
+            font-family: var(--sans); font-size: 14px;
+            background: rgba(255,255,255,0.95);
+            color: var(--text); outline: none;
+        }
+        .search-input:focus { background: #fff; box-shadow: 0 0 0 2px var(--gold); }
+        .btn-search {
+            height: 40px; padding: 0 20px;
+            background: var(--gold); color: var(--navy);
+            border: none; border-radius: 6px;
+            font-family: var(--gothic); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+            cursor: pointer; font-weight: 700;
+            transition: background 0.15s;
+        }
+        .btn-search:hover { background: #e6a619; }
+        .search-hint { font-size: 11.5px; color: rgba(219,238,255,0.6); margin-top: 8px; }
+
+        /* ── Search results ── */
+        .search-results-panel {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+        .search-results-inner { max-width: 1280px; margin: 0 auto; padding: 16px 24px; }
+        .results-count { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+        .results-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .results-table th { background: var(--navy); color: #fff; padding: 7px 10px; text-align: left; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer; }
+        .results-table th:hover { background: var(--royal); }
+        .results-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+        .results-table tr:hover td { background: var(--sky); }
+        .sku-cell { font-family: var(--mono); font-size: 12px; color: var(--royal); }
+        .tag { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        .tag-in  { background: #d4f5e5; color: #006b30; }
+        .tag-low { background: #fff3cd; color: #7a5c00; }
+        .tag-out { background: #ffe0dc; color: #b03020; }
+        .tag-ss  { background: #e8e8f0; color: #444488; font-style: italic; font-weight: 500; }
+
+        /* ── Shortcuts ── */
+        .shortcuts-section { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 24px; }
+        .shortcuts-inner { max-width: 1280px; margin: 0 auto; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .shortcut-label { font-family: var(--gothic); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
+        .shortcut-btn {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 5px 12px; border-radius: 5px;
+            font-family: var(--gothic); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+            background: var(--bg); border: 1px solid var(--border);
+            color: var(--royal); text-decoration: none;
+            transition: background 0.12s, border-color 0.12s;
+            cursor: pointer;
+        }
+        .shortcut-btn:hover { background: var(--sky); border-color: var(--royal); }
+
+        /* ── Main content ── */
+        .main { max-width: 1280px; margin: 0 auto; padding: 28px 24px; }
+
+        /* ── Section headings ── */
+        .section-heading {
+            font-family: var(--gothic); color: var(--navy);
+            font-size: 13px; font-weight: 700; letter-spacing: 0.12em;
+            text-transform: uppercase; margin-bottom: 16px; margin-top: 36px;
+            padding-bottom: 8px; border-bottom: 2px solid var(--gold);
+        }
+        .section-heading:first-child { margin-top: 0; }
+
+        /* ── Vendor cards ── */
+        .vendor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin-bottom: 24px; }
+        .vendor-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+            padding: 16px; cursor: pointer; text-align: left;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            border-top: 3px solid var(--royal);
+        }
+        .vendor-card:hover { border-color: var(--royal); box-shadow: 0 2px 12px rgba(0,53,148,0.1); }
+        .vendor-card.active { border-color: var(--royal); box-shadow: 0 2px 12px rgba(0,53,148,0.12); background: var(--sky); }
+        .vendor-card-name { font-family: var(--gothic); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--royal); margin-bottom: 4px; }
+        .vendor-card-sub { font-size: 11.5px; color: var(--muted); }
+
+        /* ── Vendor detail panel ── */
+        .vendor-panel {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+            overflow: hidden; margin-bottom: 32px;
+        }
+        .vendor-panel-header {
+            background: var(--royal); padding: 14px 20px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .vendor-panel-header h2 { font-family: var(--gothic); font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; }
+        .vendor-panel-close { background: none; border: none; color: rgba(255,255,255,0.7); font-size: 20px; cursor: pointer; line-height: 1; padding: 0 4px; }
+        .vendor-panel-close:hover { color: #fff; }
+        .vendor-panel-body { padding: 24px; }
+
+        /* ── Data table ── */
+        .data-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 24px; }
+        .data-table th { background: var(--navy); color: #fff; padding: 8px 12px; text-align: left; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; }
+        .data-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+        .data-table tr:nth-child(even) td { background: var(--bg); }
+        .data-table tr:hover td { background: var(--sky); }
+
+        /* ── Steps ── */
+        .steps-section { margin-bottom: 24px; }
+        .steps-section h3 { font-family: var(--gothic); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--navy); margin-bottom: 12px; border-left: 3px solid var(--gold); padding-left: 10px; }
+        .steps-list { list-style: none; counter-reset: steps; }
+        .steps-list li { counter-increment: steps; display: flex; gap: 12px; margin-bottom: 10px; font-size: 13.5px; line-height: 1.5; }
+        .steps-list li::before { content: counter(steps); min-width: 24px; height: 24px; background: var(--royal); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+        .steps-list li a { color: var(--royal); }
+        .steps-list .step-note { font-size: 12px; color: var(--muted); display: block; margin-top: 2px; }
+        .field-highlight { font-family: var(--mono); font-size: 12px; background: var(--sky); padding: 1px 6px; border-radius: 3px; color: var(--navy); }
+
+        /* ── External notes / clipboard ── */
+        .notes-block {
+            background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin-top: 8px; font-family: var(--mono); font-size: 13px;
+            line-height: 1.8; white-space: pre-wrap; color: var(--text);
+        }
+        .notes-controls { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 14px; flex-wrap: wrap; }
+        .notes-controls label { font-size: 12px; font-weight: 600; color: var(--text); display: block; margin-bottom: 4px; }
+        .notes-input { height: 34px; padding: 0 10px; border: 1.5px solid var(--border); border-radius: 6px; font-family: var(--sans); font-size: 13px; color: var(--text); background: #fff; outline: none; width: 200px; }
+        .notes-input:focus { border-color: var(--royal); }
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; border-radius: 6px; font-family: var(--gothic); font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; border: none; font-weight: 700; transition: background 0.15s; }
+        .btn-primary { background: var(--royal); color: #fff; }
+        .btn-primary:hover { background: var(--navy); }
+        .btn-gold { background: var(--gold); color: var(--navy); }
+        .btn-gold:hover { background: #e6a619; }
+        .copied-msg { font-size: 12px; color: var(--green); font-weight: 600; align-self: center; }
+
+        /* ── Info box ── */
+        .info-box { background: var(--sky); border: 1px solid #b8d4f0; border-radius: 6px; padding: 12px 16px; margin-bottom: 20px; font-size: 13px; color: var(--navy); }
+        .info-box strong { font-weight: 700; }
+
+        /* ── Divider ── */
+        .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+    const { useState, useEffect, useMemo, useRef } = React;
+
+    const INVENTORY_URL = 'https://dssstockroom.github.io/inventory-status-report.xlsx';
+    const PITT_SEAL = 'https://upload.wikimedia.org/wikipedia/en/thumb/f/fb/University_of_Pittsburgh_seal.svg/960px-University_of_Pittsburgh_seal.svg.png';
+
+    const SHORTCUTS = [
+        { label: 'Forms',       href: 'index.html#forms',       icon: '📋' },
+        { label: 'Hazmat BOL',  href: 'index.html#internalbol', icon: '☢️' },
+        { label: 'Emails',      href: 'index.html#emails',       icon: '✉️' },
+        { label: 'Phonebook',   href: 'index.html#phonebook',    icon: '📞' },
+        { label: 'Metrics',     href: 'metrics.html',            icon: '📊' },
+        { label: 'PLCB',        href: 'https://www.apps.lcb.pa.gov/webapp/Licensing/BulkPurchase/bulkpo.asp', icon: '🍶', ext: true },
+        { label: 'PantherExpress', href: 'https://my.pitt.edu', icon: '🐾', ext: true },
+    ];
+
+    // ── Decon items from inventory ───────────────────────────────────────
+    const DECON_ITEMS = [
+        { sku:'200GMP0125', mfgSKU:'07678003',     name:'200 Proof Ethanol, Glass, Molecular Biology Grade', uom:'EA', price:'72.20', deconCat:'04355226' },
+        { sku:'190C5000',   mfgSKU:'22032600',     name:'190 Proof Ethanol, 5 Gallon Cubitainer',           uom:'EA', price:'100.45', deconCat:'22032600' },
+        { sku:'190G1000',   mfgSKU:'04355226',     name:'190 Proof Ethanol, Plastic Bottle, 1 Gallon',      uom:'EA', price:'19.27',  deconCat:'04355226' },
+        { sku:'Y190G1000',  mfgSKU:'04355226',     name:'190 Proof Ethanol, 1 Gal, 4/CS',                  uom:'CS', price:'77.11',  deconCat:'04355226' },
+        { sku:'200PP0125',  mfgSKU:'04355222',     name:'200 Proof Ethanol, Plastic Pint',                  uom:'EA', price:'3.49',   deconCat:'04355222' },
+        { sku:'Y200PP0125', mfgSKU:'04355222',     name:'200 Proof Ethanol, Plastic Pint, 24/CS',           uom:'CS', price:'83.98',  deconCat:'04355222' },
+        { sku:'Y200G1000',  mfgSKU:'04355223',     name:'200 Proof Ethanol, 1 Gal, 4/CS',                  uom:'CS', price:'77.11',  deconCat:'04355223' },
+        { sku:'200PG0125',  mfgSKU:'07678004',     name:'200 Proof Ethanol, Glass Pint',                    uom:'EA', price:'4.26',   deconCat:'07678004' },
+        { sku:'Y200PG0125', mfgSKU:'07678004',     name:'200 Proof Ethanol, Glass Pint, 24/CS',             uom:'CS', price:'102.30', deconCat:'07678004' },
+        { sku:'200C5000',   mfgSKU:'22032601',     name:'200 Proof Ethanol, 5 Gallon Cubitainer',           uom:'EA', price:'100.45', deconCat:'22032601' },
+    ];
+
+    // ── Inventory search ─────────────────────────────────────────────────
+    function parseInventory(ab) {
+        const wb = XLSX.read(ab, { type: 'array', cellDates: true });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' });
+        const data = [];
+        for (let i = 1; i < json.length; i++) {
+            const r = json[i];
+            if (r[4]) data.push({
+                internalSKU:      String(r[4]  || '').trim(),
+                manufacturerSKUs: [r[5],r[6],r[7],r[8]].map(x => String(x||'').trim()).filter(Boolean),
+                itemName:         String(r[13] || '').trim(),
+                uom:              String(r[14] || '').trim(),
+                vendor:           String(r[12] || '').trim(),
+                location:         String(r[2]  || '').trim(),
+                onHand:           String(r[23] || '').trim(),
+                maxStock:         String(r[19] || '').trim(),
+                ourPrice:         String(r[27] || '').trim(),
+            });
+        }
+        return data;
+    }
+
+    const normSKU = s => s.replace(/-/g,'').toUpperCase();
+
+    function stockBadge(item) {
+        const loc = (item.location||'').toUpperCase();
+        if (loc === 'SS' || loc.startsWith('SS ') || loc.startsWith('SS-'))
+            return <span className="tag tag-ss">Strategic Stockout</span>;
+        const n = parseFloat(item.onHand), max = parseFloat(item.maxStock);
+        if (isNaN(n) || item.onHand === '') return <span style={{color:'var(--muted)'}}>—</span>;
+        if (n <= 0) return <span className="tag tag-out">Out</span>;
+        if (!isNaN(max) && max > 0) {
+            const r = n / max;
+            if (r <= 0.25) return <span className="tag tag-out">{n}</span>;
+            if (r <= 0.50) return <span className="tag tag-low">{n}</span>;
+            return <span className="tag tag-in">{n}</span>;
+        }
+        return n <= 3 ? <span className="tag tag-low">{n}</span> : <span className="tag tag-in">{n}</span>;
+    }
+
+    // ── Decon vendor panel ───────────────────────────────────────────────
+    function DeconPanel({ onClose }) {
+        const [plcbNum, setPlcbNum] = useState('');
+        const [copied, setCopied]   = useState(false);
+
+        const externalNotes = `E.A. Permit number: TF-PA-52
+PLCB Release number: ${plcbNum || '[enter above]'}
+Pitt's EIN number: 25-0965591
+
+For all items to be delivered to the University of Pittsburgh, Department of Chemistry, the Chevron Science Center, 219 Parkman Ave. and Eberly Hall, University Dr. are unable to accept deliveries via semi-truck/tractor trailer. If a delivery is attempted, it will be rejected, and the University is not responsible for any redelivery fees. Please contact the DSS at 412-624-8551 or dsstock@pitt.edu to make other arrangements. Thank you for your cooperation.
+
+Deliver on a straight truck with a lift gate.`;
+
+        const handleCopy = async () => {
+            try {
+                await navigator.clipboard.writeText(externalNotes);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2500);
+            } catch(e) {
+                // fallback
+                const ta = document.createElement('textarea');
+                ta.value = externalNotes;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2500);
+            }
+        };
+
+        return (
+            <div className="vendor-panel">
+                <div className="vendor-panel-header">
+                    <h2>Decon Laboratories — Ethanol Ordering</h2>
+                    <button className="vendor-panel-close" onClick={onClose}>×</button>
+                </div>
+                <div className="vendor-panel-body">
+
+                    <div className="info-box">
+                        <strong>PLCB License Info:</strong> &nbsp; Permit: <span className="field-highlight">AE-48-00</span> &nbsp; LID Number: <span className="field-highlight">24988</span>
+                    </div>
+
+                    {/* Inventory table */}
+                    <h3 style={{fontFamily:'var(--gothic)', fontSize:'12px', letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--navy)', marginBottom:'12px', borderLeft:'3px solid var(--gold)', paddingLeft:'10px'}}>Current Inventory</h3>
+                    <div style={{overflowX:'auto', marginBottom:'24px'}}>
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Internal SKU</th>
+                                    <th>Decon Cat. #</th>
+                                    <th>Description</th>
+                                    <th>UOM</th>
+                                    <th style={{textAlign:'right'}}>Our Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {DECON_ITEMS.map(item => (
+                                    <tr key={item.sku}>
+                                        <td className="sku-cell">{item.sku}</td>
+                                        <td className="sku-cell">{item.deconCat}</td>
+                                        <td>{item.name}</td>
+                                        <td>{item.uom}</td>
+                                        <td style={{textAlign:'right', fontFamily:'var(--mono)', color:'var(--green)', fontWeight:600}}>${item.price}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <hr className="divider" />
+
+                    {/* PLCB Steps */}
+                    <div className="steps-section">
+                        <h3>Step 1 — PLCB</h3>
+                        <ol className="steps-list">
+                            <li>Go to <a href="https://www.apps.lcb.pa.gov/webapp/Licensing/BulkPurchase/bulkpo.asp" target="_blank">apps.lcb.pa.gov — Bulk Purchase</a> and click <strong>Next</strong>.</li>
+                            <li>Enter Permit <span className="field-highlight">AE-48-00</span> and LID Number <span className="field-highlight">24988</span>, then click <strong>Next</strong>.</li>
+                            <li>Set Supplier Name to <span className="field-highlight">DECON LABORATORIES INC</span>. Enter the Quantity, Product Size, and Product Description, then click <strong>Next</strong>.</li>
+                            <li>Attn field: <span className="field-highlight">DSS / ULS Order Number</span>. Email: <span className="field-highlight">stockroom@pitt.edu</span>. Click <strong>Next</strong>.</li>
+                            <li><strong>Write down the Confirmation Number</strong> from the Replenishment screen — you will need this for the External Notes below.</li>
+                        </ol>
+                    </div>
+
+                    <hr className="divider" />
+
+                    {/* PantherExpress Steps */}
+                    <div className="steps-section">
+                        <h3>Step 2 — PantherExpress</h3>
+                        <ol className="steps-list">
+                            <li>Go to PantherExpress from <a href="https://my.pitt.edu" target="_blank">my.pitt.edu</a>.</li>
+                            <li>Search for the item using the Decon catalog number or description.</li>
+                            <li>Add to cart and proceed to checkout. Paste the External Notes (below) into the order notes / delivery instructions field.</li>
+                        </ol>
+                    </div>
+
+                    <hr className="divider" />
+
+                    {/* External Notes */}
+                    <h3 style={{fontFamily:'var(--gothic)', fontSize:'12px', letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--navy)', marginBottom:'14px', borderLeft:'3px solid var(--gold)', paddingLeft:'10px'}}>External Notes</h3>
+                    <div className="notes-controls">
+                        <div>
+                            <label>PLCB Release / Confirmation Number</label>
+                            <input
+                                type="text"
+                                className="notes-input"
+                                placeholder="e.g. 123456"
+                                value={plcbNum}
+                                onChange={e => { setPlcbNum(e.target.value); setCopied(false); }}
+                            />
+                        </div>
+                        <button className={`btn ${copied ? 'btn-gold' : 'btn-primary'}`} onClick={handleCopy}>
+                            {copied ? '✓ Copied!' : '📋 Copy to Clipboard'}
+                        </button>
+                        {copied && <span className="copied-msg">Ready to paste into PantherExpress</span>}
+                    </div>
+                    <div className="notes-block">{externalNotes}</div>
+
+                </div>
+            </div>
+        );
+    }
+
+    // ── Main App ─────────────────────────────────────────────────────────
+    function App() {
+        const [inventory,     setInventory]     = useState([]);
+        const [dbStatus,      setDbStatus]      = useState('loading');
+        const [query,         setQuery]         = useState('');
+        const [submitted,     setSubmitted]     = useState('');
+        const [searchResults, setSearchResults] = useState([]);
+        const [activeVendor,  setActiveVendor]  = useState(null);
+
+        useEffect(() => {
+            fetch(INVENTORY_URL)
+                .then(r => r.arrayBuffer())
+                .then(ab => { setInventory(parseInventory(ab)); setDbStatus('ok'); })
+                .catch(() => setDbStatus('error'));
+        }, []);
+
+        const handleSearch = (e) => {
+            e.preventDefault();
+            const q = query.trim();
+            if (!q) return;
+            setSubmitted(q);
+            const nq = normSKU(q);
+            const words = q.toLowerCase().split(/\s+/);
+            const found = inventory.filter(item => {
+                const ni = normSKU(item.internalSKU);
+                const nm = item.manufacturerSKUs.map(normSKU);
+                if (ni.includes(nq) || nq.includes(ni)) return true;
+                if (nm.some(m => m.includes(nq) || nq.includes(m))) return true;
+                if (words.every(w => item.itemName.toLowerCase().includes(w))) return true;
+                if (item.vendor && words.every(w => item.vendor.toLowerCase().includes(w))) return true;
+                if (item.location && item.location.toLowerCase().includes(q.toLowerCase())) return true;
+                return false;
+            });
+            setSearchResults(found);
+        };
+
+        return (
+            <div>
+                {/* Nav */}
+                <nav className="nav">
+                    <div className="nav-inner">
+                        <a href="index.html" className="nav-brand">
+                            <img src={PITT_SEAL} alt="Pitt" />
+                            <div className="nav-brand-text">
+                                <span className="nav-title">DSS Stockroom</span>
+                                <span className="nav-sub">Shared Research Support Services</span>
+                            </div>
+                        </a>
+                        <div className="nav-links">
+                            <a href="index.html" className="nav-link">← Main Site</a>
+                            <span className="nav-link active">👱 Dan's Terminal</span>
+                        </div>
+                    </div>
+                </nav>
+
+                {/* Search */}
+                <div className="search-section">
+                    <div className="search-inner">
+                        <div className="search-title">👱 Dan's Terminal</div>
+                        <div className="search-sub">Personal operations hub — search inventory, access tools, and manage day-to-day tasks</div>
+                        <form onSubmit={handleSearch}>
+                            <div className="search-row">
+                                <input
+                                    className="search-input"
+                                    type="text"
+                                    placeholder="Search catalog by SKU, name, or location…"
+                                    value={query}
+                                    onChange={e => setQuery(e.target.value)}
+                                    autoComplete="off"
+                                />
+                                <button type="submit" className="btn-search">Search</button>
+                            </div>
+                            <div className="search-hint">
+                                {dbStatus === 'loading' && '⏳ Loading catalog…'}
+                                {dbStatus === 'ok'      && `${inventory.length.toLocaleString()} items · search by internal SKU, manufacturer SKU, item name, or bin location`}
+                                {dbStatus === 'error'   && '⚠ Could not load catalog'}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                {/* Search results */}
+                {submitted && (
+                    <div className="search-results-panel">
+                        <div className="search-results-inner">
+                            {searchResults.length === 0 ? (
+                                <div style={{color:'var(--muted)', fontSize:'13px', padding:'8px 0'}}>No results for <strong>"{submitted}"</strong>.</div>
+                            ) : (
+                                <>
+                                    <div className="results-count">
+                                        {searchResults.length.toLocaleString()} result{searchResults.length !== 1 ? 's' : ''} for <strong>"{submitted}"</strong>
+                                        <button onClick={() => { setSubmitted(''); setSearchResults([]); setQuery(''); }} style={{marginLeft:'12px', fontSize:'11px', color:'var(--muted)', background:'none', border:'none', cursor:'pointer', textDecoration:'underline'}}>Clear</button>
+                                    </div>
+                                    <div style={{overflowX:'auto'}}>
+                                        <table className="results-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Location</th>
+                                                    <th>SKU</th>
+                                                    <th>Description</th>
+                                                    <th>Vendor</th>
+                                                    <th>UOM</th>
+                                                    <th style={{textAlign:'right'}}>Price</th>
+                                                    <th style={{textAlign:'center'}}>On Hand</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {searchResults.map((item, i) => (
+                                                    <tr key={item.internalSKU + i}>
+                                                        <td className="sku-cell" style={{whiteSpace:'nowrap'}}>{item.location || '—'}</td>
+                                                        <td className="sku-cell">{item.internalSKU}</td>
+                                                        <td style={{minWidth:'200px'}}>{item.itemName}</td>
+                                                        <td style={{fontSize:'12px', color:'var(--muted)', whiteSpace:'nowrap'}}>{item.vendor}</td>
+                                                        <td style={{fontSize:'12px', color:'var(--muted)'}}>{item.uom}</td>
+                                                        <td style={{textAlign:'right', fontFamily:'var(--mono)', fontSize:'12px'}}>
+                                                            {item.ourPrice ? <span style={{color:'var(--green)', fontWeight:600}}>${item.ourPrice}</span> : <span style={{color:'var(--muted)'}}>—</span>}
+                                                        </td>
+                                                        <td style={{textAlign:'center'}}>{stockBadge(item)}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Shortcuts */}
+                <div className="shortcuts-section">
+                    <div className="shortcuts-inner">
+                        <span className="shortcut-label">Quick Links</span>
+                        {SHORTCUTS.map(s => (
+                            <a key={s.label} href={s.href} className="shortcut-btn" target={s.ext ? '_blank' : '_self'} rel="noopener noreferrer">
+                                <span>{s.icon}</span>{s.label}{s.ext && <span style={{fontSize:'9px', opacity:0.6}}>↗</span>}
+                            </a>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Main content */}
+                <div className="main">
+
+                    {/* Ordering section */}
+                    <div className="section-heading">Ordering</div>
+
+                    <div className="vendor-grid">
+                        <button
+                            className={`vendor-card ${activeVendor === 'decon' ? 'active' : ''}`}
+                            onClick={() => setActiveVendor(activeVendor === 'decon' ? null : 'decon')}
+                        >
+                            <div className="vendor-card-name">Decon Laboratories</div>
+                            <div className="vendor-card-sub">Ethanol · PLCB regulated</div>
+                        </button>
+                        {/* Additional vendors can be added here */}
+                    </div>
+
+                    {activeVendor === 'decon' && (
+                        <DeconPanel onClose={() => setActiveVendor(null)} />
+                    )}
+
+                </div>
+            </div>
+        );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+</script>
+</body>
+</html>
