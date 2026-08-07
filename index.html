@@ -1958,14 +1958,14 @@
             { id:'cyclecount', icon:'📦', name:'Cycle Count',  desc:'Scan-based physical inventory verification by section and rack. Exports variance reports as CSV.' },
             { id:'labels',     icon:'🏷️', name:'Label Maker',  desc:'Generate Avery 5162 or 5160 barcode shelf labels from the inventory database or manual entry.' },
             { id:'metrics',    icon:'📊', name:'Metrics',       desc:'Order history, revenue, top items, top customers, and quarterly review dashboards.', href:'metrics.html' },
-            { id:'terminal',   icon:'👱', name:"Dan's Terminal", desc:'Personal hub for day-to-day tasks, ordering guides, vendor information, and quick-access shortcuts.', href:'terminal.html' },
+            { id:'terminal',   icon:'👱', name:"Dan's Terminal", desc:'Personal hub for day-to-day tasks, ordering guides, vendor information, and quick-access shortcuts.', href:'terminal.html', sameTab: true },
         ];
         const renderToolCards = (toolList) => toolList.map(t => (
-            <button key={t.id} className="tool-card" onClick={() => t.href ? window.open(t.href, '_blank') : navigate(t.id)}>
+            <button key={t.id} className="tool-card" onClick={() => t.href ? (t.sameTab ? window.location.href = t.href : window.open(t.href, '_blank')) : navigate(t.id)}>
                 <div className="tool-card-icon">{t.icon}</div>
                 <div className="tool-card-name">{t.name}</div>
                 <div className="tool-card-desc">{t.desc}</div>
-                <div className="tool-card-arrow">{t.href ? '↗' : '→'}</div>
+                <div className="tool-card-arrow">{t.href && !t.sameTab ? '↗' : '→'}</div>
             </button>
         ));
 
