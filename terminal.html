@@ -136,6 +136,24 @@
         }
         .section-heading:first-child { margin-top: 0; }
 
+        /* ── Modal ── */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,32,91,0.5);
+            z-index: 500;
+            display: flex; align-items: flex-start; justify-content: center;
+            padding: 40px 16px 40px;
+            overflow-y: auto;
+        }
+        .modal-box {
+            background: var(--surface);
+            border-radius: 10px;
+            overflow: hidden;
+            width: 100%; max-width: 860px;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.25);
+            margin: auto;
+        }
+
         /* ── Vendor cards ── */
         .vendor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin-bottom: 24px; }
         .vendor-card {
@@ -214,28 +232,18 @@
     const PITT_SEAL = 'https://upload.wikimedia.org/wikipedia/en/thumb/f/fb/University_of_Pittsburgh_seal.svg/960px-University_of_Pittsburgh_seal.svg.png';
 
     const SHORTCUTS = [
-        { label: 'Forms',       href: 'index.html#forms',       icon: '📋' },
-        { label: 'Hazmat BOL',  href: 'index.html#internalbol', icon: '☢️' },
-        { label: 'Emails',      href: 'index.html#emails',       icon: '✉️' },
-        { label: 'Phonebook',   href: 'index.html#phonebook',    icon: '📞' },
-        { label: 'Metrics',     href: 'metrics.html',            icon: '📊' },
-        { label: 'PLCB',        href: 'https://www.apps.lcb.pa.gov/webapp/Licensing/BulkPurchase/bulkpo.asp', icon: '🍶', ext: true },
-        { label: 'PantherExpress', href: 'https://my.pitt.edu', icon: '🐾', ext: true },
+        { label: 'Forms',             href: 'index.html',          icon: '📋' },
+        { label: 'Hazmat BOL',        href: 'index.html',          icon: '☢️' },
+        { label: 'Emails',            href: 'index.html',          icon: '✉️' },
+        { label: 'Phonebook',         href: 'index.html',          icon: '📞' },
+        { label: 'myPitt',            href: 'https://my.pitt.edu', icon: '🐾', ext: true },
+        { label: 'WTS',               href: 'https://wts.neopost.com/', icon: '📦', ext: true },
+        { label: 'SciShield',         href: 'https://pitt.scishield.com/', icon: '🛡️', ext: true },
+        { label: 'Email List',        href: 'https://list.pitt.edu/mailman/admin/dsscustomers', icon: '📧', ext: true },
+        { label: 'Pitt People Lookup',href: 'https://find.pitt.edu/', icon: '🔍', ext: true },
+        { label: 'PLCB',              href: 'https://www.apps.lcb.pa.gov/webapp/Licensing/BulkPurchase/bulkpo.asp', icon: '🍶', ext: true },
     ];
 
-    // ── Decon items from inventory ───────────────────────────────────────
-    const DECON_ITEMS = [
-        { sku:'200GMP0125', mfgSKU:'07678003',     name:'200 Proof Ethanol, Glass, Molecular Biology Grade', uom:'EA', price:'72.20', deconCat:'04355226' },
-        { sku:'190C5000',   mfgSKU:'22032600',     name:'190 Proof Ethanol, 5 Gallon Cubitainer',           uom:'EA', price:'100.45', deconCat:'22032600' },
-        { sku:'190G1000',   mfgSKU:'04355226',     name:'190 Proof Ethanol, Plastic Bottle, 1 Gallon',      uom:'EA', price:'19.27',  deconCat:'04355226' },
-        { sku:'Y190G1000',  mfgSKU:'04355226',     name:'190 Proof Ethanol, 1 Gal, 4/CS',                  uom:'CS', price:'77.11',  deconCat:'04355226' },
-        { sku:'200PP0125',  mfgSKU:'04355222',     name:'200 Proof Ethanol, Plastic Pint',                  uom:'EA', price:'3.49',   deconCat:'04355222' },
-        { sku:'Y200PP0125', mfgSKU:'04355222',     name:'200 Proof Ethanol, Plastic Pint, 24/CS',           uom:'CS', price:'83.98',  deconCat:'04355222' },
-        { sku:'Y200G1000',  mfgSKU:'04355223',     name:'200 Proof Ethanol, 1 Gal, 4/CS',                  uom:'CS', price:'77.11',  deconCat:'04355223' },
-        { sku:'200PG0125',  mfgSKU:'07678004',     name:'200 Proof Ethanol, Glass Pint',                    uom:'EA', price:'4.26',   deconCat:'07678004' },
-        { sku:'Y200PG0125', mfgSKU:'07678004',     name:'200 Proof Ethanol, Glass Pint, 24/CS',             uom:'CS', price:'102.30', deconCat:'07678004' },
-        { sku:'200C5000',   mfgSKU:'22032601',     name:'200 Proof Ethanol, 5 Gallon Cubitainer',           uom:'EA', price:'100.45', deconCat:'22032601' },
-    ];
 
     // ── Inventory search ─────────────────────────────────────────────────
     function parseInventory(ab) {
@@ -279,7 +287,8 @@
     }
 
     // ── Decon vendor panel ───────────────────────────────────────────────
-    function DeconPanel({ onClose }) {
+    function DeconPanel({ onClose, inventory }) {
+        const deconItems = inventory.filter(item => item.vendor.toUpperCase() === 'DECON ETHANOL');
         const [plcbNum, setPlcbNum] = useState('');
         const [copied, setCopied]   = useState(false);
 
@@ -335,13 +344,15 @@ Deliver on a straight truck with a lift gate.`;
                                 </tr>
                             </thead>
                             <tbody>
-                                {DECON_ITEMS.map(item => (
-                                    <tr key={item.sku}>
-                                        <td className="sku-cell">{item.sku}</td>
-                                        <td className="sku-cell">{item.deconCat}</td>
-                                        <td>{item.name}</td>
+                                {deconItems.length === 0
+                                    ? <tr><td colSpan="5" style={{color:'var(--muted)', textAlign:'center', padding:'16px'}}>Loading inventory…</td></tr>
+                                    : deconItems.map((item, i) => (
+                                    <tr key={item.internalSKU + i}>
+                                        <td className="sku-cell">{item.internalSKU}</td>
+                                        <td className="sku-cell" style={{fontSize:'11px'}}>{item.manufacturerSKUs[0] || '—'}</td>
+                                        <td>{item.itemName}</td>
                                         <td>{item.uom}</td>
-                                        <td style={{textAlign:'right', fontFamily:'var(--mono)', color:'var(--green)', fontWeight:600}}>${item.price}</td>
+                                        <td style={{textAlign:'right', fontFamily:'var(--mono)', color:'var(--green)', fontWeight:600}}>{item.ourPrice ? `$${item.ourPrice}` : '—'}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -550,8 +561,8 @@ Deliver on a straight truck with a lift gate.`;
 
                     <div className="vendor-grid">
                         <button
-                            className={`vendor-card ${activeVendor === 'decon' ? 'active' : ''}`}
-                            onClick={() => setActiveVendor(activeVendor === 'decon' ? null : 'decon')}
+                            className="vendor-card"
+                            onClick={() => setActiveVendor('decon')}
                         >
                             <div className="vendor-card-name">Decon Laboratories</div>
                             <div className="vendor-card-sub">Ethanol · PLCB regulated</div>
@@ -560,7 +571,11 @@ Deliver on a straight truck with a lift gate.`;
                     </div>
 
                     {activeVendor === 'decon' && (
-                        <DeconPanel onClose={() => setActiveVendor(null)} />
+                        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) setActiveVendor(null); }}>
+                            <div className="modal-box">
+                                <DeconPanel onClose={() => setActiveVendor(null)} inventory={inventory} />
+                            </div>
+                        </div>
                     )}
 
                 </div>
