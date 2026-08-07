@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dan's Terminal — DSS Stockroom</title>
+    <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/en/thumb/f/fb/University_of_Pittsburgh_seal.svg/960px-University_of_Pittsburgh_seal.svg.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
@@ -192,11 +193,27 @@
         .steps-section { margin-bottom: 24px; }
         .steps-section h3 { font-family: var(--gothic); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--navy); margin-bottom: 12px; border-left: 3px solid var(--gold); padding-left: 10px; }
         .steps-list { list-style: none; counter-reset: steps; }
-        .steps-list li { counter-increment: steps; display: flex; gap: 12px; margin-bottom: 10px; font-size: 13.5px; line-height: 1.5; }
-        .steps-list li::before { content: counter(steps); min-width: 24px; height: 24px; background: var(--royal); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+        .steps-list li {
+            counter-increment: steps;
+            position: relative;
+            padding-left: 36px;
+            margin-bottom: 12px;
+            font-size: 13.5px;
+            line-height: 1.6;
+        }
+        .steps-list li::before {
+            content: counter(steps);
+            position: absolute;
+            left: 0; top: 1px;
+            width: 24px; height: 24px;
+            background: var(--royal); color: #fff;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 700;
+        }
         .steps-list li a { color: var(--royal); }
         .steps-list .step-note { font-size: 12px; color: var(--muted); display: block; margin-top: 2px; }
-        .field-highlight { font-family: var(--mono); font-size: 12px; background: var(--sky); padding: 1px 6px; border-radius: 3px; color: var(--navy); }
+        .field-highlight { font-family: var(--mono); font-size: 0.9em; background: var(--sky); padding: 1px 5px; border-radius: 3px; color: var(--navy); }
 
         /* ── External notes / clipboard ── */
         .notes-block {
@@ -380,6 +397,7 @@ Deliver on a straight truck with a lift gate.`;
                         <h3>Step 2 — PantherExpress</h3>
                         <ol className="steps-list">
                             <li>Go to PantherExpress from <a href="https://my.pitt.edu" target="_blank">my.pitt.edu</a>.</li>
+                            <li>Navigate to <span className="field-highlight">Shop</span> → <span className="field-highlight">View Favorites</span> → <span className="field-highlight">Ethanol Replenishment</span> → <span className="field-highlight">Submit Request</span>.</li>
                             <li>Search for the item using the Decon catalog number or description.</li>
                             <li>Add to cart and proceed to checkout. Paste the External Notes (below) into the order notes / delivery instructions field.</li>
                         </ol>
@@ -470,7 +488,7 @@ Deliver on a straight truck with a lift gate.`;
                 {/* Search */}
                 <div className="search-section">
                     <div className="search-inner">
-                        <div className="search-title">👱 Dan's Terminal</div>
+                        <div className="search-title" style={{fontFamily:'var(--serif)', fontWeight:400, letterSpacing:'0.01em', textTransform:'none'}}>Dan's Terminal</div>
                         <div className="search-sub">Personal operations hub — search inventory, access tools, and manage day-to-day tasks</div>
                         <form onSubmit={handleSearch}>
                             <div className="search-row">
