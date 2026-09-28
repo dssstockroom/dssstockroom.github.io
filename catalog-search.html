@@ -413,11 +413,22 @@
             );
         };
 
+        const enrichedInventory = useMemo(() => {
+            if (!inventory.length) return inventory;
+            return inventory.map(item => {
+                const fullName = [item.internalSKU, ...item.manufacturerSKUs]
+                    .map(s => staffNames[s.toUpperCase()])
+                    .find(n => n) || null;
+                return fullName ? { ...item, fullName } : item;
+            });
+        }, [inventory, staffNames]);
+
         const results = useMemo(() => {
             if (!submitted) return [];
             const q = submitted.toLowerCase();
-            const filtered = inventory.filter(item =>
+            const filtered = enrichedInventory.filter(item =>
                 item.itemName.toLowerCase().includes(q) ||
+                (item.fullName && item.fullName.toLowerCase().includes(q)) ||
                 item.internalSKU.toLowerCase().includes(q) ||
                 item.manufacturerSKUs.some(s => s.toLowerCase().includes(q)) ||
                 item.vendor.toLowerCase().includes(q) ||
@@ -427,7 +438,6 @@
             return [...filtered].sort((a, b) => {
                 let av = a[sort.key] || '';
                 let bv = b[sort.key] || '';
-                // Numeric sort for price/onHand
                 if (['ourPrice','externalPrice','onHand'].includes(sort.key)) {
                     av = parseFloat(av) || 0;
                     bv = parseFloat(bv) || 0;
@@ -437,7 +447,7 @@
                     ? String(av).localeCompare(String(bv))
                     : String(bv).localeCompare(String(av));
             });
-        }, [submitted, inventory, sort]);
+        }, [submitted, enrichedInventory, sort]);
 
         const cols = [
             { key: 'internalSKU',      label: 'SKU' },
@@ -552,13 +562,7 @@
                                         {results.map((item, i) => (
                                             <tr key={item.internalSKU + i}>
                                                 <td className="td-sku">{highlight(item.internalSKU, submitted)}</td>
-                                                <td className="td-name">{highlight(
-                                                    // Check each SKU against staff catalog, prefer longest match
-                                                    [item.internalSKU, ...item.manufacturerSKUs]
-                                                        .map(s => staffNames[s.toUpperCase()])
-                                                        .find(n => n) || item.itemName,
-                                                    submitted
-                                                )}</td>
+                                                <td className="td-name">{highlight(item.fullName || item.itemName, submitted)}</td>
                                                 <td className="td-mfr">
                                                     {item.manufacturerSKUs.map((s, j) => (
                                                         <span key={j} style={{display:'block'}}>{highlight(s, submitted)}</span>
