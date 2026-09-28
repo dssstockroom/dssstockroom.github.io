@@ -290,7 +290,8 @@
 <script type="text/babel">
     const { useState, useEffect, useMemo, useCallback } = React;
 
-    const EXCEL_URL = 'https://dssstockroom.github.io/inventory-status-report.xlsx';
+    const EXCEL_URL        = 'https://dssstockroom.github.io/inventory-status-report.xlsx';
+    const STAFF_CATALOG_URL = 'https://dssstockroom.github.io/staff-catalog.xlsx';
 
     function parseInventory(ab) {
         const wb = XLSX.read(ab, { type: 'array', cellDates: true });
@@ -354,12 +355,31 @@
         const [inventory, setInventory]   = useState([]);
         const [status, setStatus]         = useState('loading');
         const [lastModified, setLastModified] = useState(null);
+        const [staffNames, setStaffNames] = useState({});
         const [query, setQuery]           = useState('');
         const [submitted, setSubmitted]   = useState('');
         const [sort, setSort]             = useState({ key: null, dir: 'asc' });
         const [dismissed, setDismissed]   = useState(false);
 
         useEffect(() => {
+            // Load staff catalog name lookup
+            fetch(STAFF_CATALOG_URL)
+                .then(r => r.arrayBuffer())
+                .then(ab => {
+                    const wb = XLSX.read(ab, { type: 'array', raw: false });
+                    const ws = wb.Sheets[wb.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+                    const map = {};
+                    for (let i = 1; i < rows.length; i++) {
+                        const partNum = String(rows[i][0] || '').trim();
+                        const name    = String(rows[i][1] || '').trim();
+                        if (partNum && name) map[partNum.toUpperCase()] = name;
+                    }
+                    setStaffNames(map);
+                })
+                .catch(() => {}); // silently fall back to inventory names
+
+            // Load inventory
             fetch(EXCEL_URL)
                 .then(r => {
                     const lm = r.headers.get('Last-Modified');
@@ -532,7 +552,13 @@
                                         {results.map((item, i) => (
                                             <tr key={item.internalSKU + i}>
                                                 <td className="td-sku">{highlight(item.internalSKU, submitted)}</td>
-                                                <td className="td-name">{highlight(item.itemName, submitted)}</td>
+                                                <td className="td-name">{highlight(
+                                                    // Check each SKU against staff catalog, prefer longest match
+                                                    [item.internalSKU, ...item.manufacturerSKUs]
+                                                        .map(s => staffNames[s.toUpperCase()])
+                                                        .find(n => n) || item.itemName,
+                                                    submitted
+                                                )}</td>
                                                 <td className="td-mfr">
                                                     {item.manufacturerSKUs.map((s, j) => (
                                                         <span key={j} style={{display:'block'}}>{highlight(s, submitted)}</span>
