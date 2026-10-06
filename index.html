@@ -1368,6 +1368,7 @@
         const [inventory, setInventory] = useState([]);
         const [dbStatus, setDbStatus] = useState('loading'); // loading | ok | error
         const [fileLastModified, setFileLastModified] = useState(null);
+        const [staffNames, setStaffNames] = useState({});
         const [activePage, setActivePage] = useState('home');
         const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -1424,6 +1425,25 @@
                         else setDbStatus('error');
                     } catch(e) { setDbStatus('error'); }
                 });
+        }, []);
+
+        // Load staff catalog name lookup
+        useEffect(() => {
+            fetch('staff-catalog.xlsx')
+                .then(r => r.arrayBuffer())
+                .then(ab => {
+                    const wb = XLSX.read(ab, { type:'array', raw:false });
+                    const ws = wb.Sheets[wb.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+                    const map = {};
+                    for (let i = 1; i < rows.length; i++) {
+                        const partNum = String(rows[i][0]||'').trim();
+                        const name    = String(rows[i][1]||'').trim();
+                        if (partNum && name) map[partNum.toUpperCase()] = name;
+                    }
+                    setStaffNames(map);
+                })
+                .catch(() => {}); // silently fall back to inventory names
         }, []);
 
         const [navSearch, setNavSearch] = useState('');
@@ -1915,9 +1935,11 @@
             const found = inventory.filter(item => {
                 const ni = normalizeSKU(item.internalSKU);
                 const nm = item.manufacturerSKUs.map(normalizeSKU);
+                const fullName = [item.internalSKU, ...item.manufacturerSKUs].map(s => staffNames[s.toUpperCase()]).find(n => n) || '';
                 if (ni.includes(nq) || nq.includes(ni)) return true;
                 if (nm.some(m => m.includes(nq) || nq.includes(m))) return true;
                 if (words.every(w => item.itemName.toLowerCase().includes(w))) return true;
+                if (fullName && words.every(w => fullName.toLowerCase().includes(w))) return true;
                 if (item.vendor && words.every(w => item.vendor.toLowerCase().includes(w))) return true;
                 if (item.location && item.location.toLowerCase().includes(query.toLowerCase())) return true;
                 return false;
@@ -1976,7 +1998,9 @@
                     <div className="container">
                         <div className="hero-layout">
                             <div className="hero-text">
-                                <h1>Dietrich School<br/><em>Scientific Stockroom</em></h1>
+                                <h1 style={{margin:0, padding:0, lineHeight:1}}>
+                                    <img src="DSSS-Logo_Gold-White.svg" alt="Dietrich School Scientific Stockroom" style={{maxWidth:'420px', width:'100%', display:'block'}} />
+                                </h1>
                                 <p>Staff operations platform for inventory management, hazmat compliance, order processing, communications, and metrics. Search the catalog below or navigate to a tool.</p>
                             </div>
                             <div className="hero-search-box">
@@ -2025,7 +2049,7 @@
                                                 {getSortedResults(searchResults).map((item, idx) => (
                                                     <tr key={idx}>
                                                         <td style={{fontFamily:'var(--mono)', fontWeight:700, fontSize:'13px'}}>{item.location}</td>
-                                                        <td style={{fontSize:'14px'}}>{item.itemName}</td>
+                                                        <td style={{fontSize:'14px'}}>{[item.internalSKU,...item.manufacturerSKUs].map(s=>staffNames[s.toUpperCase()]).find(n=>n) || item.itemName}</td>
                                                         <td style={{fontFamily:'var(--mono)', fontSize:'12px', color:'var(--royal)'}}>{item.internalSKU}</td>
                                                         <td style={{fontFamily:'var(--mono)', fontSize:'12px', color:'var(--muted)'}}>{item.manufacturerSKUs.join(', ')}</td>
                                                         <td style={{fontSize:'13px'}}>{item.vendor || '—'}</td>
