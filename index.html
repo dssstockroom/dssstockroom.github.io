@@ -5406,7 +5406,51 @@ Instagram / Facebook / Twitter(X): @dssstockroom`;
 
                     {activeTab === 'history' && (
                         <div className="card">
-                            <h2>BOL History</h2>
+                            <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'16px', flexWrap:'wrap', gap:'10px'}}>
+                                <h2 style={{margin:0}}>BOL History</h2>
+                                <div style={{display:'flex', gap:'8px'}}>
+                                    <button className="btn btn-outline" style={{fontSize:'12px'}} onClick={() => {
+                                        const json = JSON.stringify(history, null, 2);
+                                        const blob = new Blob([json], { type:'application/json' });
+                                        const url = URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `HazmatBOL_History_${new Date().toISOString().slice(0,10)}.json`;
+                                        a.click();
+                                        URL.revokeObjectURL(url);
+                                    }} disabled={history.length === 0}>
+                                        ⬇️ Export JSON
+                                    </button>
+                                    <label className="btn btn-outline" style={{fontSize:'12px', cursor:'pointer', marginBottom:0}}>
+                                        ⬆️ Import JSON
+                                        <input type="file" accept=".json" style={{display:'none'}} onChange={e => {
+                                            const file = e.target.files[0];
+                                            if (!file) return;
+                                            const reader = new FileReader();
+                                            reader.onload = ev => {
+                                                try {
+                                                    const imported = JSON.parse(ev.target.result);
+                                                    if (!Array.isArray(imported)) throw new Error('Not an array');
+                                                    const existingIds = new Set(history.map(h => h._id));
+                                                    const newRecords = imported.filter(r => r._id && r.items && !existingIds.has(r._id));
+                                                    if (newRecords.length === 0) {
+                                                        alert('No new records found — all entries already exist in history.');
+                                                        return;
+                                                    }
+                                                    const merged = [...newRecords, ...history].sort((a,b) => new Date(b._savedAt) - new Date(a._savedAt));
+                                                    setHistory(merged);
+                                                    saveIBOLHistory(merged);
+                                                    alert(`Imported ${newRecords.length} record${newRecords.length !== 1 ? 's' : ''}.`);
+                                                } catch(err) {
+                                                    alert('Import failed: invalid or unrecognised file format.');
+                                                }
+                                                e.target.value = '';
+                                            };
+                                            reader.readAsText(file);
+                                        }} />
+                                    </label>
+                                </div>
+                            </div>
                             {history.length === 0 ? (
                                 <div style={{padding:'32px', textAlign:'center', color:'var(--muted)', fontSize:'14px'}}>No BOLs saved yet.</div>
                             ) : (
